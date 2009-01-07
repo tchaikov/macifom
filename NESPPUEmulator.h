@@ -9,15 +9,16 @@
 
 typedef uint8_t (*RegisterReadMethod)(id, SEL, uint_fast32_t);
 typedef void (*RegisterWriteMethod)(id, SEL, uint8_t, uint_fast32_t);
-typedef void (*NameAttributeWriteMethod)(id, SEL, uint8_t, uint_fast32_t);
 
-typedef enum NESMirroringType {
+typedef enum {
 
-	NESHorizontalMirroring = 0;
-	NESVerticalMirroring = 1;
-	NESSingleScreenMirroring = 2;
-	NESFourScreenMirroring = 3;
-};
+	NESHorizontalMirroring = 0,
+	NESVerticalMirroring = 1,
+	NESSingleScreenMirroring = 2,
+	NESFourScreenMirroring = 3
+} NESMirroringType;
+
+@class NESCartridgeEmulator;
 
 @interface NESPPUEmulator : NSObject {
 
@@ -31,8 +32,13 @@ typedef enum NESMirroringType {
 	uint8_t *_sprRAM;
 	uint8_t *_spritePalette;
 	uint8_t *_backgroundPalette;
-	uint8_t *_chrromBank0;
-	uint8_t *_chrromBank1;
+	uint8_t ***_chrromBank0TileCache;
+	uint8_t ***_chrromBank1TileCache;
+	uint8_t ***_backgroundTileCache;
+	uint8_t ***_spriteTileCache;
+	uint8_t *_playfieldBuffer;
+	uint8_t *_firstTileCache;
+	uint8_t _scanline[256];
 	uint8_t _sprRAMAddress;
 	uint8_t *_nameAndAttributeTables;
 	uint8_t *_nameTable0;
@@ -40,7 +46,11 @@ typedef enum NESMirroringType {
 	uint8_t *_nameTable2;
 	uint8_t *_nameTable3;
 	uint8_t *_palettes;
+	uint8_t *_chromBank0;
+	uint8_t *_chromBank1;
+	
 	uint_fast32_t _cyclesSinceVINT;
+	uint_fast32_t _videoBufferIndex;
 	
 	uint16_t _VRAMAddress;
 	uint16_t _temporaryVRAMAddress;
@@ -49,12 +59,12 @@ typedef enum NESMirroringType {
 	uint8_t _addressIncrement;
 	uint8_t _colorIntensity;
 	
+	uint16_t _nameAndAttributeTablesMask;
+	uint16_t *_nameAndAttributeTablesMasks;
 	RegisterWriteMethod *_registerWriteMethods;
 	RegisterReadMethod *_registerReadMethods;
-	NameAttributeWriteMethod *_nameAndAttributeWriteMethods;
-	NameAttributeWriteMethod *_writeToNameOrAttributeTable;
 	
-	NSBitmapImageRep *_buffer;
+	unsigned char **_videoBuffer;
 	
 	BOOL _NMIOnVBlank;
 	BOOL _8x16Sprites;
@@ -64,11 +74,16 @@ typedef enum NESMirroringType {
 	BOOL _backgroundEnabled;
 	BOOL _spritesEnabled;
 	BOOL _firstWriteOccurred;
+	BOOL _oddFrame;
+	BOOL _verticalIncrement;
 	
 }
 
-- (id)initWithBuffer:(NSBitmapImageRep *)buffer andCartridge:(NESCartridgeEmulator *)cartEmu;
-- (void)finishRenderingFrame;
+- (id)initWithBuffer:(NSBitmapImageRep *)buffer;
+- (void)cacheCHROMFromCartridge:(NESCartridgeEmulator *)cartEmu;
+- (void)runPPUForCPUCycles:(uint_fast32_t)cycle;
+- (BOOL)triggeredNMI;
+- (uint_fast32_t)cyclesSinceVINT;
 - (uint8_t)readByteFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPPUFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeToPPUControlRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle;
@@ -79,17 +94,12 @@ typedef enum NESMirroringType {
 - (void)writeToVRAMAddressRegister2:(uint8_t)byte onCycle:(uint_fast32_t)cycle;
 - (void)writeToVRAMIORegister:(uint8_t)byte onCycle:(uint_fast32_t)cycle;
 - (uint8_t)readFromPPUStatusRegisterOnCycle:(uint_fast32_t)cycle;
-- (void)DMAtransferToSPRRAM(uint8_t *)bytes onCycle:(uint_fast32_t)cycle;
+- (void)DMAtransferToSPRRAM:(uint8_t *)bytes onCycle:(uint_fast32_t)cycle;
 - (uint8_t)readFromVRAMIORegisterOnCycle:(uint_fast32_t)cycle;
 - (uint8_t)readFromSPRRAMIORegisterOnCycle:(uint_fast32_t)cycle;
 - (uint8_t)readByteFromPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
-- (void)setPatternTableBank0:(uint8_t *)pointer;
-- (void)setPatternTableBank1:(uint8_t *)pointer;
 - (void)setMirroringType:(NESMirroringType)type;
-- (void)writeByte:(uint8_t)byte toHorizontallyMirroredNameOrAttributeTableAddress:(uint_fast32_t)address;
-- (void)writeByte:(uint8_t)byte toVerticallyMirroredNameOrAttributeTableAddress:(uint_fast32_t)address;
-- (void)writeByte:(uint8_t)byte toSingleScreenNameOrAttributeTableAddress:(uint_fast32_t)address;
-- (void)writeByte:(uint8_t)byte toFourScreenNameOrAttributeTableAddress:(uint_fast32_t)address;
+- (void)displayBackgroundTiles;
 
 @end

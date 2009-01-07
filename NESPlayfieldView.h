@@ -11,6 +11,9 @@
 
 @interface NESPlayfieldView : NSView {
 
+	NSBitmapImageRep *_videoBuffer;
 }
+
+- (NSBitmapImageRep *)videoBuffer;
 
 @end

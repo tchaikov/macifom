@@ -16,12 +16,17 @@
 	NES6502Interpreter *cpuInterpreter;
 	NESPPUEmulator *ppuEmulator;
 	NESCartridgeEmulator *cartEmulator;
+	
+	uint16_t firstInstruction;
+	uint16_t lastInstruction;
 }
 
-- (id)initWithROM:(NSString *)path;
+- (id)initWithBuffer:(NSBitmapImageRep *)buffer;
 - (NES6502Interpreter *)cpu;
 - (NESPPUEmulator *)ppu;
 - (NESCartridgeEmulator *)cartridge;
 - (uint_fast32_t)runUntilBreak;
+- (NSDictionary *)CPUregisters;
+- (NSArray *)instructions;
 
 @end

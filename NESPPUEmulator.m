@@ -8,7 +8,7 @@
 #import "NESPPUEmulator.h"
 #import "NESCartridgeEmulator.h"
 
-static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xAB, 0xA7, 0x7F, 0x43, 0x00, 0x00, 0x00, 0x1B, 0x00, 0x00, 0x00,
+static const uint8_t colorPalette[3][64] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xAB, 0xA7, 0x7F, 0x43, 0x00, 0x00, 0x00, 0x1B, 0x00, 0x00, 0x00,
 												0xBC, 0x00, 0x23, 0x83, 0xBF, 0xE7, 0xDB, 0xCB, 0x8B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 												0xFF, 0x3F, 0x5F, 0xA7, 0xF7, 0xFF, 0xFF, 0xFF, 0xF3, 0x83, 0x4F, 0x58, 0x00, 0x00, 0x00, 0x00,
 												0xFF, 0xAB, 0xC7, 0xD7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xAB, 0xB3, 0x9F, 0x00, 0x00, 0x00 },
@@ -16,39 +16,129 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 											   0xBC, 0x73, 0x3B, 0x00, 0x00, 0x00, 0x2B, 0x4F, 0x73, 0x97, 0xAB, 0x93, 0x83, 0x00, 0x00, 0x00,
 											   0xFF, 0xBF, 0x97, 0x8B, 0x7B, 0x77, 0x77, 0x9B, 0xBF, 0xD3, 0xDF, 0xF8, 0xEB, 0x00, 0x00, 0x00,
 											   0xFF, 0xAB, 0xC7, 0xD7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xAB, 0xB3, 0x9F, 0x00, 0x00, 0x00 }, 
-											{ 0x75, 0x8F, 0xAB, 0x9F, 0x77, 0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x5F, 0x00, 0x00, 0x00
-											  0xBC, 0xEF, 0xEF, 0xF3, 0xBF, 0x5B, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x3B, 0x8B, 0x00, 0x00, 0x00
-											  0xFF, 0xFF, 0xFF, 0xFD, 0xFF, 0xB7, 0x63, 0x3B, 0x3F, 0x13, 0x4B, 0x98, 0xDB, 0x00, 0x00, 0x00
+											{ 0x75, 0x8F, 0xAB, 0x9F, 0x77, 0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x5F, 0x00, 0x00, 0x00,
+											  0xBC, 0xEF, 0xEF, 0xF3, 0xBF, 0x5B, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x3B, 0x8B, 0x00, 0x00, 0x00,
+											  0xFF, 0xFF, 0xFF, 0xFD, 0xFF, 0xB7, 0x63, 0x3B, 0x3F, 0x13, 0x4B, 0x98, 0xDB, 0x00, 0x00, 0x00,
 											  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xDB, 0xB3, 0xAB, 0xA3, 0xA3, 0xBF, 0xCF, 0xF3, 0x00, 0x00, 0x00 } };
+
+static const uint16_t nameAndAttributeTablesMasks[4] = { 0x0BFF, 0x07FF, 0x03FF, 0x0FFF};
+
+// Checked 1/3
+static inline void incrementVRAMAddressHorizontally(uint16_t *vramAddress) {
+
+	if ((*vramAddress & 0x001F) == 31) {
+	
+		*vramAddress &= 0xFFE0; // Clear horiztonal scroll
+		*vramAddress ^= 0x0400; // Flip bit 10
+	}
+	
+	else (*vramAddress)++;
+}
+
+// Checked 1/3
+static inline void incrementVRAMAddressVertically(uint16_t *vramAddress) {
+	
+	unsigned int verticalTileNumber = ((*vramAddress & 0x03E0) / 32);
+	
+	if (((*vramAddress & 0x7000) / 4096) == 7) {
+	
+		if (verticalTileNumber == 29) {
+		
+			*vramAddress &= 0x0C1F; // Clear vertical tile index and fine vertical scroll
+			*vramAddress ^= 0x0800; // Flip bit 11
+		}
+		else if (verticalTileNumber == 31) {
+		
+			// If we're beyond the normal wrapping range, just clear
+			*vramAddress &= 0x0C1F; // Clear vertical tile index and fine vertical scroll
+		}
+		else {
+		
+			*vramAddress &= 0x0FFF; // Clear fine vertical scroll
+			*vramAddress += 0x0020; // Move to next row of tiles
+		}
+	}
+	else *vramAddress += 0x1000;
+}
+
+static inline void incrementVRAMAddressOneTileVertically(uint16_t *vramAddress) {
+			
+	if (((*vramAddress & 0x03E0) / 32) == 29) {
+			
+		*vramAddress &= 0xFC1F; // Clear vertical tile index
+		*vramAddress ^= 0x0800; // Flip bit 11
+	}
+	else *vramAddress += 0x0020; // Move to next row of tiles
+}
+
+static inline uint16_t attributeTableIndexFoxNametableIndex(uint16_t nametableIndex) {
+	
+	return (nametableIndex & 0x400) | 0x03C0 | ((nametableIndex / 16) & 0x38) | ((nametableIndex / 4) & 0x7);
+}
+
+static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uint16_t nametableIndex) {
+	
+	return ((attributeByte >> ((nametableIndex & 0x2) | ((nametableIndex >> 4) & 0x4))) & 0x3) << 2;
+}
 
 @implementation NESPPUEmulator
 
 - (uint8_t)_invalidPPURegisterAccessOnCycle:(uint_fast32_t)cycle
 {
+	NSLog(@"Invalid PPU Read Access");
+	
 	return 0;
 }
 
 - (void)_invalidPPURegisterWriteWithByte:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
-	
+	NSLog(@"Invalid PPU Write Access");
 }
 
 - (id)initWithBuffer:(NSBitmapImageRep *)buffer;
 {
 	[super init];
 	
-	_buffer = [buffer retain]; // hold onto our rendering buffer
+	_videoBuffer = (unsigned char **)malloc(sizeof(unsigned char *)*5);
+	[buffer getBitmapDataPlanes:_videoBuffer];
 	
 	_cyclesSinceVINT = 0;
+	_ppuStatusRegister = 0x80; // FIXME: We probably shouldn't really start with the VBLANK flag on, but the logic starts with VBLANK and I'm interested to see what happens.
 	_VRAMAddress = 0;
 	_temporaryVRAMAddress = 0;
-	_fineHorizontalScroll = 0x7;
+	_sprRAMAddress = 0;
+	_addressIncrement = 1;
+	_fineHorizontalScroll = 0x0;
 	_firstWriteOccurred = NO;
+	_backgroundEnabled = NO;
+	_spritesEnabled = NO;
+	_oddFrame = NO; // FIXME: Currently all logic assumes we only have even (341cc) frames
+	_NMIOnVBlank = NO;
 	
+	_playfieldBuffer = (uint8_t *)malloc(sizeof(uint8_t)*8);
+	_firstTileCache = (uint8_t *)malloc(sizeof(uint8_t)*8);
 	_sprRAM = (uint8_t *)malloc(sizeof(uint8_t)*256);
 	_palettes = (uint8_t *)malloc(sizeof(uint8_t)*32);
 	_backgroundPalette = _palettes;
 	_spritePalette = (_palettes + 0x10);
+	_chrromBank0TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
+	_chrromBank1TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
+	_backgroundTileCache = _chrromBank0TileCache;
+	_spriteTileCache = _chrromBank1TileCache;
+	
+	// Initialize the sprite buffers
+	for (int tile = 0; tile < 256; tile++) {
+	
+		_chrromBank0TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
+		_chrromBank1TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
+		
+		for (int line = 0; line < 8; line++) {
+		
+			_chrromBank0TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
+			_chrromBank1TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
+		}
+	}
+	
 	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*4096);
 	_nameTable0 = _nameAndAttributeTables;
 	_nameTable1 = _nameAndAttributeTables + 0x400;
@@ -56,7 +146,7 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	_nameTable3 = _nameAndAttributeTables + 0xC00;
 	_registerReadMethods = (RegisterReadMethod *)malloc(sizeof(uint8_t (*)(id, SEL, uint_fast32_t))*8);
 	_registerWriteMethods = (RegisterWriteMethod *)malloc(sizeof(void (*)(id, SEL, uint8_t, uint_fast32_t))*8);
-	_nameAndAttributeWriteMethods = (NameAttributeWriteMethod *)malloc(sizeof(void (*)(id, SEL, uint8_t, uint_fast32_t))*4);
+	_nameAndAttributeTablesMask = 0;
 	
 	// Readable Registers
 	_registerReadMethods[0] = (uint8_t (*)(id, SEL, uint_fast32_t))[self methodForSelector:@selector(_invalidPPURegisterAccessOnCycle:)];
@@ -81,61 +171,252 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	return self;
 }
 
-- (void)writeByte:(uint8_t)byte toHorizontallyMirroredNameOrAttributeTableAddress:(uint_fast32_t)address
+// Checked 1/3
+- (void)cacheCHROMFromCartridge:(NESCartridgeEmulator *)cartEmu
 {
-	uint_fast32_t offset = address & 0x3FF;
+	NSLog(@"In cacheCHROMFromCartridge method.");
 	
-	if (address & 0x800) {
-		
-		_nameTable3[offset] = _nameTable2[offset] = byte;
-	}
-	else {
+	uint16_t sprite; // Tile counter
+	uint16_t line; // Tile scanline counter
+	uint8_t pixel; // Tile pixel counter
+	_chromBank0 = [cartEmu pointerToCHRROMBank0];
+	_chromBank1 = [cartEmu pointerToCHRROMBank1];
 	
-		_nameTable1[offset] = _nameTable0[offset] = byte;
-	}
-}
-
-- (void)writeByte:(uint8_t)byte toVerticallyMirroredNameOrAttributeTableAddress:(uint_fast32_t)address
-{
-	uint_fast32_t offset = address & 0x3FF;
+	for (sprite = 0; sprite < 256; sprite++) {
 	
-	if (address & 0x400) {
-		
-		_nameTable3[offset] = _nameTable1[offset] = byte;
-	}
-	else {
-		
-		_nameTable2[offset] = _nameTable0[offset] = byte;
+		for (line = 0; line < 8; line++) {
+			
+			for (pixel = 0; pixel < 8; pixel++) {
+				
+				_chrromBank0TileCache[sprite][line][pixel] = ((_chromBank0[(sprite << 4) | line] & (1 << (7 - pixel))) >> (7 - pixel)) | (((_chromBank0[(sprite << 4) | (line + 8)] & (1 << (7 - pixel))) >> (7 - pixel)) << 1);
+				_chrromBank1TileCache[sprite][line][pixel] = ((_chromBank1[(sprite << 4) | line] & (1 << (7 - pixel))) >> (7 - pixel)) | (((_chromBank1[(sprite << 4) | (line + 8)] & (1 << (7 - pixel))) >> (7 - pixel)) << 1);
+			}
+		}
 	}
 }
 
-- (void)writeByte:(uint8_t)byte toSingleScreenNameOrAttributeTableAddress:(uint_fast32_t)address
-{
-	uint_fast32_t offset = address & 0x3FF;
-	
-	_nameTable3[offset] = _nameTable2[offset] = _nameTable1[offset] = _nameTable0[offset] = byte;
-}
-
-- (void)writeByte:(uint8_t)byte toFourScreenNameOrAttributeTableAddress:(uint_fast32_t)address
-{
-	_nameAndAttributeTables[address] = byte;
-}
-
+// Checked 1/4
 - (void)setMirroringType:(NESMirroringType)type
 {
-	_writeToNameOrAttributeTable = _nameAndAttributeWriteMethods[type];
+	NSLog(@"In setMirroringType method.");
+	
+	_nameAndAttributeTablesMask = nameAndAttributeTablesMasks[type];
+}
+
+- (void)displayBackgroundTiles {
+
+	uint8_t nextPixel;
+	unsigned int line;
+	unsigned int tile;
+	unsigned int pixel;
+	unsigned int videoBufferPosition = 0;
+	
+	for (line = 0; line < 64; line++) {
+		
+		for (tile = 0; tile < 32; tile++) {
+			
+			for (pixel = 0; pixel < 8; pixel++) {
+			
+				nextPixel = _backgroundPalette[_backgroundTileCache[((line / 8) * 32) + tile][line % 8][pixel]];
+				_videoBuffer[0][videoBufferPosition] = colorPalette[0][nextPixel];
+				_videoBuffer[1][videoBufferPosition] = colorPalette[1][nextPixel];
+				_videoBuffer[2][videoBufferPosition++] = colorPalette[2][nextPixel];
+			}
+		}
+	}
+}
+
+- (void)_drawScanlines:(uint8_t)start until:(uint8_t)stop
+{
+	uint8_t tileIndex;
+	uint8_t tileCounter;
+	uint8_t scanlineCounter;
+	uint8_t scanlinePosition;
+	uint8_t verticalTileOffset;
+	uint8_t pixelCounter;
+	uint8_t	tileAttributes;
+	uint8_t tileUpperColorBits;
+	uint16_t nameTableOffset;
+	
+	// NSLog(@"In drawScanlines method.");
+	
+	if (_backgroundEnabled | _spritesEnabled) {
+	for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
+	
+		// Get Vertical Tile Offset
+		verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
+		
+		scanlinePosition = 0;
+		
+		// Draw firstScanlineTileCache
+		for (pixelCounter = _fineHorizontalScroll; pixelCounter < 8; pixelCounter++) {
+			
+			_videoBuffer[0][_videoBufferIndex] = colorPalette[0][_firstTileCache[pixelCounter]];
+			_videoBuffer[1][_videoBufferIndex] = colorPalette[1][_firstTileCache[pixelCounter]];
+			_videoBuffer[2][_videoBufferIndex] = colorPalette[2][_firstTileCache[pixelCounter]];
+			_videoBufferIndex++;
+			scanlinePosition++;
+		}
+		
+		for (tileCounter = 0; tileCounter < 32; tileCounter++) {
+			
+			nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+			tileIndex = _nameAndAttributeTables[nameTableOffset];
+			tileAttributes = _nameAndAttributeTables[attributeTableIndexFoxNametableIndex(nameTableOffset)];
+			tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+			// NSLog(@"Loading Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
+			
+			for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+				
+				// FIXME: I need to revisit the drawing algorithm.. this is no place for a conditional statement
+				if (scanlinePosition) {
+					_videoBuffer[0][_videoBufferIndex] = colorPalette[0][_playfieldBuffer[pixelCounter]];
+					_videoBuffer[1][_videoBufferIndex] = colorPalette[1][_playfieldBuffer[pixelCounter]];
+					_videoBuffer[2][_videoBufferIndex] = colorPalette[2][_playfieldBuffer[pixelCounter]];
+					_videoBufferIndex++;
+					scanlinePosition++;
+				}
+				_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+				
+			}
+			
+			// Increment the VRAM address one tile to the right
+			incrementVRAMAddressHorizontally(&_VRAMAddress);
+		}
+		
+		// Increment the VRAM address vertically
+		incrementVRAMAddressVertically(&_VRAMAddress);
+		_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
+		_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
+		verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
+		
+		// Prime firstTileCache
+		// Fetch the attribute byte
+		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+		tileIndex = _nameAndAttributeTables[nameTableOffset];
+		tileAttributes = _nameAndAttributeTables[attributeTableIndexFoxNametableIndex(nameTableOffset)];
+		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+		
+		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+			
+			_firstTileCache[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+		}
+		
+		// Increment the VRAM address one tile to the right
+		incrementVRAMAddressHorizontally(&_VRAMAddress); 
+		
+		// Prime playfieldBuffer
+		// Fetch the attribute byte
+		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+		tileIndex = _nameAndAttributeTables[nameTableOffset];
+		tileAttributes = _nameAndAttributeTables[attributeTableIndexFoxNametableIndex(nameTableOffset)];
+		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+		
+		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+			
+			_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+		}
+		
+		// Increment the VRAM address one tile to the right
+		incrementVRAMAddressHorizontally(&_VRAMAddress); 
+		
+		// Prime in-range object cache
+	}
+	}
+	
+	// Start at scanline 0, end at 239
+	_cyclesSinceVINT = 7161 + 341 * (stop - start);
+}
+
+- (uint_fast32_t)cyclesSinceVINT {
+	
+	return _cyclesSinceVINT;
+}
+
+- (BOOL)triggeredNMI {
+	
+	return _NMIOnVBlank && (_ppuStatusRegister & 0x80);
+}
+
+- (BOOL)completePrimingScanlineStoppingOnCycle:(uint_fast32_t)cycle
+{
+	uint8_t tileIndex;
+	uint8_t verticalTileOffset;
+	uint8_t pixelCounter;
+	uint8_t	tileAttributes;
+	uint8_t tileUpperColorBits;
+	uint16_t nameTableOffset;
+	
+	// NSLog(@"In completePrimingScanlineStoppingOnCycle method. Initial VRAM Address is 0x%4.4x",_VRAMAddress);
+	
+	// FIXME: This needs to be cycle accurate and return false if incomplete
+	if (cycle < (341*21)) {
+		
+		_cyclesSinceVINT = cycle;
+	}
+	else {
+		
+		// Jump out if we're beyond this
+		if (_cyclesSinceVINT >= 7161) return YES;
+		
+		if (_backgroundEnabled | _spritesEnabled) {
+		// Prime firstTileCache
+		// Fetch the attribute byte
+		//	incrementVRAMAddressVertically(&_VRAMAddress);
+			
+		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+		tileIndex = _nameAndAttributeTables[nameTableOffset];
+		tileAttributes = _nameAndAttributeTables[attributeTableIndexFoxNametableIndex(nameTableOffset)];
+		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+		verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
+		// NSLog(@"Loading First Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
+		
+		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+			
+			_firstTileCache[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+		}
+		
+		// Increment the VRAM address one tile to the right
+		incrementVRAMAddressHorizontally(&_VRAMAddress); 
+		
+		// Prime playfieldBuffer
+		// Fetch the attribute byte
+		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+		tileIndex = _nameAndAttributeTables[nameTableOffset];
+		tileAttributes = _nameAndAttributeTables[attributeTableIndexFoxNametableIndex(nameTableOffset)];
+		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+		// NSLog(@"Loading Playfield Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
+			
+		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+			
+			_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+		}
+		
+		// Increment the VRAM address one tile to the right
+		incrementVRAMAddressHorizontally(&_VRAMAddress);
+		}
+		
+		_cyclesSinceVINT = 341*21; // Bring the current cycle count past the priming scanline
+		
+		return YES;
+	}
+	
+	return NO;
 }
 
 - (BOOL)completeDrawingScanlineStoppingOnCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In completeDrawingScanlineStoppingOnCycle method.");
+	
 	uint_fast32_t cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
-	uint8_t currentScanline = cyclesPastPrimingScanline / 341;
+	// uint8_t currentScanline = cyclesPastPrimingScanline / 341;
 	uint_fast32_t currentScanlineClockCycle = cyclesPastPrimingScanline % 341;
-	uint_fast32_t endingCycle, cyclesToRun;
+	// uint_fast32_t endingCycle, cyclesToRun;
 	BOOL didCompleteScanline = NO;
 		
 	if (!currentScanlineClockCycle) return YES; // Jump out if we're at the beginning of a scanline
 	
+	/*
 	cyclesToRun = (cycle - ( _oddFrame ? 7160 : 7161)) - cyclesPastPrimingScanline;
 	
 	if (cyclesToRun >= (341 - currentScanlineClockCycle)) {
@@ -176,7 +457,7 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 			}
 		}
 		// FIXME: A cycle-exact version should be used here
-		/*
+		
 		 uint_fast32_t end = endingCycle < 256 ? endingCycle : 256;
 		 BOOL oddCycle = counter & 0x1;
 		 uint_fast32_t counter = (currentScanlineClockCycle < 64) ? 64 : (currentScanlineClockCycle - 64); // start at 0 or current
@@ -197,7 +478,7 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 			
 			counter++;
 		}
-		 */
+		
 	}
 	
 	// Prime latches with sprite patterns
@@ -214,15 +495,19 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	}
 	
 	_cyclesSinceVINT += cyclesToRun;
+	 
+	*/
 	
 	return didCompleteScanline;
 }
 
-- (void)runPPUUntilCPUCycle:(uint_fast32_t)cycle
+- (void)runPPUForCPUCycles:(uint_fast32_t)cycle
 {
-	uint_fast32_t endingCycle = cycle * 3;
+	uint_fast32_t endingCycle = _cyclesSinceVINT + (cycle * 3);
 	uint_fast32_t cyclesPastPrimingScanline;
 	uint8_t endingScanline;
+	
+	// NSLog(@"In runPPUUntilCPUCycle method.");
 	
 	// Just add cycles if we're still in VBLANK
 	if (endingCycle < (341*20)) {
@@ -232,63 +517,116 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	}
 	else {
 	
+		if (_cyclesSinceVINT <= (341*20)) {
+			
+			if (_backgroundEnabled | _spritesEnabled) {
+			
+				// NSLog(@"Copying temporary VRAM address to VRAM address: 0x%4.4x",_temporaryVRAMAddress);
+				_VRAMAddress = _temporaryVRAMAddress;
+				_videoBufferIndex = 0;
+			}
+		}
+		
 		if (![self completePrimingScanlineStoppingOnCycle:endingCycle]) return;
 	}
 	
-	cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
-	// complete the current unfinished scanline, if any, using cycle exact renderer
-	if (cyclesPastPrimingScanline % 341) {
-	
-		if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
-	}
+	// complete any unfinished scanlines up to this point
+	if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
 	else {
 	
 		// Determine last whole scanline to draw
 		endingScanline = ((endingCycle  - ( _oddFrame ? 7160 : 7161)) / 341);
-		endingScanline = endingScanline > 239 ? 239 : endingScanline;
-		[self drawScanlines:(cyclesPastPrimingScanline / 341) through:endingScanline];
+		endingScanline = endingScanline > 240 ? 240 : endingScanline;
+		cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
+		[self _drawScanlines:(cyclesPastPrimingScanline / 341) until:endingScanline];
 	}
 	
-	// complete next unfinished scanline, if any
+	// start next incomplete scanline, if any
 	if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
 	
 	if (endingCycle > (_oddFrame ? 89340 : 89341)) {
 		
+		// NSLog(@"PPU reached VBLANK.");
 		// We're at the end of the frame.. we'll ignore the overage here, we really shouldn't call this method as-is for more than a frame
 		
-		_cyclesSinceVINT = _oddFrame ? 89341 : 89342; // Set such that we're at the end of the frame
+		_cyclesSinceVINT = _oddFrame ? (endingCycle - 89341) : (endingCycle - 89342); // Set such that we're at the end of the frame
 		_ppuStatusRegister |= 0x80; // Set VLBANK flag
 	}
 	else {
 	
 		_cyclesSinceVINT = endingCycle;
 	}
-}
-
-- (void)finishRenderingFrame
-{
-	[self runPPUUntilCPUCycle:89342]; // Run PPU until the end of the frame
-	_cyclesSinceVINT = 0; // Reset cycles since VINT
-	[_playFieldView setNeedsDisplay:YES]; // Flag view with playfield image for redraw
+	
+	// NSLog(@"Falling out of runPPUUntilCPUCycle at cycle %d.",_cyclesSinceVINT);
 }
 
 - (uint8_t)readByteFromPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In readByteFromPPUAddress method Reading 0x%4.4x.",address);
+	
+	uint16_t effectiveAddress = address & 0x3FFF;
+	
+	if (effectiveAddress >= 0x3F00) {
+		
+		// Palette read
+		return _palettes[effectiveAddress & 0x1F];
+	}
+	else if (effectiveAddress >= 0x2000) {
+		
+		return _nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask];
+	}
+	else if (effectiveAddress >= 0x1000) {
+		
+		// FIXME: I need to ensure that these pointers are changed when the cartridge swaps out CHRROM banks
+		return _chromBank1[effectiveAddress & 0xFFF];
+	}
+	else return _chromBank0[effectiveAddress];
+	
 	return 0;
 }
 
 - (void)writeByte:(uint8_t)byte toPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeBytetoPPUAddress. Writing 0x%2.2x to 0x%4.4x.",byte,address);
 	
+	uint16_t effectiveAddress = address & 0x3FFF;
+	int index; // pallete index counter
+	
+	if (effectiveAddress >= 0x3F00) {
+		
+		// Palette write
+		effectiveAddress &= 0x1F;
+		if (effectiveAddress) {
+			
+			_palettes[effectiveAddress] = byte & 0x3F;
+		}
+		else {
+		
+			// Writing the mirrored transparent color
+			index = 0;
+			while (index < 32) {
+				
+				_palettes[index] = byte & 0x3F;
+				index += 4;
+			}
+		}
+	}
+	else if (effectiveAddress >= 0x2000) {
+		
+		// Name or attribute table write
+		_nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask] = byte;
+	}
+	
+	// Pattern table write?	
 }
 
 - (uint8_t)readByteFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
-{
+{	
 	return _registerReadMethods[address & 0x7](self,@selector(_invalidPPURegisterAccessOnCycle:),cycle);
 }
 
 - (void)writeByte:(uint8_t)byte toPPUFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
-{
+{	
 	_registerWriteMethods[address & 0x7](self,@selector(_invalidPPURegisterWriteWithByte:onCycle:),byte,cycle);
 }
 
@@ -296,19 +634,24 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 //
 - (void)writeToPPUControlRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeToPPUControlRegister1 (0x2000) method. Writing 0x%2.2x.",byte);
+	
 	_ppuControlRegister1 = byte;
-	_temporaryVRAMAddress &= (0x73FF | ((byte & 0x3) << 10)); // Put selected nametable into temporary PPU address
+	_temporaryVRAMAddress &= 0x73FF; // Clear bits 10 and 11 (X and Y nametable selection)
+	_temporaryVRAMAddress |= (byte & 0x3) << 10; // Put selected nametables into temporary PPU address
 	_addressIncrement = (_ppuControlRegister1 & 0x4) ? 32 : 1; // Increment on write to $2007 by 32 if true
-	_spriteTable = (_ppuControlRegister1 & 0x8) ? _chrromBank1 : _chrromBank0; // Get base address for spriteTable
-	_backgroundTable = (_ppuControlRegister1 & 0x10) ? _chrromBank1 : _chrromBank0;
-	_8x16Sprites = (_ppuControlRegister1 & 0x20);
-	_NMIOnVBlank = (_ppuControlRegister1 & 0x80);
+	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
+	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
+	_8x16Sprites = (_ppuControlRegister1 & 0x20) ? YES : NO;
+	_NMIOnVBlank = (_ppuControlRegister1 & 0x80) ? YES : NO;
 }
 
 // 0x2001
 //
 - (void)writeToPPUControlRegister2:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeToPPUControlRegister2 (0x2001) method. Writing 0x%2.2x.",byte);
+	
 	_ppuControlRegister2 = byte;
 	
 	_monochrome = _ppuControlRegister2 & 0x1;
@@ -319,9 +662,27 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	_colorIntensity = _ppuControlRegister2 & 0xE0; // Top three bits are color intensity
 }
 
+// 2005
+// Checked 1/4
 - (void)writeToVRAMAddressRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeToVRAMAddressRegister1 (0x2005) method. Writing 0x%2.2x.",byte);
+	
 	if (_firstWriteOccurred) {
+	
+		// the word of loopy:
+		// 2005 second write:
+		// t:0000001111100000=d:11111000
+		// t:0111000000000000=d:00000111
+		
+		_temporaryVRAMAddress &= 0x7C1F;
+		_temporaryVRAMAddress |= (byte & 0xF8) << 2; // OR in upper five bytes of operand as the vertical scroll
+		_temporaryVRAMAddress &= 0xFFF; // Clear bits 12-14
+		_temporaryVRAMAddress |= (byte & 0x7) << 12; // OR in the bits from the operand as the fine vertical scroll
+		
+		_firstWriteOccurred = NO; // Set toggle
+	}
+	else {
 	
 		// thus spake loopy:
 		// 2005 first write:
@@ -330,52 +691,42 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 		
 		_temporaryVRAMAddress &= 0x7FE0; // Clear lower five bytes
 		_temporaryVRAMAddress |= (byte / 8); // OR in upper five bytes of operand as the horizontal scroll
-		_fineHorizontalScroll = (7 - (byte & 0x7)); // Lower three bits represent the fine horizontal scroll value (0-7)
-		// Revsering the fine horizontal scroll as we don't reverse it otherwise as a result of CRT drawing
+		_fineHorizontalScroll = byte & 0x7; // Lower three bits represent the fine horizontal scroll value (0-7)
 		
-		_firstWriteOccurred = NO; // Reset toggle
+		_firstWriteOccurred = YES; // Reset toggle
 	}
-	else {
-	
-		// the word of loopy:
-		// 2005 second write:
-		// t:0000001111100000=d:11111000
-		// t:0111000000000000=d:00000111
-		
-		_temporaryVRAMAddress &= 0x7C1F;
-		_temporaryVRAMAddress |= (byte / 8); // OR in upper five bytes of operand as the vertical scroll
-		_temporaryVRAMAddress &= 0xFFF; // Clear bits 12-14
-		_temporaryVRAMAddress |= ((byte & 0x7) << 12); // OR in the bits from the operand as the fine vertical scroll
-		
-		_firstWriteOccurred = YES; // Set toggle
-	}
-	
 }
 
+// 2006
+// Checked 1/4
 - (void)writeToVRAMAddressRegister2:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeToVRAMAddressRegister2 (0x2006) method. Writing 0x%2.2x.",byte);
+	
 	// 2006 first write:
 	// t:0011111100000000=d:00111111
 	// t:1100000000000000=0
 	// 2006 second write:
 	// t:0000000011111111=d:11111111
 	// v=t
+	
 	if (_firstWriteOccurred) {
 		
-		_temporaryVRAMAddress &= 0xFF; // Clear upper byte
-		_temporaryVRAMAddress |= ((byte & 0x3F) << 8); // OR in lower 6 bits as first six of upper byte
+		// Second write ors in low byte
+		_temporaryVRAMAddress &= 0xFF00; // Clear lower byte
+		_temporaryVRAMAddress |= byte; // OR in lower byte
+		_VRAMAddress = _temporaryVRAMAddress; // Copy temporary VRAM address to real VRAM address
 		
 		_firstWriteOccurred = NO; // Reset toggle
 	}
 	else {
 	
-		_temporaryVRAMAddress &= 0xFF00; // Clear lower byte
-		_temporaryVRAMAddress |= byte; // OR in lower byte
-		_VRAMAddress = _temporaryVRAMAddress;
+		// First write ors in high byte
+		_temporaryVRAMAddress &= 0x00FF; // Clear upper byte
+		_temporaryVRAMAddress |= ((byte & 0x3F) << 8); // OR in lower 6 bits as first six of upper byte
 		
 		_firstWriteOccurred = YES; // Set toggle
 	}
-	
 }
 
 - (uint8_t)readFromVRAMIORegisterOnCycle:(uint_fast32_t)cycle
@@ -385,55 +736,52 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	
 	if (effectiveAddress < 0x1000) { 
 		
+		// FIXME: I need to ensure that these pointers are changed when the cartridge swaps out CHRROM banks
 		// CHRROM Bank 0 Read
-		_bufferedVRAMRead = _chrromBank0[effectiveAddress];
+		_bufferedVRAMRead = _chromBank0[effectiveAddress];
 	}
 	else if (effectiveAddress < 0x2000) { 
 		
+		// FIXME: I need to ensure that these pointers are changed when the cartridge swaps out CHRROM banks
 		// CHRROM Bank 1 Read
-		_bufferedVRAMRead = _chrromBank1[effectiveAddress - 0x1000];
+		_bufferedVRAMRead = _chromBank1[effectiveAddress & 0xFFF];
 	}
 	else if (effectiveAddress < 0x3F00) { 
 		
 		// Name or Attribute Table Read
-		_bufferedVRAMRead = _nameAndAttributeTables[(effectiveAddress & 0x2FFF) - 0x2000];
+		_bufferedVRAMRead = _nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask];
 	}
 	else { 
 		
 		// Palette Read (Unbuffered)
-		_bufferedVRAMRead = _nameAndAttributeTables[effectiveAddress - 0x1000]; // 0x3000 mirrors 0x2000
+		_bufferedVRAMRead = _nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask]; // 0x3000 mirrors 0x2000
 		valueToReturn = _palettes[effectiveAddress & 0x1F]; // modulo 32 as there are 32 entries
 	}
-		
+	
 	_VRAMAddress += _addressIncrement; // Increment VRAM address by either 1 or 32 depending on bit 2 of 0x2000
+	/*
+	if (_verticalIncrement) incrementVRAMAddressOneTileVertically(&_VRAMAddress); // Increment VRAM address by either 1 or 32 depending on bit 2 of 0x2000
+	else incrementVRAMAddressHorizontally(&_VRAMAddress);
+	 */
+	
+	// NSLog(@"In readFromVRAMIORegisterOnCycle (0x2007) method. Returning 0x%2.2x.",valueToReturn);
 	
 	return valueToReturn;
 }
 
 - (void)writeToVRAMIORegister:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
-	uint16_t effectiveAddress = _VRAMAddress & 0x3FFF; // addresses above 0x3FFF are mirrored
+	// NSLog(@"In writeToVRAMIORegisteronCycle method. Writing %2.2x to %4.4x.",byte,_VRAMAddress);
 	
-	if (effectiveAddress < 0x2000) {
-		
-		// Why are you writing to a pattern table?
-	}
-	else if (effectiveAddress < 0x3F00) { 
-		
-		// Name or Attribute Table Write
-		_writeToNameOrAttributeTable(self,@selector(writeByte:toHorizontallyMirroredNameOrAttributeTableAddress:),byte,((effectiveAddress & 0x2FFF) - 0x2000));
-	}
-	else { 
-		
-		// Palette Write
-		_palettes[effectiveAddress & 0x1F] = byte; // modulo 32 as there are 32 entries
-	}
+	[self writeByte:byte toPPUAddress:_VRAMAddress onCycle:cycle];
 	
 	_VRAMAddress += _addressIncrement; // Increment VRAM address by either 1 or 32 depending on bit 2 of 0x2000
 }
 
-- (void)DMAtransferToSPRRAM(uint8_t *)bytes onCycle:(uint_fast32_t)cycle
+- (void)DMAtransferToSPRRAM:(uint8_t *)bytes onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In DMAtransferToSPRRAM:onCycle: method.");
+	
 	memcpy(_sprRAM,bytes,sizeof(uint8_t)*256); // transfer 256 bytes
 	
 	// This takes 512 CPU cycles, run the PPU if this is mid-frame
@@ -441,11 +789,15 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 
 - (void)writeToSPRRAMAddressRegister:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeToSPRRAMAddressRegister:onCycle: method. Writing 0x%2.2x.",byte);
+	
 	_sprRAMAddress = byte;
 }
 
 - (void)writeToSPRRAMIOControlRegister:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In writeToSPRRAMIOControlRegister:onCycle: method. Writing 0x%2.2x.",byte);
+	
 	_sprRAM[_sprRAMAddress] = byte;
 	
 	_sprRAMAddress++; // Increment SPRRAM Address on write
@@ -453,6 +805,8 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 
 - (uint8_t)readFromSPRRAMIORegisterOnCycle:(uint_fast32_t)cycle
 {
+	// NSLog(@"In readFromSPRRAMIOControlRegister:onCycle: method.");
+	
 	return _sprRAM[_sprRAMAddress];
 }
 
@@ -463,19 +817,9 @@ static const uint8_t colorPalette[64][3] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xA
 	_firstWriteOccurred = NO; // Reset 0x2005 / 0x2006 read toggle
 	_ppuStatusRegister &= 0x7F; // Clear the VBLANK flag
 	
+	// NSLog(@"In readFromPPUStatusRegisterOnCycle: method. Returning 0x%2.2x.",valueToReturn);
+	
 	return valueToReturn;
-}
-
-- (void)setPatternTableBank0:(uint8_t *)pointer
-{
-	// FIXME: Should run PPU before assigning
-	_chrromBank0 = pointer;
-}
-
-- (void)setPatternTableBank1:(uint8_t *)pointer
-{
-	// FIXME: Should run PPU before assigning
-	_chrromBank1 = pointer;
 }
 
 @end

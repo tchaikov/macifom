@@ -17,21 +17,31 @@
 	_cpuRegisters->indexRegisterX = 0;
 	_cpuRegisters->indexRegisterY = 0;
 	_cpuRegisters->programCounter = 0;
-	_cpuRegisters->stackPointer = 0xFF;
+	_cpuRegisters->stackPointer = 0xFF; // FIXME: http://nesdevwiki.org/wiki/Power-Up_State says this should be $FD
 	_cpuRegisters->statusCarry = 0;
 	_cpuRegisters->statusZero = 0;
 	_cpuRegisters->statusIRQDisable = 0;
 	_cpuRegisters->statusDecimal = 0;
-	_cpuRegisters->statusBreak = 0;
+	_cpuRegisters->statusBreak = 0; // FIXME: http://nesdevwiki.org/wiki/Power-Up_State says this should be on
 	_cpuRegisters->statusOverflow = 0;
 	_cpuRegisters->statusNegative = 0;	
 }
 
+- (void)_clearCPUMemory
+{
+	int counter;
+	
+	// Taken from http://nesdevwiki.org/wiki/Power-Up_State
+	for (counter = 0; counter < 2048; counter++) _zeroPage[counter] = 0xFF;
+	
+	_zeroPage[0x0008] = 0xF7;
+	_zeroPage[0x0009] = 0xEF;
+	_zeroPage[0x000a] = 0xDF;
+	_zeroPage[0x000f] = 0xBF;
+}
+
 - (uint8_t)readByteFromCPUAddressSpace:(uint16_t)address
 {
-	uint8_t page;
-	uint8_t byte = address;
-	
 	if (address >= 0x8000) return [cartridge readByteFromPRGROM:address];
 	else if (address >= 0x6000) return [cartridge readByteFromSRAM:address];
 	else if (address >= 0x4020) return 0;
@@ -39,16 +49,7 @@
 	else if (address >= 0x2000) return [ppu readByteFromCPUAddress:address onCycle:currentCPUCycle];
 	else {
 		
-		page = (address >> 8) % 8;
-		switch (page) {
-				
-			case 0: return _zeroPage[byte];
-				break;
-			case 1: return _stack[byte];
-				break;
-			default: return _cpuRAM[((page-2)*256)+byte];
-				break;
-		}
+		return _zeroPage[address & 0x07FF];
 	}
 	
 	return 0;
@@ -63,26 +64,49 @@
 
 - (void)writeByte:(uint8_t)byte toCPUAddress:(uint16_t)address
 {
-	uint8_t page;
-	uint8_t offset = address;
+	uint8_t *DMAorigin;
 	
 	if (address < 0x2000) {
-		
-		page = (address >> 8) % 8;
-		switch (page) {
-				
-			case 0: _zeroPage[offset] = byte;
-				break;
-			case 1: _stack[offset] = byte;
-				break;
-			default: _cpuRAM[((page-2)*256)+offset] = byte;
-				break;
-		}
+	
+		_zeroPage[address & 0x07FF] = byte;
 	}
 	else if (address < 0x4000) [ppu writeByte:byte toPPUFromCPUAddress:address onCycle:currentCPUCycle];
-	else if (address < 0x4020) return;
+	else if (address < 0x4020) {
+		
+		if (address == 0x4014) {
+			
+			if (byte < 32) {
+				
+				// NSLog(@"Initiating DMA SPRRAM transfer from CPU RAM: 0x%4.4x", (0x100 * byte));
+				DMAorigin = _zeroPage + (0x100 * (byte & 0x7));
+			}
+			else if (byte >= 192) {
+				
+				// NSLog(@"Initiating DMA SPRRAM transfer from PRGROMBank0: 0x%4.4x", (0x100 * byte));
+				DMAorigin = [cartridge pointerToPRGROMBank0] + (0x100 * (byte & 0x7));
+			}
+			else if (byte >= 128) {
+				
+				// NSLog(@"Initiating DMA SPRRAM transfer from PRGROMBank1: 0x%4.4x", (0x100 * byte));
+				DMAorigin = [cartridge pointerToPRGROMBank1] + (0x100 * (byte & 0x7));
+			}
+			else if (byte >= 96) {
+				
+				// NSLog(@"Initiating DMA SPRRAM transfer from SRAM: 0x%4.4x", (0x100 * byte));
+				DMAorigin = [cartridge pointerToSRAM] + (0x100 * (byte & 0x1F));
+			}
+			else {
+				
+				// NSLog(@"!! Initiating DMA SPRRAM transfer from place I don't have a pointer to: 0x%4.4x", (0x100 * byte));
+				DMAorigin = NULL; // Crap! Don't know what to do about DMA transfers from registers
+			}
+			[ppu DMAtransferToSPRRAM:DMAorigin onCycle:currentCPUCycle];
+			currentCPUCycle += 512; // DMA transfer to SPRRAM requires 512 CPU cycles
+		}
+	}
 	else if (address < 0x6000) [cartridge writeByte:byte toSRAMwithCPUAddress:address];
 	else if (address < 0x8000) return; // Don't know what to do with expansion ROM writes
+	
 	return; // Shouldn't be able to write to cartridge memory, right?
 }
 
@@ -497,7 +521,7 @@
 - (uint_fast32_t)_performBranchOnPositive:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? 1 : ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1);
+	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 ;
 	
 	return _cpuRegisters->statusNegative ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -505,7 +529,7 @@
 - (uint_fast32_t)_performBranchOnNegative:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1) : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
 	
 	return _cpuRegisters->statusNegative ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -513,7 +537,7 @@
 - (uint_fast32_t)_performBranchOnOverflowSet:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1) : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
 	
 	return _cpuRegisters->statusOverflow ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -521,7 +545,7 @@
 - (uint_fast32_t)_performBranchOnOverflowClear:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? 1 : ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1);
+	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1;
 	
 	return _cpuRegisters->statusOverflow ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -529,7 +553,7 @@
 - (uint_fast32_t)_performBranchOnCarrySet:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1) : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
 	
 	return _cpuRegisters->statusCarry ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -537,7 +561,7 @@
 - (uint_fast32_t)_performBranchOnCarryClear:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? 1 : ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1);
+	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1;
 	
 	return _cpuRegisters->statusCarry ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -545,7 +569,7 @@
 - (uint_fast32_t)_performBranchOnZeroSet:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1) : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
 	
 	return _cpuRegisters->statusZero ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -553,7 +577,7 @@
 - (uint_fast32_t)_performBranchOnZeroClear:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? 1 : ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1);
+	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1;
 	
 	return _cpuRegisters->statusZero ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -626,9 +650,11 @@
 - (uint_fast32_t)_pushProcessorStatusToStack:(uint8_t)opcode
 {
 	uint8_t processorStatusByte = (1 << 5);
+	uint8_t breakFlag = opcode == 0x08 ? 1 : _cpuRegisters->statusBreak; // If PHP is called by itself, it pushes a set break flag http://www.6502.org/tutorials/register_preservation.html
+	// See also http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
 	processorStatusByte |= (_cpuRegisters->statusNegative << 7);
 	processorStatusByte |= (_cpuRegisters->statusOverflow << 6);
-	processorStatusByte |= (_cpuRegisters->statusBreak << 4);
+	processorStatusByte |= (breakFlag << 4);
 	processorStatusByte |= (_cpuRegisters->statusDecimal << 3);
 	processorStatusByte |= (_cpuRegisters->statusIRQDisable << 2);
 	processorStatusByte |= (_cpuRegisters->statusZero << 1);
@@ -663,7 +689,8 @@
 
 - (uint_fast32_t)_performBreak:(uint8_t)opcode
 {
-	_cpuRegisters->statusBreak = 1; // This should be set early as it is apparently 1 on the stack
+	// FIXME: Brad Taylor says that BRK is actually a two-byte opcode with a padding bit - http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
+	_cpuRegisters->statusBreak = 1;
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:0]; // Finally, push the processor status register to the stack
@@ -675,7 +702,7 @@
 
 - (uint_fast32_t)_performInterrupt:(uint8_t)opcode
 {
-	_cpuRegisters->statusBreak = 1;
+	_cpuRegisters->statusBreak = 0; // Interrupt clears the break flag http://www.6502.org/tutorials/register_preservation.html
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:0]; // Finally, push the processor status register to the stack
@@ -687,7 +714,7 @@
 
 - (uint_fast32_t)_performNonMaskableInterrupt:(uint8_t)opcode
 {
-	_cpuRegisters->statusBreak = 0; // FIXME: I believe this should be cleared on NMI
+	_cpuRegisters->statusBreak = 0; // Break is not set for NMI http://www.6502.org/tutorials/register_preservation.html
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:0]; // Finally, push the processor status register to the stack
@@ -695,6 +722,11 @@
 	_cpuRegisters->statusIRQDisable = 1;
 	
 	return 7;
+}
+
+- (void)nmi {
+
+	currentCPUCycle += [self _performNonMaskableInterrupt:0];
 }
 
 - (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu andPPU:(NESPPUEmulator *)ppuEmu {
@@ -705,15 +737,16 @@
 	ppu = ppuEmu; // Non-retained reference;
 	
 	_cpuRegisters = (CPURegisters *)malloc(sizeof(CPURegisters));
-	_zeroPage = (uint8_t *)malloc(sizeof(uint8_t)*256);
-	_stack = (uint8_t *)malloc(sizeof(uint8_t)*256);
-	_cpuRAM = (uint8_t *)malloc(sizeof(uint8_t)*1536);
+	_zeroPage = (uint8_t *)malloc(sizeof(uint8_t)*2048);
+	_stack = _zeroPage + 256;
+	_cpuRAM = _stack + 256;
 	_operationMethods = (OperationMethodPointer *)malloc(sizeof(uint_fast32_t (*)(id, SEL, uint8_t))*256);
 	_operationSelectors = (SEL *)malloc(sizeof(SEL)*256);
 	_standardOperations = (StandardOpPointer *)malloc(sizeof(void (*)(CPURegisters *,uint8_t))*256);
 	_writeOperations = (WriteOpPointer *)malloc(sizeof(uint8_t (*)(CPURegisters *,uint8_t))*256);
 	
 	[self _clearRegisters];
+	[self _clearCPUMemory];
 	
 	currentCPUCycle = 0;
 	breakPoint = 0;
@@ -1103,9 +1136,7 @@
 - (void)dealloc
 {
 	free(_cpuRegisters);
-	free(_stack);
-	free(_zeroPage);
-	free(_cpuRAM);
+	free(_zeroPage); // FIXME: Current all memory below 0x2000 is allocated in the zeroPage
 	free(_operationMethods);
 	free(_operationSelectors);
 	free(_standardOperations);
@@ -1133,7 +1164,20 @@
 
 - (uint_fast32_t)executeUntilCycle:(uint_fast32_t)cycle 
 {
-	return 0;
+	uint8_t opcode;
+	
+	while (currentCPUCycle < cycle) {
+		
+		opcode = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++];
+		currentCPUCycle += _operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
+	}
+	
+	return currentCPUCycle;
+}
+
+- (void)resetCPUCycleCounter {
+	
+	currentCPUCycle = 0;
 }
 
 - (uint_fast32_t)executeUntilBreak

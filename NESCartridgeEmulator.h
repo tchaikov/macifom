@@ -17,6 +17,7 @@
 	uint8_t *_patternTable0;
 	uint8_t *_patternTable1;
 	uint8_t *_trainer;
+	uint8_t *_sram;
 	
 	BOOL _usesVerticalMirroring;
 	BOOL _hasTrainer;
@@ -30,6 +31,7 @@
 	uint8_t _numberOfRAMBanks;
 	
 	BOOL _romFileDidLoad;
+	int _controllerRead;
 }
 
 - (id)initWithiNESFileAtPath:(NSString *)path;
@@ -43,6 +45,7 @@
 - (uint8_t *)pointerToPRGROMBank1;
 - (uint8_t *)pointerToCHRROMBank0;
 - (uint8_t *)pointerToCHRROMBank1;
+- (uint8_t *)pointerToSRAM;
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address;
 - (NSString *)mapperDescription;
 

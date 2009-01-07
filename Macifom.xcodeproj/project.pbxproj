@@ -13,7 +13,6 @@
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		B99E78F00E745E280019B353 /* NESPPUEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78E90E745E270019B353 /* NESPPUEmulator.m */; };
 		B99E78F10E745E280019B353 /* NES6502Interpreter.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */; };
-		B99E78F20E745E280019B353 /* NESCoreEmulation.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EC0E745E270019B353 /* NESCoreEmulation.m */; };
 		B99E78F30E745E280019B353 /* NESCartridgeEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */; };
 		B99E79120E745EFC0019B353 /* NESApplicationController.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */; };
 		B99E791A0E7462220019B353 /* NESPlayfieldView.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E79190E7462220019B353 /* NESPlayfieldView.m */; };
@@ -31,9 +30,7 @@
 		8D1107320486CEB800E47090 /* Macifom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macifom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B99E78E80E745E270019B353 /* NES6502Interpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NES6502Interpreter.h; sourceTree = "<group>"; };
 		B99E78E90E745E270019B353 /* NESPPUEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESPPUEmulator.m; sourceTree = "<group>"; };
-		B99E78EA0E745E270019B353 /* NESCoreEmulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESCoreEmulation.h; sourceTree = "<group>"; };
 		B99E78EB0E745E270019B353 /* NES6502Interpreter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NES6502Interpreter.m; sourceTree = "<group>"; };
-		B99E78EC0E745E270019B353 /* NESCoreEmulation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESCoreEmulation.m; sourceTree = "<group>"; };
 		B99E78ED0E745E270019B353 /* NESPPUEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESPPUEmulator.h; sourceTree = "<group>"; };
 		B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESCartridgeEmulator.m; sourceTree = "<group>"; };
 		B99E78EF0E745E280019B353 /* NESCartridgeEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESCartridgeEmulator.h; sourceTree = "<group>"; };
@@ -58,16 +55,14 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				B99E78EA0E745E270019B353 /* NESCoreEmulation.h */,
-				B99E78EC0E745E270019B353 /* NESCoreEmulation.m */,
+				B99E79100E745EFC0019B353 /* NESApplicationController.h */,
+				B99E79110E745EFC0019B353 /* NESApplicationController.m */,
 				B99E78E80E745E270019B353 /* NES6502Interpreter.h */,
 				B99E78EB0E745E270019B353 /* NES6502Interpreter.m */,
 				B99E78ED0E745E270019B353 /* NESPPUEmulator.h */,
 				B99E78E90E745E270019B353 /* NESPPUEmulator.m */,
 				B99E78EF0E745E280019B353 /* NESCartridgeEmulator.h */,
 				B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */,
-				B99E79100E745EFC0019B353 /* NESApplicationController.h */,
-				B99E79110E745EFC0019B353 /* NESApplicationController.m */,
 				B99E79180E7462220019B353 /* NESPlayfieldView.h */,
 				B99E79190E7462220019B353 /* NESPlayfieldView.m */,
 			);
@@ -197,7 +192,6 @@
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
 				B99E78F00E745E280019B353 /* NESPPUEmulator.m in Sources */,
 				B99E78F10E745E280019B353 /* NES6502Interpreter.m in Sources */,
-				B99E78F20E745E280019B353 /* NESCoreEmulation.m in Sources */,
 				B99E78F30E745E280019B353 /* NESCartridgeEmulator.m in Sources */,
 				B99E79120E745EFC0019B353 /* NESApplicationController.m in Sources */,
 				B99E791A0E7462220019B353 /* NESPlayfieldView.m in Sources */,

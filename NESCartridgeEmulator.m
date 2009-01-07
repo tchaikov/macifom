@@ -105,6 +105,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
 	
+	_controllerRead = 0; // FIXME: Controller faking hijinx!
+	
 	return self;
 }
 
@@ -129,17 +131,10 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		_prgromBank0 = _prgromBanks[0];
 		_prgromBank1 = _prgromBanks[1];
 	}
-	
-	if (_numberOfCHRROMBanks == 1) {
-		
-		_patternTable0 = _chrromBanks[0];
-		_patternTable1 = _chrromBanks[0];
-	}
-	else if (_numberOfCHRROMBanks > 1) {
-		
-		_patternTable0 = _chrromBanks[0];
-		_patternTable1 = _chrromBanks[1];
-	}
+
+	// FIXME: More sophisticated logic will be required for mappers.
+	_patternTable0 = _chrromBanks[0];
+	_patternTable1 = _chrromBanks[0] + 4096;
 }
 
 - (BOOL)_loadiNESROMOptions:(NSData *)header
@@ -226,6 +221,9 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		else [rom getBytes:_chrromBanks[bank]];
 	}
 	
+	// FIXME: Always allocating SRAM, because I'm not sure how to detect it yet
+	_sram = (uint8_t *)malloc(sizeof(uint8_t)*8192);
+	
 	// Close ROM file
 	[fileHandle closeFile];
 	
@@ -287,22 +285,61 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (uint8_t)readByteFromSRAM:(uint16_t)address 
 {
-	return 0;
+	return _sram[address & 0x1FFF];
 }
 
 - (uint8_t)readByteFromControlRegister:(uint16_t)address
 {
+	if (address == 0x4016) {
+		// FIXME: Controller faking hijinx!
+		NSLog(@"Attempting to Read from Controller 1.");
+		/*
+		if (_controllerRead++ == 11) {
+		
+			NSLog(@"Returning 1!");
+			return 1;
+		 
+		}
+		 */
+	}	
+	
 	return 0;
 }
 
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address
 {
-	return;
+	_sram[address & 0x1FFF] = byte;
+	NSLog(@"Writing byte to SRAM address 0x%4.4x",address);
 }
 
 - (NSString *)mapperDescription
 {
 	return [NSString stringWithCString:mapperDescriptions[_mapperNumber] encoding:NSASCIIStringEncoding];
+}
+
+- (uint8_t *)pointerToPRGROMBank0 
+{
+	return _prgromBank0;
+}
+
+- (uint8_t *)pointerToPRGROMBank1
+{
+	return _prgromBank1;
+}
+
+- (uint8_t *)pointerToCHRROMBank0
+{
+	return _patternTable0;
+}
+
+- (uint8_t *)pointerToCHRROMBank1
+{
+	return _patternTable1;
+}
+
+- (uint8_t *)pointerToSRAM
+{
+	return _sram;
 }
 
 @end

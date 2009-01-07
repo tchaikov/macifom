@@ -55,6 +55,7 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 
 - (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu andPPU:(NESPPUEmulator *)ppuEmu;
 - (void)reset;
+- (void)resetCPUCycleCounter;
 - (uint_fast32_t)executeUntilCycle:(uint_fast32_t)cycle;
 - (uint_fast32_t)executeUntilBreak;
 - (void)setBreakpoint:(uint16_t)counter;
@@ -65,6 +66,7 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)writeByte:(uint8_t)byte toCPUAddress:(uint16_t)address;
 - (uint_fast32_t)interpretOpcode;
 - (void)setProgramCounter:(uint16_t)jump;
+- (void)nmi;
 
 @end
 
