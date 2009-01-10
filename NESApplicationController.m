@@ -150,6 +150,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			
 			// Cache the CHRROM to prepare for rendering
 			[ppuEmulator cacheCHROMFromCartridge:cartEmulator];
+			
+			// Allow CPU Interpreter to cache PRGROM pointers
+			[cpuInterpreter setPRGROMPointers];
 		}
 		else {
 		

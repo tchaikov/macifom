@@ -9,6 +9,215 @@
 #import "NESCartridgeEmulator.h"
 #import "NESPPUEmulator.h"
 
+static void _ADC(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t oldAccumulator = cpuRegisters->accumulator;
+	uint16_t result = (uint16_t)oldAccumulator + operand + cpuRegisters->statusCarry;
+	cpuRegisters->accumulator = (uint8_t)result;
+	cpuRegisters->statusCarry = result >> 8;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusOverflow = ((oldAccumulator ^ cpuRegisters->accumulator) & (operand ^ cpuRegisters->accumulator)) / 128;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static void _AND(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->accumulator &= operand;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static void _ASL(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->statusCarry = cpuRegisters->accumulator >> 7;
+	cpuRegisters->accumulator <<= 1;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static uint8_t _ASL_RMW(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->statusCarry = operand >> 7;
+	operand <<= 1;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+	
+	return operand;
+}
+
+static void _BIT(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusOverflow = ((operand / 64) & 1);
+	cpuRegisters->statusZero = !(cpuRegisters->accumulator & operand);
+}
+
+static void _CMP(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t result = cpuRegisters->accumulator - operand;
+	cpuRegisters->statusCarry = (operand <= cpuRegisters->accumulator); // Should be an unsigned comparison
+	cpuRegisters->statusNegative = result >> 7;
+	cpuRegisters->statusZero = !result;
+}
+
+static void _CPX(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t result = cpuRegisters->indexRegisterX - operand;
+	cpuRegisters->statusCarry = (operand <= cpuRegisters->indexRegisterX); // Should be an unsigned comparison
+	cpuRegisters->statusNegative = result >> 7;
+	cpuRegisters->statusZero = !result;
+}
+
+static void _CPY(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t result = cpuRegisters->indexRegisterY - operand;
+	cpuRegisters->statusCarry = (operand <= cpuRegisters->indexRegisterY); // Should be an unsigned comparison
+	cpuRegisters->statusNegative = result >> 7;
+	cpuRegisters->statusZero = !result;
+}
+
+static uint8_t _DEC(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	operand--;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+	
+	return operand;
+}
+
+static uint8_t _INC(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	operand++;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+	
+	return operand;
+}
+
+static void _EOR(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->accumulator ^= operand;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static void _LDA(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->accumulator = operand;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+}
+
+static void _LDX(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->indexRegisterX = operand;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+}
+
+static void _LDY(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->indexRegisterY = operand;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+}
+
+static void _LSR(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->statusCarry = (cpuRegisters->accumulator & 1);
+	cpuRegisters->accumulator >>= 1;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static uint8_t _LSR_RMW(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->statusCarry = (operand & 1);
+	operand >>= 1;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+	
+	return operand;
+}
+
+static void _ORA(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	cpuRegisters->accumulator |= operand;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static void _ROL(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t oldCarry = cpuRegisters->statusCarry;
+	cpuRegisters->statusCarry = cpuRegisters->accumulator >> 7;
+	cpuRegisters->accumulator <<= 1;
+	cpuRegisters->accumulator |= oldCarry;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static uint8_t _ROL_RMW(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t oldCarry = cpuRegisters->statusCarry;
+	cpuRegisters->statusCarry = operand >> 7;
+	operand <<= 1;
+	operand |= oldCarry;
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+	
+	return operand;
+}
+
+static void _ROR(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t oldCarry = cpuRegisters->statusCarry;
+	cpuRegisters->statusCarry = (cpuRegisters->accumulator & 1);
+	cpuRegisters->accumulator >>= 1;
+	cpuRegisters->accumulator |= (oldCarry << 7);
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static uint8_t _ROR_RMW(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t oldCarry = cpuRegisters->statusCarry;
+	cpuRegisters->statusCarry = (operand & 1);
+	operand >>= 1;
+	operand |= (oldCarry << 7);
+	cpuRegisters->statusNegative = operand >> 7;
+	cpuRegisters->statusZero = !operand;
+	
+	return operand;
+}
+
+static void _SBC(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	uint8_t oldAccumulator = cpuRegisters->accumulator;
+	operand = ~operand; // invert operand bits, used to do this below but it must happen BEFORE promotion to uin16_t
+	uint16_t result = (uint16_t)oldAccumulator + operand + cpuRegisters->statusCarry;
+	cpuRegisters->accumulator = (uint8_t)result;
+	cpuRegisters->statusCarry = result >> 8;
+	cpuRegisters->statusNegative = cpuRegisters->accumulator >> 7;
+	cpuRegisters->statusOverflow = ((oldAccumulator ^ cpuRegisters->accumulator) & (operand ^ cpuRegisters->accumulator)) / 128;
+	cpuRegisters->statusZero = !cpuRegisters->accumulator;
+}
+
+static uint8_t _GetAccumulator(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	return cpuRegisters->accumulator;
+}
+
+static uint8_t _GetIndexRegisterX(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	return cpuRegisters->indexRegisterX;
+}
+
+static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
+	
+	return cpuRegisters->indexRegisterY;
+}
+
 @implementation NES6502Interpreter
 
 - (void)_clearRegisters
@@ -42,22 +251,21 @@
 
 - (uint8_t)readByteFromCPUAddressSpace:(uint16_t)address
 {
-	if (address >= 0x8000) return [cartridge readByteFromPRGROM:address];
+	if (address >= 0xC000) return _prgRomBank1[address & 0x3FFF];
+	else if (address >= 0x8000) return _prgRomBank0[address & 0x3FFF];
+	else if (address < 0x2000) return _zeroPage[address & 0x07FF];
 	else if (address >= 0x6000) return [cartridge readByteFromSRAM:address];
 	else if (address >= 0x4020) return 0;
 	else if (address >= 0x4000) return [cartridge readByteFromControlRegister:address];
-	else if (address >= 0x2000) return [ppu readByteFromCPUAddress:address onCycle:currentCPUCycle];
-	else {
-		
-		return _zeroPage[address & 0x07FF];
-	}
+	else return [ppu readByteFromCPUAddress:address onCycle:currentCPUCycle];
 	
 	return 0;
 }
 
 - (uint16_t)readAddressFromCPUAddressSpace:(uint16_t)address
 {	
-	if (address >= 0x8000) return [cartridge readAddressFromPRGROM:address];
+	if (address >= 0xC000) return _prgRomBank1[address & 0x3FFF] + ((uint16_t)_prgRomBank1[(address + 1) & 0x3FFF] * 256);
+	else if (address >= 0x8000) return _prgRomBank0[address & 0x3FFF] + ((uint16_t)_prgRomBank0[(address + 1) & 0x3FFF] * 256);
 	
 	return [self readByteFromCPUAddressSpace:address] + ((uint16_t)[self readByteFromCPUAddressSpace:address+1] * 256);
 }
@@ -83,12 +291,12 @@
 			else if (byte >= 192) {
 				
 				// NSLog(@"Initiating DMA SPRRAM transfer from PRGROMBank0: 0x%4.4x", (0x100 * byte));
-				DMAorigin = [cartridge pointerToPRGROMBank0] + (0x100 * (byte & 0x7));
+				DMAorigin = _prgRomBank0 + (0x100 * (byte & 0x7));
 			}
 			else if (byte >= 128) {
 				
 				// NSLog(@"Initiating DMA SPRRAM transfer from PRGROMBank1: 0x%4.4x", (0x100 * byte));
-				DMAorigin = [cartridge pointerToPRGROMBank1] + (0x100 * (byte & 0x7));
+				DMAorigin = _prgRomBank1 + (0x100 * (byte & 0x7));
 			}
 			else if (byte >= 96) {
 				
@@ -1207,6 +1415,12 @@
 - (CPURegisters *)cpuRegisters
 {
 	return _cpuRegisters;
+}
+
+- (void)setPRGROMPointers
+{
+	_prgRomBank0 = [cartridge pointerToPRGROMBank0];
+	_prgRomBank1 = [cartridge pointerToPRGROMBank1];
 }
 
 @end

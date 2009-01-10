@@ -292,7 +292,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 {
 	if (address == 0x4016) {
 		// FIXME: Controller faking hijinx!
-		NSLog(@"Attempting to Read from Controller 1.");
+		// NSLog(@"Attempting to Read from Controller 1.");
 		/*
 		if (_controllerRead++ == 11) {
 		
@@ -309,7 +309,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address
 {
 	_sram[address & 0x1FFF] = byte;
-	NSLog(@"Writing byte to SRAM address 0x%4.4x",address);
+	// NSLog(@"Writing byte to SRAM address 0x%4.4x",address);
 }
 
 - (NSString *)mapperDescription
