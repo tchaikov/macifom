@@ -54,6 +54,9 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 	
 	NESCartridgeEmulator *cartridge;
 	NESPPUEmulator *ppu;
+	
+	uint_fast32_t _controller1;
+	uint8_t _controllerReadIndex;
 }
 
 - (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu andPPU:(NESPPUEmulator *)ppuEmu;
@@ -71,5 +74,6 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)setProgramCounter:(uint16_t)jump;
 - (void)nmi;
 - (void)setPRGROMPointers;
+- (void)setController1Data:(uint_fast32_t)data;
 
 @end

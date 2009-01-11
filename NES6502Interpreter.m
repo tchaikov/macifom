@@ -256,7 +256,13 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	else if (address < 0x2000) return _zeroPage[address & 0x07FF];
 	else if (address >= 0x6000) return [cartridge readByteFromSRAM:address];
 	else if (address >= 0x4020) return 0;
-	else if (address >= 0x4000) return [cartridge readByteFromControlRegister:address];
+	else if (address >= 0x4000) {
+	
+		if (address == 0x4016) {
+		
+			return ((_controller1 >> _controllerReadIndex++) & 0x1);
+		}
+	}
 	else return [ppu readByteFromCPUAddress:address onCycle:currentCPUCycle];
 	
 	return 0;
@@ -310,6 +316,10 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 			}
 			[ppu DMAtransferToSPRRAM:DMAorigin onCycle:currentCPUCycle];
 			currentCPUCycle += 512; // DMA transfer to SPRRAM requires 512 CPU cycles
+		}
+		else if (address == 0x4016) {
+		
+			_controllerReadIndex = 0; // should be resetting this when 1 then 0 is written
 		}
 	}
 	else if (address < 0x6000) [cartridge writeByte:byte toSRAMwithCPUAddress:address];
@@ -960,6 +970,9 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	breakPoint = 0;
 	_encounteredUnsupportedOpcode = NO;
 	
+	_controller1 = 0x20000; // Indicate one controller attached to $4016
+	_controllerReadIndex = 0;
+	
 	// Load valid method pointers
 	_operationMethods[0x00] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performBreak:)]; // BRK
 	_operationSelectors[0x00] = @selector(_performBreak:);
@@ -1421,6 +1434,11 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 {
 	_prgRomBank0 = [cartridge pointerToPRGROMBank0];
 	_prgRomBank1 = [cartridge pointerToPRGROMBank1];
+}
+
+- (void)setController1Data:(uint_fast32_t)data
+{
+	_controller1 = data;
 }
 
 @end

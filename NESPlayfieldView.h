@@ -11,9 +11,15 @@
 
 @interface NESPlayfieldView : NSView {
 
-	NSBitmapImageRep *_videoBuffer;
+	uint_fast32_t *_videoBuffer;
+	CGDataProviderRef _provider;
+	CGColorSpaceRef _colorSpace;
+	
+	uint_fast32_t _controller1;
+	uint_fast32_t _controller2;
 }
 
-- (NSBitmapImageRep *)videoBuffer;
+- (uint_fast32_t *)videoBuffer;
+- (uint_fast32_t)readController1;
 
 @end

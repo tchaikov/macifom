@@ -64,7 +64,7 @@ typedef enum {
 	RegisterWriteMethod *_registerWriteMethods;
 	RegisterReadMethod *_registerReadMethods;
 	
-	unsigned char **_videoBuffer;
+	uint_fast32_t *_videoBuffer;
 	
 	BOOL _NMIOnVBlank;
 	BOOL _8x16Sprites;
@@ -76,10 +76,9 @@ typedef enum {
 	BOOL _firstWriteOccurred;
 	BOOL _oddFrame;
 	BOOL _verticalIncrement;
-	
 }
 
-- (id)initWithBuffer:(NSBitmapImageRep *)buffer;
+- (id)initWithBuffer:(uint_fast32_t *)buffer;
 - (void)cacheCHROMFromCartridge:(NESCartridgeEmulator *)cartEmu;
 - (void)runPPUForCPUCycles:(uint_fast32_t)cycle;
 - (BOOL)triggeredNMI;

@@ -199,6 +199,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 	uint_fast32_t ppuCyclesToRun;
 	uint_fast32_t cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
+	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
 	
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 	

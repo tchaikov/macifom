@@ -8,18 +8,14 @@
 #import "NESPPUEmulator.h"
 #import "NESCartridgeEmulator.h"
 
-static const uint8_t colorPalette[3][64] = { { 0x75, 0x27, 0x00, 0x47, 0x8F, 0xAB, 0xA7, 0x7F, 0x43, 0x00, 0x00, 0x00, 0x1B, 0x00, 0x00, 0x00,
-												0xBC, 0x00, 0x23, 0x83, 0xBF, 0xE7, 0xDB, 0xCB, 0x8B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-												0xFF, 0x3F, 0x5F, 0xA7, 0xF7, 0xFF, 0xFF, 0xFF, 0xF3, 0x83, 0x4F, 0x58, 0x00, 0x00, 0x00, 0x00,
-												0xFF, 0xAB, 0xC7, 0xD7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xAB, 0xB3, 0x9F, 0x00, 0x00, 0x00 },
-											{ 0x75, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0B, 0x2F, 0x47, 0x51, 0x3F, 0x3F, 0x00, 0x00, 0x00,
-											   0xBC, 0x73, 0x3B, 0x00, 0x00, 0x00, 0x2B, 0x4F, 0x73, 0x97, 0xAB, 0x93, 0x83, 0x00, 0x00, 0x00,
-											   0xFF, 0xBF, 0x97, 0x8B, 0x7B, 0x77, 0x77, 0x9B, 0xBF, 0xD3, 0xDF, 0xF8, 0xEB, 0x00, 0x00, 0x00,
-											   0xFF, 0xAB, 0xC7, 0xD7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xAB, 0xB3, 0x9F, 0x00, 0x00, 0x00 }, 
-											{ 0x75, 0x8F, 0xAB, 0x9F, 0x77, 0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x5F, 0x00, 0x00, 0x00,
-											  0xBC, 0xEF, 0xEF, 0xF3, 0xBF, 0x5B, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x3B, 0x8B, 0x00, 0x00, 0x00,
-											  0xFF, 0xFF, 0xFF, 0xFD, 0xFF, 0xB7, 0x63, 0x3B, 0x3F, 0x13, 0x4B, 0x98, 0xDB, 0x00, 0x00, 0x00,
-											  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xDB, 0xB3, 0xAB, 0xA3, 0xA3, 0xBF, 0xCF, 0xF3, 0x00, 0x00, 0x00 } };
+static const uint_fast32_t colorPalette[64] = { 0xFF757575, 0xFF271B8F, 0xFF0000AB, 0xFF47009F, 0xFF8F0077, 0xFFAB0013, 0xFFA70000, 0xFF7F0B00,
+												0xFF432F00, 0xFF004700, 0xFF005100, 0xFF003F17, 0xFF1B3F5F, 0xFF000000, 0xFF000000, 0xFF000000,
+												0xFFBCBCBC, 0xFF0073EF, 0xFF233BEF, 0xFF8300F3, 0xFFBF00BF, 0xFFE7005B, 0xFFDB2B00, 0xFFCB4F0F,
+												0xFF8B7300, 0xFF009700, 0xFF00AB00, 0xFF00933B, 0xFF00838B, 0xFF000000, 0xFF000000, 0xFF000000,
+												0xFFFFFFFF, 0xFF3FBFFF, 0xFF5F97FF, 0xFFA78BFD, 0xFFF77BFF, 0xFFFF77B7, 0xFFFF7763, 0xFFFF9B3B,
+												0xFFF3BF3F, 0xFF83D313, 0xFF4FDF4B, 0xFF58F898, 0xFF00EBDB, 0xFF000000, 0xFF000000, 0xFF000000,
+												0xFFFFFFFF, 0xFFABE7FF, 0xFFC7D7FF, 0xFFD7CBFF, 0xFFFFC7FF, 0xFFFFC7DB, 0xFFFFBFB3, 0xFFFFDBAB,
+												0xFFFFE7A3, 0xFFE3FFA3, 0xFFABF3BF, 0xFFB3FFCF, 0xFF9FFFF3, 0xFF000000, 0xFF000000, 0xFF000000 };
 
 static const uint16_t nameAndAttributeTablesMasks[4] = { 0x0BFF, 0x07FF, 0x03FF, 0x0FFF};
 
@@ -83,6 +79,17 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 
 @implementation NESPPUEmulator
 
+- (uint8_t)printAttributeTableLookup {
+
+	uint16_t nametableIndex = 0;
+	
+	for (nametableIndex = 0; nametableIndex < 1024; nametableIndex++) {
+	
+		printf("%2.2x, ",attributeTableIndexFoxNametableIndex(nametableIndex));
+		
+	}
+}
+
 - (uint8_t)_invalidPPURegisterAccessOnCycle:(uint_fast32_t)cycle
 {
 	NSLog(@"Invalid PPU Read Access");
@@ -95,12 +102,11 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	NSLog(@"Invalid PPU Write Access");
 }
 
-- (id)initWithBuffer:(NSBitmapImageRep *)buffer;
+- (id)initWithBuffer:(uint_fast32_t *)buffer;
 {
 	[super init];
 	
-	_videoBuffer = (unsigned char **)malloc(sizeof(unsigned char *)*5);
-	[buffer getBitmapDataPlanes:_videoBuffer];
+	_videoBuffer = buffer;
 	
 	_cyclesSinceVINT = 0;
 	_ppuStatusRegister = 0x80; // FIXME: We probably shouldn't really start with the VBLANK flag on, but the logic starts with VBLANK and I'm interested to see what happens.
@@ -218,9 +224,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 			for (pixel = 0; pixel < 8; pixel++) {
 			
 				nextPixel = _backgroundPalette[_backgroundTileCache[((line / 8) * 32) + tile][line % 8][pixel]];
-				_videoBuffer[0][videoBufferPosition] = colorPalette[0][nextPixel];
-				_videoBuffer[1][videoBufferPosition] = colorPalette[1][nextPixel];
-				_videoBuffer[2][videoBufferPosition++] = colorPalette[2][nextPixel];
+				_videoBuffer[videoBufferPosition++] = colorPalette[nextPixel];
 			}
 		}
 	}
@@ -251,10 +255,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		// Draw firstScanlineTileCache
 		for (pixelCounter = _fineHorizontalScroll; pixelCounter < 8; pixelCounter++) {
 			
-			_videoBuffer[0][_videoBufferIndex] = colorPalette[0][_firstTileCache[pixelCounter]];
-			_videoBuffer[1][_videoBufferIndex] = colorPalette[1][_firstTileCache[pixelCounter]];
-			_videoBuffer[2][_videoBufferIndex] = colorPalette[2][_firstTileCache[pixelCounter]];
-			_videoBufferIndex++;
+			_videoBuffer[_videoBufferIndex++] = colorPalette[_firstTileCache[pixelCounter]];
 			scanlinePosition++;
 		}
 		
@@ -270,10 +271,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 				
 				// FIXME: I need to revisit the drawing algorithm.. this is no place for a conditional statement
 				if (scanlinePosition) {
-					_videoBuffer[0][_videoBufferIndex] = colorPalette[0][_playfieldBuffer[pixelCounter]];
-					_videoBuffer[1][_videoBufferIndex] = colorPalette[1][_playfieldBuffer[pixelCounter]];
-					_videoBuffer[2][_videoBufferIndex] = colorPalette[2][_playfieldBuffer[pixelCounter]];
-					_videoBufferIndex++;
+					_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
 					scanlinePosition++;
 				}
 				_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
