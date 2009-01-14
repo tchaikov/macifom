@@ -498,6 +498,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	uint8_t pixelCounter;
 	uint8_t	tileAttributes;
 	uint8_t tileUpperColorBits;
+	uint8_t tileLowerColorBits;
 	uint16_t nameTableOffset;
 	
 	// NSLog(@"In drawScanlines method.");
@@ -532,8 +533,9 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
 					scanlinePosition++;
 				}
-				_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
 				
+				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+				_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
 			}
 			
 			// Increment the VRAM address one tile to the right
@@ -555,7 +557,8 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		
 		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 			
-			_firstTileCache[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+			_firstTileCache[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
 		}
 		
 		// Increment the VRAM address one tile to the right
@@ -570,7 +573,8 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		
 		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 			
-			_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+			_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
 		}
 		
 		// Increment the VRAM address one tile to the right
@@ -602,6 +606,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	uint8_t	tileAttributes;
 	uint8_t tileUpperColorBits;
 	uint16_t nameTableOffset;
+	uint8_t tileLowerColorBits;
 	
 	// NSLog(@"In completePrimingScanlineStoppingOnCycle method. Initial VRAM Address is 0x%4.4x",_VRAMAddress);
 	
@@ -629,7 +634,8 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		
 		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 			
-			_firstTileCache[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+			_firstTileCache[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
 		}
 		
 		// Increment the VRAM address one tile to the right
@@ -645,7 +651,8 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 			
 		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 			
-			_playfieldBuffer[pixelCounter] = _backgroundPalette[_backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter] | tileUpperColorBits];
+			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+			_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
 		}
 		
 		// Increment the VRAM address one tile to the right
@@ -846,25 +853,19 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	// NSLog(@"In writeBytetoPPUAddress. Writing 0x%2.2x to 0x%4.4x.",byte,address);
 	
 	uint16_t effectiveAddress = address & 0x3FFF;
-	int index; // pallete index counter
 	
 	if (effectiveAddress >= 0x3F00) {
 		
 		// Palette write
 		effectiveAddress &= 0x1F;
-		if (effectiveAddress) {
+		if (effectiveAddress & 0x3) {
 			
 			_palettes[effectiveAddress] = byte & 0x3F;
 		}
 		else {
 		
 			// Writing the mirrored transparent color
-			index = 0;
-			while (index < 32) {
-				
-				_palettes[index] = byte & 0x3F;
-				index += 4;
-			}
+			_palettes[(effectiveAddress & 0xF) | 0x10] = _palettes[effectiveAddress & 0xF] = byte & 0x3F;
 		}
 	}
 	else if (effectiveAddress >= 0x2000) {
