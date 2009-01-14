@@ -19,6 +19,7 @@ static const uint_fast32_t colorPalette[64] = { 0xFF757575, 0xFF271B8F, 0xFF0000
 
 static const uint16_t nameAndAttributeTablesMasks[4] = { 0x0BFF, 0x07FF, 0x03FF, 0x0FFF};
 
+/*
 static const uint16_t attributeTableIndexLookupTable[2048] = { 0x03c0, 0x03c0, 0x03c0, 0x03c0, 0x03c1, 0x03c1, 0x03c1, 0x03c1, 
 0x03c2, 0x03c2, 0x03c2, 0x03c2, 0x03c3, 0x03c3, 0x03c3, 0x03c3, 
 0x03c4, 0x03c4, 0x03c4, 0x03c4, 0x03c5, 0x03c5, 0x03c5, 0x03c5, 
@@ -275,6 +276,7 @@ static const uint16_t attributeTableIndexLookupTable[2048] = { 0x03c0, 0x03c0, 0
 0x07fa, 0x07fa, 0x07fa, 0x07fa, 0x07fb, 0x07fb, 0x07fb, 0x07fb, 
 0x07fc, 0x07fc, 0x07fc, 0x07fc, 0x07fd, 0x07fd, 0x07fd, 0x07fd, 
 0x07fe, 0x07fe, 0x07fe, 0x07fe, 0x07ff, 0x07ff, 0x07ff, 0x07ff };
+*/
 
 // Checked 1/3
 static inline void incrementVRAMAddressHorizontally(uint16_t *vramAddress) {
@@ -324,9 +326,9 @@ static inline void incrementVRAMAddressOneTileVertically(uint16_t *vramAddress) 
 	else *vramAddress += 0x0020; // Move to next row of tiles
 }
 
-static inline uint16_t attributeTableIndexFoxNametableIndex(uint16_t nametableIndex) {
+static inline uint16_t attributeTableIndexForNametableIndex(uint16_t nametableIndex) {
 	
-	return (nametableIndex & 0x400) | 0x03C0 | ((nametableIndex / 16) & 0x38) | ((nametableIndex / 4) & 0x7);
+	return (nametableIndex & 0xC00) | 0x03C0 | ((nametableIndex / 16) & 0x38) | ((nametableIndex / 4) & 0x7);
 }
 
 static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uint16_t nametableIndex) {
@@ -343,7 +345,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	
 	while (nameTableIndex < 2048) {
 	
-		for (entry = 0; entry < 8; entry++) printf("0x%4.4x, ",attributeTableIndexFoxNametableIndex(nameTableIndex++));
+		for (entry = 0; entry < 8; entry++) printf("0x%4.4x, ",attributeTableIndexForNametableIndex(nameTableIndex++));
 		printf("\n");
 	}
 }
@@ -379,8 +381,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	_oddFrame = NO; // FIXME: Currently all logic assumes we only have even (341cc) frames
 	_NMIOnVBlank = NO;
 	
-	_playfieldBuffer = (uint8_t *)malloc(sizeof(uint8_t)*8);
-	_firstTileCache = (uint8_t *)malloc(sizeof(uint8_t)*8);
+	_playfieldBuffer = (uint8_t *)malloc(sizeof(uint8_t)*16);
 	_sprRAM = (uint8_t *)malloc(sizeof(uint8_t)*256);
 	_palettes = (uint8_t *)malloc(sizeof(uint8_t)*32);
 	_backgroundPalette = _palettes;
@@ -488,12 +489,55 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	}
 }
 
+- (void)_preloadTilesForScanline
+{
+	uint8_t tileIndex;
+	uint8_t verticalTileOffset;
+	uint8_t pixelCounter;
+	uint8_t	tileAttributes;
+	uint8_t tileUpperColorBits;
+	uint16_t nameTableOffset;
+	uint8_t tileLowerColorBits;
+	
+	// Fetch first tile in the scanline
+	// Fetch the attribute byte
+	nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+	tileIndex = _nameAndAttributeTables[nameTableOffset];
+	tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
+	tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+	verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
+	
+	for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+		
+		tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+		_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
+	}
+	
+	// Increment the VRAM address one tile to the right
+	incrementVRAMAddressHorizontally(&_VRAMAddress); 
+	
+	// Fetch the second tile in the scanline
+	// Fetch the attribute byte
+	nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+	tileIndex = _nameAndAttributeTables[nameTableOffset];
+	tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
+	tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+	
+	for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+		
+		tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+		_playfieldBuffer[pixelCounter + 8] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
+	}
+	
+	// Increment the VRAM address one tile to the right
+	incrementVRAMAddressHorizontally(&_VRAMAddress); 	
+}
+
 - (void)_drawScanlines:(uint8_t)start until:(uint8_t)stop
 {
 	uint8_t tileIndex;
 	uint8_t tileCounter;
 	uint8_t scanlineCounter;
-	uint8_t scanlinePosition;
 	uint8_t verticalTileOffset;
 	uint8_t pixelCounter;
 	uint8_t	tileAttributes;
@@ -504,84 +548,60 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	// NSLog(@"In drawScanlines method.");
 	
 	if (_backgroundEnabled | _spritesEnabled) {
-	for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
 	
-		// Get Vertical Tile Offset
-		verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
+		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
+	
+			// Get Vertical Tile Offset
+			verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
 		
-		scanlinePosition = 0;
+			// Draw first two cached tiles
+			for (pixelCounter = _fineHorizontalScroll; pixelCounter < 16; pixelCounter++) {
+			
+				_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
+			}
 		
-		// Draw firstScanlineTileCache
-		for (pixelCounter = _fineHorizontalScroll; pixelCounter < 8; pixelCounter++) {
+			for (tileCounter = 0; tileCounter < 30; tileCounter++) {
 			
-			_videoBuffer[_videoBufferIndex++] = colorPalette[_firstTileCache[pixelCounter]];
-			scanlinePosition++;
-		}
-		
-		for (tileCounter = 0; tileCounter < 32; tileCounter++) {
+				nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+				tileIndex = _nameAndAttributeTables[nameTableOffset];
+				tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
+				tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+				// NSLog(@"Loading Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
 			
-			nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
-			tileIndex = _nameAndAttributeTables[nameTableOffset];
-			tileAttributes = _nameAndAttributeTables[attributeTableIndexLookupTable[nameTableOffset]];
-			tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
-			// NSLog(@"Loading Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
-			
-			for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
-				
-				// FIXME: I need to revisit the drawing algorithm.. this is no place for a conditional statement
-				if (scanlinePosition) {
-					_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
-					scanlinePosition++;
+				for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+	
+					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 				}
-				
-				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-				_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
+			
+				// Increment the VRAM address one tile to the right
+				incrementVRAMAddressHorizontally(&_VRAMAddress);
 			}
 			
-			// Increment the VRAM address one tile to the right
+			// Draw the 33rd title if necessary
+			nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+			tileIndex = _nameAndAttributeTables[nameTableOffset];
+			tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
+			tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+			
+			for (pixelCounter = 0; pixelCounter < _fineHorizontalScroll; pixelCounter++) {
+			
+				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
+			}
+			
+			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
 			incrementVRAMAddressHorizontally(&_VRAMAddress);
-		}
-		
-		// Increment the VRAM address vertically
-		incrementVRAMAddressVertically(&_VRAMAddress);
-		_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
-		_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
-		verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
-		
-		// Prime firstTileCache
-		// Fetch the attribute byte
-		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
-		tileIndex = _nameAndAttributeTables[nameTableOffset];
-		tileAttributes = _nameAndAttributeTables[attributeTableIndexLookupTable[nameTableOffset]];
-		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
-		
-		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 			
-			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-			_firstTileCache[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
+			// Increment the VRAM address vertically
+			incrementVRAMAddressVertically(&_VRAMAddress);
+			_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
+			_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
+		
+			[self _preloadTilesForScanline];
+		
+			// Prime in-range object cache
 		}
-		
-		// Increment the VRAM address one tile to the right
-		incrementVRAMAddressHorizontally(&_VRAMAddress); 
-		
-		// Prime playfieldBuffer
-		// Fetch the attribute byte
-		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
-		tileIndex = _nameAndAttributeTables[nameTableOffset];
-		tileAttributes = _nameAndAttributeTables[attributeTableIndexLookupTable[nameTableOffset]];
-		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
-		
-		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
-			
-			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-			_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
-		}
-		
-		// Increment the VRAM address one tile to the right
-		incrementVRAMAddressHorizontally(&_VRAMAddress); 
-		
-		// Prime in-range object cache
-	}
 	}
 	
 	// Start at scanline 0, end at 239
@@ -599,15 +619,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 }
 
 - (BOOL)completePrimingScanlineStoppingOnCycle:(uint_fast32_t)cycle
-{
-	uint8_t tileIndex;
-	uint8_t verticalTileOffset;
-	uint8_t pixelCounter;
-	uint8_t	tileAttributes;
-	uint8_t tileUpperColorBits;
-	uint16_t nameTableOffset;
-	uint8_t tileLowerColorBits;
-	
+{	
 	// NSLog(@"In completePrimingScanlineStoppingOnCycle method. Initial VRAM Address is 0x%4.4x",_VRAMAddress);
 	
 	// FIXME: This needs to be cycle accurate and return false if incomplete
@@ -621,42 +633,8 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		if (_cyclesSinceVINT >= 7161) return YES;
 		
 		if (_backgroundEnabled | _spritesEnabled) {
-		// Prime firstTileCache
-		// Fetch the attribute byte
-		//	incrementVRAMAddressVertically(&_VRAMAddress);
-			
-		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
-		tileIndex = _nameAndAttributeTables[nameTableOffset];
-		tileAttributes = _nameAndAttributeTables[attributeTableIndexLookupTable[nameTableOffset]];
-		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
-		verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
-		// NSLog(@"Loading First Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
 		
-		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
-			
-			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-			_firstTileCache[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
-		}
-		
-		// Increment the VRAM address one tile to the right
-		incrementVRAMAddressHorizontally(&_VRAMAddress); 
-		
-		// Prime playfieldBuffer
-		// Fetch the attribute byte
-		nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
-		tileIndex = _nameAndAttributeTables[nameTableOffset];
-		tileAttributes = _nameAndAttributeTables[attributeTableIndexLookupTable[nameTableOffset]];
-		tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
-		// NSLog(@"Loading Playfield Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
-			
-		for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
-			
-			tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-			_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
-		}
-		
-		// Increment the VRAM address one tile to the right
-		incrementVRAMAddressHorizontally(&_VRAMAddress);
+			[self _preloadTilesForScanline];
 		}
 		
 		_cyclesSinceVINT = 341*21; // Bring the current cycle count past the priming scanline
