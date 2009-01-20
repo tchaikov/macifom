@@ -533,17 +533,66 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	incrementVRAMAddressHorizontally(&_VRAMAddress); 	
 }
 
+- (void)_findInRangeSprites
+{
+	uint8_t nextScanline = _videoBufferIndex / 256;
+	uint_fast32_t sprRAMIndex;
+	uint_fast8_t tempOAMIndex;
+	uint_fast8_t pixelCounter;
+	uint_fast8_t spriteHorizontalOffset;
+	uint_fast8_t spritePixelsToDraw;
+	
+	_numberOfSpritesOnScanline = 0;
+	
+	for (sprRAMIndex = 0; sprRAMIndex < 256; sprRAMIndex += 4) {
+	
+		if ((nextScanline >= _sprRAM[sprRAMIndex]) && (nextScanline - _sprRAM[sprRAMIndex] < 8)) {
+		
+			if (_numberOfSpritesOnScanline == 8) {
+				
+				// Set flag on 9th in range object found
+				_ppuStatusRegister |= 0x20;
+				break;
+			}
+			_spritesOnCurrentScanline[_numberOfSpritesOnScanline++] = sprRAMIndex;
+		}
+	}
+	
+	// Prime the priority buffer with info for in-range sprites
+	for (tempOAMIndex = (_numberOfSpritesOnScanline - 1); tempOAMIndex <= 0; tempOAMIndex--) {
+	
+		sprRAMIndex = _spritesOnCurrentScanline[tempOAMIndex];
+		spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
+		spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
+		
+		for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
+			
+			// if (_spriteTileCache[_sprRAM[sprRAMIndex + 1]][nextScanline - _sprRAM[sprRAMIndex]][pixelCounter])
+				_scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
+			// else _scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
+		}
+	}
+}
+
 - (void)_drawScanlines:(uint8_t)start until:(uint8_t)stop
 {
-	uint8_t tileIndex;
-	uint8_t tileCounter;
-	uint8_t scanlineCounter;
-	uint8_t verticalTileOffset;
-	uint8_t pixelCounter;
-	uint8_t	tileAttributes;
-	uint8_t tileUpperColorBits;
-	uint8_t tileLowerColorBits;
-	uint16_t nameTableOffset;
+	uint_fast8_t tileIndex;
+	uint_fast8_t tileCounter;
+	uint_fast8_t scanlineCounter;
+	uint_fast8_t verticalTileOffset;
+	uint_fast8_t pixelCounter;
+	uint_fast8_t spriteCounter;
+	uint_fast8_t tileAttributes;
+	uint_fast8_t tileUpperColorBits;
+	uint_fast8_t tileLowerColorBits;
+	uint_fast16_t nameTableOffset;
+	uint_fast8_t sprRAMIndex;
+	uint_fast8_t spriteVerticalOffset;
+	uint_fast8_t spriteYOffset;
+	uint_fast8_t spriteHorizontalOffset;
+	uint_fast32_t spriteVideoBufferOffset;
+	uint_fast8_t spritePixelsToDraw;
+	uint_fast8_t spriteUpperColorBits;
 	
 	// NSLog(@"In drawScanlines method.");
 	
@@ -593,14 +642,34 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
 			incrementVRAMAddressHorizontally(&_VRAMAddress);
 			
+			// Draw sprites
+			for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
+			
+				sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
+				spriteYOffset = _sprRAM[sprRAMIndex];
+				spriteVerticalOffset = ((_videoBufferIndex / 256) - 1) - _sprRAM[sprRAMIndex];
+				spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
+				spriteVideoBufferOffset = _videoBufferIndex - 256 + spriteHorizontalOffset;
+				spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
+				spriteUpperColorBits = (_sprRAM[sprRAMIndex + 2] & 0x3) * 4;
+				
+				for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
+					
+					_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= _scanlinePriorityBuffer[spriteHorizontalOffset];
+					_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[_spriteTileCache[_sprRAM[sprRAMIndex + 1]][spriteVerticalOffset][pixelCounter] | spriteUpperColorBits]] & ~(_scanlinePriorityBuffer[spriteHorizontalOffset]);
+				}
+			}
+			
 			// Increment the VRAM address vertically
 			incrementVRAMAddressVertically(&_VRAMAddress);
 			_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
 			_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
 		
+			// Load in first two playfield tiles of the next scanline
 			[self _preloadTilesForScanline];
 		
 			// Prime in-range object cache
+			[self _findInRangeSprites];
 		}
 	}
 	
@@ -635,6 +704,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		if (_backgroundEnabled | _spritesEnabled) {
 		
 			[self _preloadTilesForScanline];
+			[self _findInRangeSprites];
 		}
 		
 		_cyclesSinceVINT = 341*21; // Bring the current cycle count past the priming scanline

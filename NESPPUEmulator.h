@@ -37,7 +37,9 @@ typedef enum {
 	uint8_t ***_backgroundTileCache;
 	uint8_t ***_spriteTileCache;
 	uint8_t *_playfieldBuffer;
-	uint8_t _scanline[256];
+	uint_fast32_t _scanlinePriorityBuffer[256];
+	uint_fast8_t _spritesOnCurrentScanline[8];
+	uint_fast8_t _numberOfSpritesOnScanline;
 	uint8_t _sprRAMAddress;
 	uint8_t *_nameAndAttributeTables;
 	uint8_t *_nameTable0;
