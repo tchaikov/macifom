@@ -24,8 +24,8 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 		
 		_videoBuffer = (uint_fast32_t *)malloc(sizeof(uint_fast32_t)*256*240);
 		_provider = CGDataProviderCreateWithData(NULL, _videoBuffer, sizeof(uint_fast32_t)*256*240,VideoBufferProviderReleaseData);
-		_controller1 = 0x20000; // Should indicate one controller on $4016
-		_controller2 = 0x20000; // Should indicate one controller on $4017
+		_controller1 = 0x0001FF00; // Should indicate one controller on $4016 per nestech.txt
+		_controller2 = 0x0002FF00; // Should indicate one controller on $4017 per nestech.txt
 		
 		// There are reports that this can return fnf on Leopard, investigating...
 		if (CMGetSystemProfile(&profile) == noErr) { 
