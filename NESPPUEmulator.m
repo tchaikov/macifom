@@ -537,7 +537,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 {
 	uint8_t nextScanline = _videoBufferIndex / 256;
 	uint_fast32_t sprRAMIndex;
-	uint_fast8_t tempOAMIndex;
+	int tempOAMIndex;
 	uint_fast8_t pixelCounter;
 	uint_fast8_t spriteHorizontalOffset;
 	uint_fast8_t spritePixelsToDraw;
@@ -546,7 +546,8 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	
 	for (sprRAMIndex = 0; sprRAMIndex < 256; sprRAMIndex += 4) {
 	
-		if ((nextScanline >= _sprRAM[sprRAMIndex]) && (nextScanline - _sprRAM[sprRAMIndex] < 8)) {
+		// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
+		if ((nextScanline >= (_sprRAM[sprRAMIndex] + 1)) && (nextScanline - (_sprRAM[sprRAMIndex] + 1) < 8)) {
 		
 			if (_numberOfSpritesOnScanline == 8) {
 				
@@ -558,8 +559,11 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		}
 	}
 	
+	// Chear the priority buffer
+	memset(_scanlinePriorityBuffer,0xFF,sizeof(uint_fast32_t)*256);
+	
 	// Prime the priority buffer with info for in-range sprites
-	for (tempOAMIndex = (_numberOfSpritesOnScanline - 1); tempOAMIndex <= 0; tempOAMIndex--) {
+	for (tempOAMIndex = (_numberOfSpritesOnScanline - 1); tempOAMIndex >= 0; tempOAMIndex--) {
 	
 		sprRAMIndex = _spritesOnCurrentScanline[tempOAMIndex];
 		spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
@@ -567,9 +571,9 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		
 		for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
 			
-			// if (_spriteTileCache[_sprRAM[sprRAMIndex + 1]][nextScanline - _sprRAM[sprRAMIndex]][pixelCounter])
+			// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
+			if (_spriteTileCache[_sprRAM[sprRAMIndex + 1]][nextScanline - (_sprRAM[sprRAMIndex] + 1)][pixelCounter])
 				_scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
-			// else _scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 		}
 	}
 }
@@ -581,7 +585,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	uint_fast8_t scanlineCounter;
 	uint_fast8_t verticalTileOffset;
 	uint_fast8_t pixelCounter;
-	uint_fast8_t spriteCounter;
+	int spriteCounter;
 	uint_fast8_t tileAttributes;
 	uint_fast8_t tileUpperColorBits;
 	uint_fast8_t tileLowerColorBits;
@@ -643,20 +647,35 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 			incrementVRAMAddressHorizontally(&_VRAMAddress);
 			
 			// Draw sprites
-			for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
+			for (spriteCounter = (_numberOfSpritesOnScanline - 1); spriteCounter >= 0; spriteCounter--) {
 			
 				sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
 				spriteYOffset = _sprRAM[sprRAMIndex];
-				spriteVerticalOffset = ((_videoBufferIndex / 256) - 1) - _sprRAM[sprRAMIndex];
+				spriteVerticalOffset = ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1);
+				// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
 				spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
 				spriteVideoBufferOffset = _videoBufferIndex - 256 + spriteHorizontalOffset;
 				spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
 				spriteUpperColorBits = (_sprRAM[sprRAMIndex + 2] & 0x3) * 4;
 				
-				for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
-					
-					_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= _scanlinePriorityBuffer[spriteHorizontalOffset];
-					_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[_spriteTileCache[_sprRAM[sprRAMIndex + 1]][spriteVerticalOffset][pixelCounter] | spriteUpperColorBits]] & ~(_scanlinePriorityBuffer[spriteHorizontalOffset]);
+				// Check for horizontal flip
+				if (_sprRAM[sprRAMIndex + 2] & 0x40) {
+				
+					// Draw Flipped
+					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
+						
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= _scanlinePriorityBuffer[spriteHorizontalOffset + (7 - pixelCounter)];
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[_spriteTileCache[_sprRAM[sprRAMIndex + 1]][spriteVerticalOffset][(7 - pixelCounter)] | spriteUpperColorBits]] & ~(_scanlinePriorityBuffer[spriteHorizontalOffset + (7 - pixelCounter)]);
+					}
+				}
+				else {
+				
+					// Draw Straight
+					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
+						
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= _scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter];
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[_spriteTileCache[_sprRAM[sprRAMIndex + 1]][spriteVerticalOffset][pixelCounter] | spriteUpperColorBits]] & ~(_scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter]);
+					}
 				}
 			}
 			

@@ -273,7 +273,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>7</integer>
+									<integer>11</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -298,7 +298,7 @@
 							<real>233</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>13 84 1240 748 0 0 1280 832 </string>
+						<string>6 84 1240 748 0 0 1280 832 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -316,7 +316,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>NESPPUEmulator.m</string>
+								<string>NESPlayfieldView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -324,24 +324,24 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>NESPPUEmulator.m</string>
+										<string>NESPlayfieldView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>B9A967F40F26374800566267</string>
+										<string>B932FA120F26F75700FCA823</string>
 										<key>history</key>
 										<array>
 											<string>B987354C0F0F178D00224CA8</string>
-											<string>B9D9474A0F1A8A130068D9E7</string>
 											<string>B9D9474B0F1A8A130068D9E7</string>
 											<string>B9D9474D0F1A8A130068D9E7</string>
 											<string>B9D9474F0F1A8A130068D9E7</string>
 											<string>B93616790F23A06F008E6574</string>
 											<string>B936167A0F23A06F008E6574</string>
-											<string>B936167B0F23A06F008E6574</string>
 											<string>B936167C0F23A06F008E6574</string>
 											<string>B9A37B530F24EA8D00DB94A4</string>
-											<string>B91D0F5C0F2633AA00B23F5A</string>
+											<string>B932FA0E0F26F75700FCA823</string>
+											<string>B932FA0F0F26F75700FCA823</string>
+											<string>B932F9FF0F26EEBC00FCA823</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -356,6 +356,11 @@
 											<string>B9F913B00E78EF9A006F23BB</string>
 											<string>B9F913B60E78EF9A006F23BB</string>
 											<string>B987355F0F0F178D00224CA8</string>
+											<string>B932FA010F26EEBC00FCA823</string>
+											<string>B932FA020F26EEBC00FCA823</string>
+											<string>B932FA030F26EEBC00FCA823</string>
+											<string>B932FA100F26F75700FCA823</string>
+											<string>B932FA110F26F75700FCA823</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -369,7 +374,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {985, 597}}</string>
 								<key>RubberWindowFrame</key>
-								<string>13 84 1240 748 0 0 1280 832 </string>
+								<string>6 84 1240 748 0 0 1280 832 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -389,7 +394,7 @@
 								<key>Frame</key>
 								<string>{{0, 602}, {985, 105}}</string>
 								<key>RubberWindowFrame</key>
-								<string>13 84 1240 748 0 0 1280 832 </string>
+								<string>6 84 1240 748 0 0 1280 832 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -413,9 +418,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>B9A967F50F26374800566267</string>
+				<string>B932F9E50F26D20100FCA823</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>B9A967F60F26374800566267</string>
+				<string>B932F9E60F26D20100FCA823</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -562,10 +567,11 @@
 	<array>
 		<string>B98734FC0F0F108E00224CA8</string>
 		<string>1CD10A99069EF8BA00B06720</string>
+		<string>1C78EAAD065D492600B07095</string>
 		<string>/Users/auston/Projects/Software/Macifom/Macifom.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>13 84 1240 748 0 0 1280 832 </string>
+	<string>6 84 1240 748 0 0 1280 832 </string>
 	<key>WindowToolsV3</key>
 	<array>
 		<dict>
@@ -581,12 +587,14 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string></string>
+								<string>NESPPUEmulator.m</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -642,7 +650,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>B98734FC0F0F108E00224CA8</string>
-				<string>B9A967F70F26374800566267</string>
+				<string>B932F9F20F26D78800FCA823</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
@@ -762,13 +770,13 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1CD10A99069EF8BA00B06720</string>
-				<string>B9A967F80F26374800566267</string>
+				<string>B932F9E70F26D20100FCA823</string>
 				<string>1C162984064C10D400B95A72</string>
-				<string>B9A967F90F26374800566267</string>
-				<string>B9A967FA0F26374800566267</string>
-				<string>B9A967FB0F26374800566267</string>
-				<string>B9A967FC0F26374800566267</string>
-				<string>B9A967FD0F26374800566267</string>
+				<string>B932F9E80F26D20100FCA823</string>
+				<string>B932F9E90F26D20100FCA823</string>
+				<string>B932F9EA0F26D20100FCA823</string>
+				<string>B932F9EB0F26D20100FCA823</string>
+				<string>B932F9EC0F26D20100FCA823</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.debugV3</string>
@@ -924,7 +932,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1C78EAAD065D492600B07095</string>
-				<string>B95CE1D10F2571AC00F25D8C</string>
+				<string>B932FA050F26EEBC00FCA823</string>
 				<string>1C78EAAC065D492600B07095</string>
 			</array>
 			<key>ToolbarConfiguration</key>

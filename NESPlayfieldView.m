@@ -31,7 +31,7 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 		if (CMGetSystemProfile(&profile) == noErr) { 
 			_colorSpace = CGColorSpaceCreateWithPlatformColorSpace(profile); 
 			CMCloseProfile(profile); 
-			NSLog(@"Obtained System Color Space.");
+			NSLog(@"Obtained System colorspace. CG rendering will follow the fast path.");
 		} 
 		else _colorSpace = CGColorSpaceCreateDeviceRGB();
 	}
@@ -61,19 +61,19 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	switch ([keysHit characterAtIndex:0]) {
 	
 		case 'w':
-			_controller1 &= 0xFFFFFF0F; // Clear directional data to prevent more than one direction being pressed.
+			_controller1 &= 0xFFFFFFCF; // FIXME: Currently, we clear up and down to prevent errors. Perhaps I should clear all directions?
 			_controller1 |= 0x10; // Up
 			break;
 		case 'a':
-			_controller1 &= 0xFFFFFF0F;
+			_controller1 &= 0xFFFFFF3F; // Clear left and right to prevent errors
 			_controller1 |= 0x40; // Left
 			break;
 		case 's':
-			_controller1 &= 0xFFFFFF0F;
+			_controller1 &= 0xFFFFFFCF;
 			_controller1 |= 0x20; // Down
 			break;
 		case 'd':
-			_controller1 &= 0xFFFFFF0F;
+			_controller1 &= 0xFFFFFF3F;
 			_controller1 |= 0x80; // Right
 			break;
 		case 'k':
@@ -93,15 +93,42 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 
 - (void)keyUp:(NSEvent *)theEvent
 {
+	NSString *keysHit = [theEvent characters];
 	
+	if ([keysHit length] < 1) return;
+	
+	switch ([keysHit characterAtIndex:0]) {
+			
+		case 'w':
+			_controller1 &= 0xFFFFFFCF; // Clear both up and down
+			break;
+		case 'a':
+			_controller1 &= 0xFFFFFF3F;
+			break;
+		case 's':
+			_controller1 &= 0xFFFFFFCF;
+			break;
+		case 'd':
+			_controller1 &= 0xFFFFFF3F;
+			break;
+		case 'k':
+			_controller1 &= 0xFFFFFFFE; // A button release
+			break;
+		case 'l':
+			_controller1 &= 0xFFFFFFFD; // B button release
+			break;
+		case 'g':
+			_controller1 &= 0xFFFFFFFB; // Select button release
+			break;
+		case 'h':
+			_controller1 &= 0xFFFFFFF7; // Start button release
+			break;
+	}
 }
 
 - (uint_fast32_t)readController1
-{
-	uint_fast32_t valueToReturn = _controller1;
-	_controller1 = 0x20000; // Clear controller input
-	
-	return valueToReturn;
+{	
+	return _controller1;
 }
 
 - (uint_fast32_t *)videoBuffer
