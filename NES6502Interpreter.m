@@ -273,7 +273,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	if (address >= 0xC000) return _prgRomBank1[address & 0x3FFF] + ((uint16_t)_prgRomBank1[(address + 1) & 0x3FFF] * 256);
 	else if (address >= 0x8000) return _prgRomBank0[address & 0x3FFF] + ((uint16_t)_prgRomBank0[(address + 1) & 0x3FFF] * 256);
 	
-	return [self readByteFromCPUAddressSpace:address] + ((uint16_t)[self readByteFromCPUAddressSpace:address+1] * 256);
+	return _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),address) + ((uint16_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),address + 1) * 256);
 }
 
 - (void)writeByte:(uint8_t)byte toCPUAddress:(uint16_t)address
@@ -349,7 +349,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)_performOperationAsImmediate:(uint8_t)opcode
 {
-	_standardOperations[opcode](_cpuRegisters,[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++]);
+	_standardOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++));
 	
 	return 2;
 }
@@ -357,7 +357,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performOperationAsAbsolute:(uint8_t)opcode
 {
 	currentCPUCycle += 3; // Read occurs on third cycle
-	_standardOperations[opcode](_cpuRegisters,[self readByteFromCPUAddressSpace:[self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter]]);
+	_standardOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),[self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter]));
 	_cpuRegisters->programCounter += 2;
 	
 	return 1; // 1 cycle executes following fetch
@@ -368,7 +368,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 {
 	uint16_t absoluteAddress = [self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter];
 	uint16_t indexedAddress = absoluteAddress + _cpuRegisters->indexRegisterX;
-	_standardOperations[opcode](_cpuRegisters,[self readByteFromCPUAddressSpace:indexedAddress]);
+	_standardOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),indexedAddress));
 	_cpuRegisters->programCounter += 2;
 	
 	return 4 + ((absoluteAddress >> 8) != (indexedAddress >> 8));
@@ -379,7 +379,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 {
 	uint16_t absoluteAddress = [self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter];
 	uint16_t indexedAddress = absoluteAddress + _cpuRegisters->indexRegisterY;
-	_standardOperations[opcode](_cpuRegisters,[self readByteFromCPUAddressSpace:indexedAddress]);
+	_standardOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),indexedAddress));
 	_cpuRegisters->programCounter += 2;
 	
 	return 4 + ((absoluteAddress >> 8) != (indexedAddress >> 8));
@@ -387,21 +387,21 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)_performOperationAsZeroPage:(uint8_t)opcode
 {
-	_standardOperations[opcode](_cpuRegisters,_zeroPage[[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++]]);
+	_standardOperations[opcode](_cpuRegisters,_zeroPage[_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++)]);
 	
 	return 3;
 }
 
 - (uint_fast32_t)_performOperationAsZeroPageX:(uint8_t)opcode
 {
-	_standardOperations[opcode](_cpuRegisters,_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterX)]); // hopefully this add will be done as uint8_t, causing it to wrap
+	_standardOperations[opcode](_cpuRegisters,_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterX)]); // hopefully this add will be done as uint8_t, causing it to wrap
 	
 	return 4;
 }
 
 - (uint_fast32_t)_performOperationAsZeroPageY:(uint8_t)opcode
 {
-	_standardOperations[opcode](_cpuRegisters,_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterY)]); // hopefully this add will be done as uint8_t, causing it to wrap
+	_standardOperations[opcode](_cpuRegisters,_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterY)]); // hopefully this add will be done as uint8_t, causing it to wrap
 	
 	return 4;
 }
@@ -415,9 +415,9 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
  */
 - (uint_fast32_t)_performOperationAsIndirectX:(uint8_t)opcode
 {
-	uint16_t effectiveAddress = _zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + _cpuRegisters->indexRegisterX)]; // Fetch ADL
-	effectiveAddress += (_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterX + 1)] << 8); // Fetch ADH
-	uint8_t operand = [self readByteFromCPUAddressSpace:effectiveAddress];
+	uint16_t effectiveAddress = _zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + _cpuRegisters->indexRegisterX)]; // Fetch ADL
+	effectiveAddress += (_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterX + 1)] << 8); // Fetch ADH
+	uint8_t operand = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),effectiveAddress);
 	_standardOperations[opcode](_cpuRegisters,operand);
 	
 	return 6;
@@ -432,10 +432,10 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performOperationAsIndirectY:(uint8_t)opcode
 {
 	uint16_t effectiveAddress = 0;
-	uint16_t absoluteAddress = _zeroPage[[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter]]; // Fetch BAL
-	absoluteAddress += (_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:(_cpuRegisters->programCounter)++] + 1)] << 8); // Fetch BAH
+	uint16_t absoluteAddress = _zeroPage[_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter)]; // Fetch BAL
+	absoluteAddress += (_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + 1)] << 8); // Fetch BAH
 	effectiveAddress = absoluteAddress + _cpuRegisters->indexRegisterY; // Add IndexRegisterY to BAH,BAL, potential page crossing
-	uint8_t operand = [self readByteFromCPUAddressSpace:effectiveAddress];
+	uint8_t operand = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),effectiveAddress);
 	_standardOperations[opcode](_cpuRegisters,operand);
 	
 	return 5 + ((absoluteAddress >> 8) != (effectiveAddress >> 8)); // Check for page crossing
@@ -473,21 +473,21 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)_performWriteOperationWithZeroPage:(uint8_t)opcode
 {
-	_zeroPage[[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++]] = _writeOperations[opcode](_cpuRegisters,opcode);
+	_zeroPage[_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++)] = _writeOperations[opcode](_cpuRegisters,opcode);
 	
 	return 3;
 }
 
 - (uint_fast32_t)_performWriteOperationWithZeroPageX:(uint8_t)opcode
 {
-	_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterX)] = _writeOperations[opcode](_cpuRegisters,opcode); // hopefully this add will be done as uint8_t, causing it to wrap
+	_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterX)] = _writeOperations[opcode](_cpuRegisters,opcode); // hopefully this add will be done as uint8_t, causing it to wrap
 	
 	return 4;
 }
 
 - (uint_fast32_t)_performWriteOperationWithZeroPageY:(uint8_t)opcode
 {
-	_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterY)] = _writeOperations[opcode](_cpuRegisters,opcode); // hopefully this add will be done as uint8_t, causing it to wrap
+	_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterY)] = _writeOperations[opcode](_cpuRegisters,opcode); // hopefully this add will be done as uint8_t, causing it to wrap
 	
 	return 4;
 }
@@ -500,8 +500,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
  */
 - (uint_fast32_t)_performWriteOperationWithIndirectX:(uint8_t)opcode
 {
-	uint16_t effectiveAddress = _zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + _cpuRegisters->indexRegisterX)]; // Fetch ADL
-	effectiveAddress += (_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterX + 1)] << 8); // Fetch ADH
+	uint16_t effectiveAddress = _zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + _cpuRegisters->indexRegisterX)]; // Fetch ADL
+	effectiveAddress += (_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterX + 1)] << 8); // Fetch ADH
 	[self writeByte:_writeOperations[opcode](_cpuRegisters,opcode) toCPUAddress:effectiveAddress];
 	
 	return 6;
@@ -517,8 +517,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performWriteOperationWithIndirectY:(uint8_t)opcode
 {
 	uint16_t effectiveAddress = 0;
-	uint16_t absoluteAddress = _zeroPage[[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter]]; // Fetch BAL
-	absoluteAddress += (_zeroPage[(uint8_t)([self readByteFromCPUAddressSpace:(_cpuRegisters->programCounter)++] + 1)] << 8); // Fetch BAH
+	uint16_t absoluteAddress = _zeroPage[_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter)]; // Fetch BAL
+	absoluteAddress += (_zeroPage[(uint8_t)(_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + 1)] << 8); // Fetch BAH
 	effectiveAddress = absoluteAddress + _cpuRegisters->indexRegisterY; // Add IndexRegisterY to BAH,BAL, potential page crossing
 	[self writeByte:_writeOperations[opcode](_cpuRegisters,opcode) toCPUAddress:effectiveAddress];
 	
@@ -529,7 +529,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performOperationAsRMWAbsolute:(uint8_t)opcode
 {
 	uint16_t address = [self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter];
-	uint8_t value = _writeOperations[opcode](_cpuRegisters,[self readByteFromCPUAddressSpace:address]);
+	uint8_t value = _writeOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),address));
 	_cpuRegisters->programCounter += 2;
 	[self writeByte:value toCPUAddress:address];
 	
@@ -541,7 +541,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 {
 	uint16_t absoluteAddress = [self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter];
 	uint16_t indexedAddress = absoluteAddress + _cpuRegisters->indexRegisterX;
-	uint8_t value = _writeOperations[opcode](_cpuRegisters,[self readByteFromCPUAddressSpace:indexedAddress]);
+	uint8_t value = _writeOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),indexedAddress));
 	_cpuRegisters->programCounter += 2;
 	[self writeByte:value toCPUAddress:indexedAddress];
 	
@@ -551,7 +551,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 // FIXME: Should emulate all reads and writes for RMW
 - (uint_fast32_t)_performOperationAsRMWZeroPage:(uint8_t)opcode
 {
-	uint8_t offset = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++];
+	uint8_t offset = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
 	_zeroPage[offset] = _writeOperations[opcode](_cpuRegisters,_zeroPage[offset]);
 	
 	return 5; // Read-Modify-Write ZeroPage operations take 5 cycles
@@ -559,7 +559,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)_performOperationAsRMWZeroPageX:(uint8_t)opcode
 {
-	uint8_t offset = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] + _cpuRegisters->indexRegisterX;
+	uint8_t offset = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) + _cpuRegisters->indexRegisterX;
 	_zeroPage[offset] = _writeOperations[opcode](_cpuRegisters,_zeroPage[offset]);
 	
 	return 6; // Read-Modify-Write ZeroPage Indexed operations take 6 cycles
@@ -739,7 +739,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnPositive:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 ;
+	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? 1 : (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1 ;
 	
 	return _cpuRegisters->statusNegative ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -747,7 +747,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnNegative:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusNegative ? (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1 : 1;
 	
 	return _cpuRegisters->statusNegative ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -755,7 +755,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnOverflowSet:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1 : 1;
 	
 	return _cpuRegisters->statusOverflow ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -763,7 +763,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnOverflowClear:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusOverflow ? 1 : (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1;
 	
 	return _cpuRegisters->statusOverflow ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -771,7 +771,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnCarrySet:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1 : 1;
 	
 	return _cpuRegisters->statusCarry ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -779,7 +779,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnCarryClear:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusCarry ? 1 : (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1;
 	
 	return _cpuRegisters->statusCarry ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
@@ -787,7 +787,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnZeroSet:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1 : 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1 : 1;
 	
 	return _cpuRegisters->statusZero ? (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8))) : 2;
 }
@@ -795,15 +795,15 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performBranchOnZeroClear:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter + 1; // Page crossing occurs if branch destination is on a page other than that of the next opcode
-	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? 1 : (int8_t)[self readByteFromCPUAddressSpace:_cpuRegisters->programCounter] + 1;
+	_cpuRegisters->programCounter += _cpuRegisters->statusZero ? 1 : (int8_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter) + 1;
 	
 	return _cpuRegisters->statusZero ? 2 : (3 + ((oldProgramCounter >> 8) != (_cpuRegisters->programCounter >> 8)));
 }
 
 - (uint_fast32_t)_performAbsoluteJump:(uint8_t)opcode
 {
-	uint16_t newProgramCounter = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++]; // Read new PCL
-	newProgramCounter += ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] << 8); // add new PCH
+	uint16_t newProgramCounter = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++); // Read new PCL
+	newProgramCounter += (_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) << 8); // add new PCH
 	_cpuRegisters->programCounter = newProgramCounter; // Set new Program Counter
 	
 	return 3;
@@ -816,10 +816,10 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performIndirectJump:(uint8_t)opcode
 {
 	uint16_t offset = 0;
-	uint8_t offsetLowByte = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++]; // Low byte of address of new PC
-	offset = ([self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++] << 8); // High byte of address of new PC
-	_cpuRegisters->programCounter = [self readByteFromCPUAddressSpace:(offset | offsetLowByte)]; // Load low byte of new PC into PC
-	_cpuRegisters->programCounter += ([self readByteFromCPUAddressSpace:(offset | ((uint8_t)(offsetLowByte + 1)))] << 8); // Increment low byte before odding with high byte to allow overflow
+	uint8_t offsetLowByte = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++); // Low byte of address of new PC
+	offset = (_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++) << 8); // High byte of address of new PC
+	_cpuRegisters->programCounter = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),(offset | offsetLowByte)); // Load low byte of new PC into PC
+	_cpuRegisters->programCounter += (_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),(offset | ((uint8_t)(offsetLowByte + 1)))) << 8); // Increment low byte before odding with high byte to allow overflow
 	
 	return 5;
 }
@@ -827,8 +827,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (uint_fast32_t)_performJumpToSubroutine:(uint8_t)opcode
 {
 	uint16_t oldProgramCounter = _cpuRegisters->programCounter;
-	_cpuRegisters->programCounter = [self readByteFromCPUAddressSpace:oldProgramCounter++];
-	_cpuRegisters->programCounter += ([self readByteFromCPUAddressSpace:oldProgramCounter] << 8); // Don't increment PC so last byte of JSR add is on stack
+	_cpuRegisters->programCounter = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),oldProgramCounter++);
+	_cpuRegisters->programCounter += (_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),oldProgramCounter) << 8); // Don't increment PC so last byte of JSR add is on stack
 	_stack[_cpuRegisters->stackPointer--] = (oldProgramCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = oldProgramCounter; // store program counter low byte on stack
 	
@@ -1351,6 +1351,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_writeOperations[0xFE] = (uint8_t (*)(CPURegisters *,uint8_t))_INC;
 	_operationMethods[0xFF] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ??
 	
+	_readByteFromCPUAddressSpace = (uint8_t (*)(id, SEL, uint16_t))[self methodForSelector:@selector(readByteFromCPUAddressSpace:)];
+	
 	return self;
 }
 
@@ -1389,7 +1391,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	while (currentCPUCycle < cycle) {
 		
-		opcode = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++];
+		opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
 		currentCPUCycle += _operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
 	}
 	
@@ -1407,7 +1409,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	while (!_encounteredUnsupportedOpcode && (_cpuRegisters->programCounter != breakPoint)) {
 	
-		opcode = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++];
+		opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
 		currentCPUCycle += _operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
 	}
 	
@@ -1416,13 +1418,13 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)interpretOpcode
 {
-	uint8_t opcode = [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter++];
+	uint8_t opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
 	return _operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, I don't think this matters
 }
 
 - (uint8_t)currentOpcode
 {
-	return [self readByteFromCPUAddressSpace:_cpuRegisters->programCounter];
+	return _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter);
 }
 
 - (CPURegisters *)cpuRegisters

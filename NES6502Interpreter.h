@@ -51,6 +51,7 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 	WriteOpPointer *_writeOperations;
 	OperationMethodPointer *_operationMethods;
 	SEL *_operationSelectors;
+	uint8_t (*_readByteFromCPUAddressSpace)(id, SEL, uint16_t);
 	
 	NESCartridgeEmulator *cartridge;
 	NESPPUEmulator *ppu;

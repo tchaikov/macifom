@@ -100,16 +100,16 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	switch ([keysHit characterAtIndex:0]) {
 			
 		case 'w':
-			_controller1 &= 0xFFFFFFCF; // Clear both up and down
+			_controller1 &= 0xFFFFFFEF; // Clear up
 			break;
 		case 'a':
-			_controller1 &= 0xFFFFFF3F;
+			_controller1 &= 0xFFFFFFBF; // Clear left
 			break;
 		case 's':
-			_controller1 &= 0xFFFFFFCF;
+			_controller1 &= 0xFFFFFFDF; // Clear down
 			break;
 		case 'd':
-			_controller1 &= 0xFFFFFF3F;
+			_controller1 &= 0xFFFFFF7F; // Clear right
 			break;
 		case 'k':
 			_controller1 &= 0xFFFFFFFE; // A button release

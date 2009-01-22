@@ -336,6 +336,17 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	return ((attributeByte >> ((nametableIndex & 0x2) | ((nametableIndex >> 4) & 0x4))) & 0x3) << 2;
 }
 
+static inline void backupPalettesForRendering(uint8_t *originalPalette, uint8_t *backupPalette) {
+
+	memcpy(backupPalette,originalPalette,sizeof(uint8_t)*32);
+	originalPalette[0x4] = originalPalette[0x8] = originalPalette[0xC] = originalPalette[0x10] = originalPalette[0x14] = originalPalette[0x18] = originalPalette[0x1C] = originalPalette[0x0];
+}
+
+static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *backupPalette) {
+	
+	memcpy(originalPalette,backupPalette,sizeof(uint8_t)*32);
+}
+
 @implementation NESPPUEmulator
 
 - (void)printAttributeTableIndices
@@ -540,6 +551,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	int tempOAMIndex;
 	uint_fast8_t pixelCounter;
 	uint_fast8_t spriteHorizontalOffset;
+	uint_fast8_t spriteVerticalOffset;
 	uint_fast8_t spritePixelsToDraw;
 	
 	_numberOfSpritesOnScanline = 0;
@@ -568,11 +580,13 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 		sprRAMIndex = _spritesOnCurrentScanline[tempOAMIndex];
 		spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
 		spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
+		// FIXME: If someone decides to switch a sprite's vertical orientation during HBLANK there will be major issues because we're pre-calculating here.
+		spriteVerticalOffset = _sprRAM[sprRAMIndex + 2] & 0x80 ? 7 - (nextScanline - (_sprRAM[sprRAMIndex] + 1)) : nextScanline - (_sprRAM[sprRAMIndex] + 1);
 		
 		for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
 			
 			// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
-			if (_spriteTileCache[_sprRAM[sprRAMIndex + 1]][nextScanline - (_sprRAM[sprRAMIndex] + 1)][pixelCounter])
+			if (_spriteTileCache[_sprRAM[sprRAMIndex + 1]][spriteVerticalOffset][pixelCounter])
 				_scanlinePriorityBuffer[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
 		}
 	}
@@ -592,7 +606,6 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	uint_fast16_t nameTableOffset;
 	uint_fast8_t sprRAMIndex;
 	uint_fast8_t spriteVerticalOffset;
-	uint_fast8_t spriteYOffset;
 	uint_fast8_t spriteHorizontalOffset;
 	uint_fast32_t spriteVideoBufferOffset;
 	uint_fast8_t spritePixelsToDraw;
@@ -600,14 +613,17 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 	
 	// NSLog(@"In drawScanlines method.");
 	
-	if (_backgroundEnabled | _spritesEnabled) {
+	if (_backgroundEnabled || _spritesEnabled) {
 	
+		// backupPalettesForRendering(_palettes,_backupPalettes);
+		
 		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
 	
 			// Get Vertical Tile Offset
 			verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
 		
 			// Draw first two cached tiles
+			// FIXME: It might be faster to do the colorPalette indexing elsewhere and then memcpy here
 			for (pixelCounter = _fineHorizontalScroll; pixelCounter < 16; pixelCounter++) {
 			
 				_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
@@ -624,6 +640,7 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 				for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 	
 					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+					// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 				}
 			
@@ -644,14 +661,13 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 			}
 			
 			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
-			incrementVRAMAddressHorizontally(&_VRAMAddress);
+			// incrementVRAMAddressHorizontally(&_VRAMAddress);
 			
 			// Draw sprites
-			for (spriteCounter = (_numberOfSpritesOnScanline - 1); spriteCounter >= 0; spriteCounter--) {
+			for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
 			
-				sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
-				spriteYOffset = _sprRAM[sprRAMIndex];
-				spriteVerticalOffset = ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1);
+				sprRAMIndex = _spritesOnCurrentScanline[(_numberOfSpritesOnScanline - 1) - spriteCounter];
+				spriteVerticalOffset = (_sprRAM[sprRAMIndex + 2] & 0x80 ? 7 - (((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1)) : ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1));
 				// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
 				spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
 				spriteVideoBufferOffset = _videoBufferIndex - 256 + spriteHorizontalOffset;
@@ -690,6 +706,9 @@ static inline uint8_t upperColorBitsFromAttributeByte(uint8_t attributeByte, uin
 			// Prime in-range object cache
 			[self _findInRangeSprites];
 		}
+		
+		// Restore original palettes
+		// restoreBackupPalettes(_palettes,_backupPalettes);
 	}
 	
 	// Start at scanline 0, end at 239
