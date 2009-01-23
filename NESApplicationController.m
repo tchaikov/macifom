@@ -3,7 +3,6 @@
 //  Macifom
 //
 //  Created by Auston Stewart on 9/7/08.
-//  Copyright 2008 Apple, Inc.. All rights reserved.
 //
 
 #import "NESApplicationController.h"
@@ -153,6 +152,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			
 			// Allow CPU Interpreter to cache PRGROM pointers
 			[cpuInterpreter setPRGROMPointers];
+			
+			// Reset the CPU to prepare for execution
+			[cpuInterpreter reset];
 		}
 		else {
 		
@@ -168,6 +170,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	andPPU:ppuEmulator];
 	_currentInstruction = nil;
 	instructions = nil;
+	debuggerIsVisible = NO;
 }
 
 - (IBAction)resetCPU:(id)sender {
@@ -210,9 +213,31 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[playfieldView setNeedsDisplay:YES];
 }
 
+- (IBAction)showAndHideDebugger:(id)sender
+{
+	if (debuggerIsVisible) {
+	
+		[debuggerWindow orderOut:nil];
+		debuggerIsVisible = NO;
+	}
+	else {
+	
+		[debuggerWindow makeKeyAndOrderFront:nil];
+		debuggerIsVisible = YES;
+	}
+}
+
 - (IBAction)play:(id)sender {
 
-	gameTimer = [NSTimer scheduledTimerWithTimeInterval:.017 target:self selector:@selector(_nextFrame) userInfo:nil repeats:YES];
+	if (gameTimer == nil) {
+		
+		gameTimer = [NSTimer scheduledTimerWithTimeInterval:.017 target:self selector:@selector(_nextFrame) userInfo:nil repeats:YES];
+	}
+	else {
+	
+		[gameTimer invalidate];
+		gameTimer = nil;
+	}
 }
 
 - (IBAction)pause:(id)sender {
@@ -278,12 +303,6 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	value = scannedValue; // take just 8 bits for the value
 	
 	[cpuInterpreter writeByte:value toCPUAddress:address];
-}
-
-- (IBAction)displayBackgroundTiles:(id)sender
-{
-	[ppuEmulator displayBackgroundTiles];
-	[playfieldView setNeedsDisplay:YES];
 }
 
 - (void)updatecpuRegisters

@@ -3,7 +3,6 @@
 //  Macifom
 //
 //  Created by Auston Stewart on 9/7/08.
-//  Copyright 2008 Apple, Inc.. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
@@ -29,6 +28,9 @@
 	IBOutlet NSTextField *peekField;
 	IBOutlet NSTextField *peekLabel;
 	IBOutlet NSTextField *pokeField;
+	IBOutlet NSWindow *debuggerWindow;
+	
+	BOOL debuggerIsVisible;
 }
 
 - (IBAction)play:(id)sender;
@@ -42,7 +44,7 @@
 - (IBAction)step:(id)sender;
 - (IBAction)peek:(id)sender;
 - (IBAction)poke:(id)sender;
-- (IBAction)displayBackgroundTiles:(id)sender;
+- (IBAction)showAndHideDebugger:(id)sender;
 - (void)updatecpuRegisters;
 - (NSDictionary *)cpuRegisters;
 - (void)setCpuRegisters:(NSDictionary *)newRegisters;

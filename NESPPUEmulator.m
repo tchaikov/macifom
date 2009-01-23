@@ -1,6 +1,6 @@
 //
 //  NESPPUEmulator.m
-//  Innuendo
+//  Macifom
 //
 //  Created by Auston Stewart on 7/27/08.
 //

@@ -1,9 +1,8 @@
 //
 //  NESCartridgeEmulator.h
-//  Innuendo
+//  Macifom
 //
 //  Created by Auston Stewart on 7/27/08.
-//  Copyright 2008 Apple, Inc.. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

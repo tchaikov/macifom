@@ -1,6 +1,6 @@
 //
 //  NES6502Interpreter.h
-//  Familiar
+//  Macifom
 //
 //  Created by Auston Stewart on 7/27/08.
 //

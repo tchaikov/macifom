@@ -3,7 +3,6 @@
 //  Macifom
 //
 //  Created by Auston Stewart on 9/7/08.
-//  Copyright 2008 Apple, Inc.. All rights reserved.
 //
 
 #import "NESPlayfieldView.h"
@@ -34,6 +33,8 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 			NSLog(@"Obtained System colorspace. CG rendering will follow the fast path.");
 		} 
 		else _colorSpace = CGColorSpaceCreateDeviceRGB();
+		
+		[[self window] useOptimizedDrawing:YES]; // Use optimized drawing in window as there are no overlapping subviews
 	}
 	
     return self;
@@ -76,10 +77,10 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 			_controller1 &= 0xFFFFFF3F;
 			_controller1 |= 0x80; // Right
 			break;
-		case 'k':
+		case 'l':
 			_controller1 |= 0x1; // A button fire
 			break;
-		case 'l':
+		case 'k':
 			_controller1 |= 0x2; // B button fire
 			break;
 		case 'g':
@@ -111,10 +112,10 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 		case 'd':
 			_controller1 &= 0xFFFFFF7F; // Clear right
 			break;
-		case 'k':
+		case 'l':
 			_controller1 &= 0xFFFFFFFE; // A button release
 			break;
-		case 'l':
+		case 'k':
 			_controller1 &= 0xFFFFFFFD; // B button release
 			break;
 		case 'g':
