@@ -125,14 +125,33 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 - (IBAction)loadROM:(id)sender
 {
-	NSOpenPanel *openPanel = [NSOpenPanel openPanel];
+	NSError *propagatedError;
+	NSAlert *errorDialog;
+	NSOpenPanel *openPanel;
+	
+	if (gameIsLoaded) {
+		
+		if (gameTimer != nil) {
+		
+			[gameTimer invalidate];
+			gameTimer = nil;
+		}
+	}
+	
+	openPanel = [NSOpenPanel openPanel];
 	[openPanel setCanChooseFiles:YES];
 	[openPanel setCanChooseDirectories:NO];
 	[openPanel setAllowsMultipleSelection:NO];
 	
 	if (NSOKButton == [openPanel runModalForDirectory:nil file:nil types:[NSArray arrayWithObject:@"nes"]]) {
 		
-		if ([cartEmulator loadROMFileAtPath:[[openPanel filenames] objectAtIndex:0]]) {
+		// Clear loaded ROM data, if any
+		[cartEmulator clearROMdata];
+		
+		// Reset the PPU
+		[ppuEmulator resetPPUstatus];
+		
+		if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:[[openPanel filenames] objectAtIndex:0]])) {
 		
 			// Friendly Debugging Info
 			NSLog(@"Cartridge Information:");
@@ -155,10 +174,21 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			
 			// Reset the CPU to prepare for execution
 			[cpuInterpreter reset];
+			
+			// Flip the bool to indicate that the game is loaded
+			[self setGameIsLoaded:YES];
+			
+			// Start the game
+			[self play:nil];
 		}
 		else {
 		
-			// should NSAlert here
+			// There's no game loaded
+			[self setGameIsLoaded:NO];
+			
+			// Throw an error
+			errorDialog = [NSAlert alertWithError:propagatedError];
+			[errorDialog runModal];
 		}
 	}
 }
@@ -171,6 +201,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	_currentInstruction = nil;
 	instructions = nil;
 	debuggerIsVisible = NO;
+	gameIsLoaded = NO;
 }
 
 - (IBAction)resetCPU:(id)sender {
@@ -227,22 +258,39 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 }
 
+- (BOOL)gameIsLoaded
+{
+	return gameIsLoaded;
+}
+
+- (void)setGameIsLoaded:(BOOL)flag
+{
+	gameIsLoaded = flag;
+	
+	if (flag) {
+	
+		[playPauseMenuItem setEnabled:YES];
+	}
+	else {
+		
+		[playPauseMenuItem setTitle:@"Play"];
+		[playPauseMenuItem setEnabled:NO];
+	}
+}
+
 - (IBAction)play:(id)sender {
 
 	if (gameTimer == nil) {
 		
+		[playPauseMenuItem setTitle:@"Pause"];
 		gameTimer = [NSTimer scheduledTimerWithTimeInterval:.017 target:self selector:@selector(_nextFrame) userInfo:nil repeats:YES];
 	}
 	else {
 	
+		[playPauseMenuItem setTitle:@"Play"];
 		[gameTimer invalidate];
 		gameTimer = nil;
 	}
-}
-
-- (IBAction)pause:(id)sender {
-
-	[gameTimer invalidate];
 }
 
 - (IBAction)advanceFrame:(id)sender {

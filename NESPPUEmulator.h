@@ -84,6 +84,7 @@ typedef enum {
 - (void)runPPUForCPUCycles:(uint_fast32_t)cycle;
 - (BOOL)triggeredNMI;
 - (uint_fast32_t)cyclesSinceVINT;
+- (void)resetPPUstatus;
 - (uint8_t)readByteFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPPUFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeToPPUControlRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle;

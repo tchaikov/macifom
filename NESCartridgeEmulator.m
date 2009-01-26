@@ -104,41 +104,58 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
 	
-	_controllerRead = 0; // FIXME: Controller faking hijinx!
-	
 	return self;
 }
 
 - (void)dealloc
 {
-	[self _cleanUpPRGROMMemory];
-	[self _cleanUpCHRROMMemory];
-	[self _cleanUpTrainerMemory];
+	[self clearROMdata];
 	
 	[super dealloc];
 }
 
-- (void)_setROMPointers
+- (void)clearROMdata
 {
-	if (_numberOfPRGROMBanks == 1) {
-	
-		_prgromBank0 = _prgromBanks[0];
-		_prgromBank1 = _prgromBanks[0];
-	}
-	else if (_numberOfPRGROMBanks > 1) {
-	
-		_prgromBank0 = _prgromBanks[0];
-		_prgromBank1 = _prgromBanks[1];
-	}
-
-	// FIXME: More sophisticated logic will be required for mappers.
-	_patternTable0 = _chrromBanks[0];
-	_patternTable1 = _chrromBanks[0] + 4096;
+	[self _cleanUpPRGROMMemory];
+	[self _cleanUpCHRROMMemory];
+	[self _cleanUpTrainerMemory];
 }
 
-- (BOOL)_loadiNESROMOptions:(NSData *)header
+- (NSError *)_setROMPointers
 {
-	if ([header length] < 16) return NO;
+	switch (_mapperNumber) {
+	
+		case 0:	
+			if (_numberOfPRGROMBanks == 1) {
+	
+				_prgromBank0 = _prgromBanks[0];
+				_prgromBank1 = _prgromBanks[0];
+			}
+			else if (_numberOfPRGROMBanks > 1) {
+	
+				_prgromBank0 = _prgromBanks[0];
+				_prgromBank1 = _prgromBanks[1];
+			}
+
+			// FIXME: More sophisticated logic will be required for mappers.
+			_patternTable0 = _chrromBanks[0];
+			_patternTable1 = _chrromBanks[0] + 4096;
+			break;
+		default:
+			return [NSError errorWithDomain:@"NESMapperErrorDomain" code:11 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Unsupported iNES Mapper",NSLocalizedDescriptionKey,[NSString stringWithFormat:@"Macifom was unable to load the selected file as it specifies an unsupported iNES mapper: %@",[self mapperDescription]],NSLocalizedRecoverySuggestionErrorKey,nil]];
+			break;
+	}
+	
+	return nil;
+}
+
+- (NSError *)_loadiNESROMOptions:(NSData *)header
+{
+	if ([header length] < 16) {
+	
+		_romFileDidLoad = NO;
+		return [NSError errorWithDomain:@"NESFileErrorDomain" code:4 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"iNES file is corrupt.",NSLocalizedDescriptionKey,@"Macifom was unable to parse the selected file as the iNES header is corrupt.",NSLocalizedRecoverySuggestionErrorKey,nil]];
+	}
 	
 	uint8_t lowerOptionsByte = *((uint8_t *)[header bytes]+6);
 	uint8_t higherOptionsByte = *((uint8_t *)[header bytes]+7);
@@ -167,30 +184,43 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	
 	_mapperNumber = ((lowerOptionsByte & 0xF0) >> 4) + (higherOptionsByte & 0xF0);
 	
-	return YES;
+	return nil;
 }
 
-- (BOOL)_loadiNESFileAtPath:(NSString *)path
+- (NSError *)_loadiNESFileAtPath:(NSString *)path
 {
 	uint_fast8_t bank;
 	NSData *rom;
+	NSError *propagatedError = nil;
 	BOOL loadErrorOccurred = NO;
 	NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:path];
 	
-	if (fileHandle == nil) return NO; // Return NO if no file was found
+	if (fileHandle == nil) {
+		
+		_romFileDidLoad = NO;
+		return [NSError errorWithDomain:@"NESFileErrorDomain" code:1 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"File could not be opened.",NSLocalizedDescriptionKey,@"Macifom was unable to open the file selected.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
+	}
 	
 	NSData *header = [fileHandle readDataOfLength:16]; // Attempt to load 16 byte iNES Header
 	
 	// File format validation, must be iNES
 	// Should check if the file is 4 chars long, need to figure out fourth char in header format
-	if ((*((const char *)[header bytes]) != 'N') || (*((const char *)[header bytes]+1) != 'E') || (*((const char *)[header bytes]+2) != 'S')) return NO;
+	if ((*((const char *)[header bytes]) != 'N') || (*((const char *)[header bytes]+1) != 'E') || (*((const char *)[header bytes]+2) != 'S')) {
+	
+		_romFileDidLoad = NO;
+		return [NSError errorWithDomain:@"NESFileErrorDomain" code:2 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"File is not in iNES format.",NSLocalizedDescriptionKey,@"Macifom was unable to parse the selected file as it does not appear to be in iNES format.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
+	}
 	
 	// Blast existing memory
 	[self _cleanUpPRGROMMemory];
 	[self _cleanUpCHRROMMemory];
 	
 	// Load ROM Options
-	if (![self _loadiNESROMOptions:header]) return NO;
+	if (nil != (propagatedError = [self _loadiNESROMOptions:header])) {
+	
+		_romFileDidLoad = NO;
+		return propagatedError;
+	}
 	
 	// Extract Trainer If Present
 	if (_hasTrainer) {
@@ -226,10 +256,16 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// Close ROM file
 	[fileHandle closeFile];
 	
-	// Set ROM pointers
-	[self _setROMPointers];
+	if (loadErrorOccurred) {
 	
-	return !loadErrorOccurred;
+		_romFileDidLoad = NO;
+		return [NSError errorWithDomain:@"NESFileErrorDomain" code:3 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"ROM data could not be extracted.",NSLocalizedDescriptionKey,@"Macifom was unable to extract the ROM data from the selected file. This is likely due to file corruption or inaccurate header information.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
+	}
+	
+	// Set ROM pointers
+	propagatedError = [self _setROMPointers];
+	
+	return propagatedError;
 }
 
 - (id)initWithiNESFileAtPath:(NSString *)path
@@ -254,14 +290,15 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_numberOfPRGROMBanks = 0;
 	_numberOfCHRROMBanks = 0;
 	_numberOfRAMBanks = 0;
-	_romFileDidLoad = [self _loadiNESFileAtPath:path];
+	_romFileDidLoad = NO;
 	
 	return self;
 }
 
-- (BOOL)loadROMFileAtPath:(NSString *)path
+- (NSError *)loadROMFileAtPath:(NSString *)path
 {
-	return (_romFileDidLoad = [self _loadiNESFileAtPath:path]);
+	// Right now, only iNES format is supported
+	return [self _loadiNESFileAtPath:path];
 }
 
 - (uint8_t)readByteFromPRGROM:(uint16_t)offset
@@ -289,19 +326,6 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (uint8_t)readByteFromControlRegister:(uint16_t)address
 {
-	if (address == 0x4016) {
-		// FIXME: Controller faking hijinx!
-		// NSLog(@"Attempting to Read from Controller 1.");
-		/*
-		if (_controllerRead++ == 11) {
-		
-			NSLog(@"Returning 1!");
-			return 1;
-		 
-		}
-		 */
-	}	
-	
 	return 0;
 }
 

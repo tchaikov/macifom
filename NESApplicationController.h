@@ -29,12 +29,13 @@
 	IBOutlet NSTextField *peekLabel;
 	IBOutlet NSTextField *pokeField;
 	IBOutlet NSWindow *debuggerWindow;
+	IBOutlet NSMenuItem *playPauseMenuItem;
 	
 	BOOL debuggerIsVisible;
+	BOOL gameIsLoaded;
 }
 
 - (IBAction)play:(id)sender;
-- (IBAction)pause:(id)sender;
 - (IBAction)run:(id)sender;
 - (IBAction)setBreak:(id)sender;
 - (IBAction)runUntilBreak:(id)sender;
@@ -45,6 +46,8 @@
 - (IBAction)peek:(id)sender;
 - (IBAction)poke:(id)sender;
 - (IBAction)showAndHideDebugger:(id)sender;
+- (BOOL)gameIsLoaded;
+- (void)setGameIsLoaded:(BOOL)flag;
 - (void)updatecpuRegisters;
 - (NSDictionary *)cpuRegisters;
 - (void)setCpuRegisters:(NSDictionary *)newRegisters;

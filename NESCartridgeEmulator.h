@@ -30,11 +30,10 @@
 	uint8_t _numberOfRAMBanks;
 	
 	BOOL _romFileDidLoad;
-	int _controllerRead;
 }
 
 - (id)initWithiNESFileAtPath:(NSString *)path;
-- (BOOL)loadROMFileAtPath:(NSString *)path;
+- (NSError *)loadROMFileAtPath:(NSString *)path;
 - (uint8_t)readByteFromPRGROM:(uint16_t)address;
 - (uint8_t)readByteFromCHRROM:(uint16_t)address;
 - (uint8_t)readByteFromControlRegister:(uint16_t)address;
@@ -46,6 +45,7 @@
 - (uint8_t *)pointerToCHRROMBank1;
 - (uint8_t *)pointerToSRAM;
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address;
+- (void)clearROMdata;
 - (NSString *)mapperDescription;
 
 @property(nonatomic, readonly) BOOL romFileDidLoad;

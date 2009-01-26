@@ -373,12 +373,8 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	NSLog(@"Invalid PPU Write Access");
 }
 
-- (id)initWithBuffer:(uint_fast32_t *)buffer;
+- (void)resetPPUstatus
 {
-	[super init];
-	
-	_videoBuffer = buffer;
-	
 	_cyclesSinceVINT = 0;
 	_ppuStatusRegister = 0x80; // FIXME: We probably shouldn't really start with the VBLANK flag on, but the logic starts with VBLANK and I'm interested to see what happens.
 	_VRAMAddress = 0;
@@ -391,7 +387,15 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	_spritesEnabled = NO;
 	_oddFrame = NO; // FIXME: Currently all logic assumes we only have even (341cc) frames
 	_NMIOnVBlank = NO;
+	_nameAndAttributeTablesMask = 0;	
+}
+
+- (id)initWithBuffer:(uint_fast32_t *)buffer;
+{
+	[super init];
 	
+	[self resetPPUstatus];
+	_videoBuffer = buffer;
 	_playfieldBuffer = (uint8_t *)malloc(sizeof(uint8_t)*16);
 	_sprRAM = (uint8_t *)malloc(sizeof(uint8_t)*256);
 	_palettes = (uint8_t *)malloc(sizeof(uint8_t)*32);
@@ -422,7 +426,6 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	_nameTable3 = _nameAndAttributeTables + 0xC00;
 	_registerReadMethods = (RegisterReadMethod *)malloc(sizeof(uint8_t (*)(id, SEL, uint_fast32_t))*8);
 	_registerWriteMethods = (RegisterWriteMethod *)malloc(sizeof(void (*)(id, SEL, uint8_t, uint_fast32_t))*8);
-	_nameAndAttributeTablesMask = 0;
 	
 	// Readable Registers
 	_registerReadMethods[0] = (uint8_t (*)(id, SEL, uint_fast32_t))[self methodForSelector:@selector(_invalidPPURegisterAccessOnCycle:)];
