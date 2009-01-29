@@ -25,6 +25,14 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 		_provider = CGDataProviderCreateWithData(NULL, _videoBuffer, sizeof(uint_fast32_t)*256*240,VideoBufferProviderReleaseData);
 		_controller1 = 0x0001FF00; // Should indicate one controller on $4016 per nestech.txt
 		_controller2 = 0x0002FF00; // Should indicate one controller on $4017 per nestech.txt
+		_windowedRect.origin.x = 0;
+		_windowedRect.origin.y = 0;
+		_fullScreenRect.size.width = _windowedRect.size.width = 256;
+		_fullScreenRect.size.height =_windowedRect.size.height = 240;
+		_fullScreenRect.origin.y = 0;
+		_fullScreenRect.origin.x = 32;
+		_scale = 1;
+		screenRect = &_windowedRect;
 		
 		// There are reports that this can return fnf on Leopard, investigating...
 		if (CMGetSystemProfile(&profile) == noErr) { 
@@ -137,14 +145,31 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	return _videoBuffer;
 }
 
+- (void)scaleForFullScreenDrawing
+{
+	_scale = 2;
+	screenRect = &_fullScreenRect;
+	
+	// Default background for the window appears to be white
+	[[self window] setBackgroundColor:[NSColor blackColor]];
+}
+
+- (void)scaleForWindowedDrawing
+{
+	_scale = 1;
+	screenRect = &_windowedRect;
+	
+	[[self window] makeFirstResponder:self];
+}
+
 - (void)drawRect:(NSRect)rect {
     
 	CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort]; // Obtain graphics port from the window
 	CGImageRef screen = CGImageCreate(256, 240, 8, 32, 4 * 256, _colorSpace, kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Host, _provider, NULL, false, kCGRenderingIntentDefault); // Create an image optimized for ARGB32.
-	CGRect screenRect = NSRectToCGRect(rect); // This is just a typecast, I could probably do this myself.
 	
-	CGContextDrawImage(context, screenRect, screen); // All that work just to blit.
-
+	CGContextSetShouldAntialias(context, false);
+	CGContextScaleCTM(context, _scale, _scale);
+	CGContextDrawImage(context, *screenRect, screen); // All that work just to blit.
 	CGImageRelease(screen); // Then toss the image.
 }
 

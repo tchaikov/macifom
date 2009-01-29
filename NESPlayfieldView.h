@@ -16,9 +16,17 @@
 	
 	uint_fast32_t _controller1;
 	uint_fast32_t _controller2;
+	
+	CGRect _windowedRect;
+	CGRect _fullScreenRect;
+	CGRect *screenRect;
+	
+	CGFloat _scale;
 }
 
 - (uint_fast32_t *)videoBuffer;
 - (uint_fast32_t)readController1;
+- (void)scaleForFullScreenDrawing;
+- (void)scaleForWindowedDrawing;
 
 @end

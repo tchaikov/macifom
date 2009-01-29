@@ -21,6 +21,7 @@
 	NSArray *instructions;
 	NSDictionary *cpuRegisters;
 	NSTimer *gameTimer;
+	CFDictionaryRef _fullScreenMode;
 	
 	NSMutableDictionary *_currentInstruction;
 	
@@ -46,6 +47,7 @@
 - (IBAction)peek:(id)sender;
 - (IBAction)poke:(id)sender;
 - (IBAction)showAndHideDebugger:(id)sender;
+- (IBAction)toggleFullScreenMode:(id)sender;
 - (BOOL)gameIsLoaded;
 - (void)setGameIsLoaded:(BOOL)flag;
 - (void)updatecpuRegisters;

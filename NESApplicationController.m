@@ -195,6 +195,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 - (void)awakeFromNib {
 
+	boolean_t exactMatch;
+	
 	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
 	cartEmulator = [[NESCartridgeEmulator alloc] init];
 	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	andPPU:ppuEmulator];
@@ -202,6 +204,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	instructions = nil;
 	debuggerIsVisible = NO;
 	gameIsLoaded = NO;
+	
+	// FIXME: Should probably CGRelease this somewhere
+	_fullScreenMode = CGDisplayBestModeForParameters(kCGDirectMainDisplay,32,640,480,&exactMatch);
 }
 
 - (IBAction)resetCPU:(id)sender {
@@ -275,6 +280,20 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		
 		[playPauseMenuItem setTitle:@"Play"];
 		[playPauseMenuItem setEnabled:NO];
+	}
+}
+
+- (IBAction)toggleFullScreenMode:(id)sender
+{	
+	if ([playfieldView isInFullScreenMode]) {
+		
+		[playfieldView exitFullScreenModeWithOptions:nil];
+		[playfieldView scaleForWindowedDrawing];
+	}
+	else {
+
+		[playfieldView enterFullScreenMode:[NSScreen mainScreen] withOptions:[NSDictionary dictionaryWithObjectsAndKeys:(NSDictionary *)_fullScreenMode,NSFullScreenModeSetting,[NSNumber numberWithBool:NO],NSFullScreenModeAllScreens,nil]];
+		[playfieldView scaleForFullScreenDrawing];
 	}
 }
 
