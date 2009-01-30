@@ -150,6 +150,9 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	_scale = 2;
 	screenRect = &_fullScreenRect;
 	
+	// Set the preferred backing store to the card to get on the Quartz GL path
+	[[self window] setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
+	
 	// Default background for the window appears to be white
 	[[self window] setBackgroundColor:[NSColor blackColor]];
 }
@@ -167,6 +170,7 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort]; // Obtain graphics port from the window
 	CGImageRef screen = CGImageCreate(256, 240, 8, 32, 4 * 256, _colorSpace, kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Host, _provider, NULL, false, kCGRenderingIntentDefault); // Create an image optimized for ARGB32.
 	
+	CGContextSetInterpolationQuality(context, kCGInterpolationNone);
 	CGContextSetShouldAntialias(context, false);
 	CGContextScaleCTM(context, _scale, _scale);
 	CGContextDrawImage(context, *screenRect, screen); // All that work just to blit.
