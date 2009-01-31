@@ -400,6 +400,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_numberOfCHRROM8KBBanks = 0;
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
+	_prgromBanksDidChange = NO;
+	_chrromBanksDidChange = NO;
 	
 	return self;
 }
@@ -446,13 +448,22 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address
 {
-	if (_mapperNumber == 3) {
-	
-		// If we're CNROM we need to switch the CHRROM banks
-		_patternTable0 = _chrromBanks[byte & 0x3];
-		_patternTable1 = _chrromBanks[byte & 0x3] + 4096;
-		_chrromBank0Index = (byte & 0x3) * 2;
-		_chrromBank1Index = ((byte & 0x3) * 2) + 1;
+	switch (_mapperNumber) {
+		case 2:
+			// For UxROM, switch the lower PRGROM bank
+			_prgromBank0 = _prgromBanks[byte & (_numberOfPRGROMBanks > 8 ? 0xF : 0x7)];
+			_prgromBanksDidChange = YES;
+			break;
+		case 3:
+			// If we're CNROM we need to switch the CHRROM banks
+			_patternTable0 = _chrromBanks[byte & 0x3];
+			_patternTable1 = _chrromBanks[byte & 0x3] + 4096;
+			_chrromBank0Index = (byte & 0x3) * 2;
+			_chrromBank1Index = ((byte & 0x3) * 2) + 1;
+			_chrromBanksDidChange = YES;
+			break;
+		default:
+			break;
 	}
 }
 
@@ -494,6 +505,20 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 - (uint8_t *)pointerToSRAM
 {
 	return _sram;
+}
+
+- (BOOL)prgromBanksDidChange
+{
+	BOOL valueToReturn = _prgromBanksDidChange;
+	_prgromBanksDidChange = NO;
+	return valueToReturn;
+}
+
+- (BOOL)chrromBanksDidChange
+{
+	BOOL valueToReturn = _chrromBanksDidChange;
+	_chrromBanksDidChange = NO;
+	return valueToReturn;	
 }
 
 @end

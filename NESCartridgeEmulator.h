@@ -26,6 +26,8 @@
 	BOOL _usesBatteryBackedRAM;
 	BOOL _usesFourScreenVRAMLayout;
 	BOOL _isPAL;
+	BOOL _prgromBanksDidChange;
+	BOOL _chrromBanksDidChange;
 	
 	uint_fast8_t _mapperNumber;
 	uint_fast8_t _numberOfPRGROMBanks;
@@ -51,6 +53,8 @@
 - (uint8_t ***)pointerToCHRROMBank0TileCache;
 - (uint8_t ***)pointerToCHRROMBank1TileCache;
 - (uint8_t *)pointerToSRAM;
+- (BOOL)prgromBanksDidChange;
+- (BOOL)chrromBanksDidChange;
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address;
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address;
 - (void)clearROMdata;

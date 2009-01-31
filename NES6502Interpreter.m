@@ -330,11 +330,18 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	else {
 		
 		[cartridge writeByte:byte toPRGROMwithCPUAddress:address];
-		[ppu setCHRROMTileCachePointersForBank0:[cartridge pointerToCHRROMBank0TileCache] bank1:[cartridge pointerToCHRROMBank1TileCache]];
-		[ppu setCHRROMPointersForBank0:[cartridge pointerToCHRROMBank0] bank1:[cartridge pointerToCHRROMBank1]];
+		
+		if ([cartridge prgromBanksDidChange]) {
+			
+			[self setPRGROMPointers];
+		}
+		
+		if ([cartridge chrromBanksDidChange]) {
+		
+			[ppu setCHRROMTileCachePointersForBank0:[cartridge pointerToCHRROMBank0TileCache] bank1:[cartridge pointerToCHRROMBank1TileCache]];
+			[ppu setCHRROMPointersForBank0:[cartridge pointerToCHRROMBank0] bank1:[cartridge pointerToCHRROMBank1]];
+		}
 	}
-	
-	return; // Shouldn't be able to write to cartridge memory, right?
 }
 
 /* Note to self: May note be able to assume that all program execution is from cartridge memory.
