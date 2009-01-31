@@ -319,11 +319,20 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		}
 		else if (address == 0x4016) {
 		
-			_controllerReadIndex = 0; // should be resetting this when 1 then 0 is written
+			_controllerReadIndex = 0; // FIXME: Really, I should be resetting this when 1 then 0 is written
 		}
 	}
-	else if (address < 0x6000) [cartridge writeByte:byte toSRAMwithCPUAddress:address];
-	else if (address < 0x8000) return; // Don't know what to do with expansion ROM writes
+	else if (address < 0x6000) return;
+	else if (address < 0x8000) {
+		
+		[cartridge writeByte:byte toSRAMwithCPUAddress:address];
+	}
+	else {
+		
+		[cartridge writeByte:byte toPRGROMwithCPUAddress:address];
+		[ppu setCHRROMTileCachePointersForBank0:[cartridge pointerToCHRROMBank0TileCache] bank1:[cartridge pointerToCHRROMBank1TileCache]];
+		[ppu setCHRROMPointersForBank0:[cartridge pointerToCHRROMBank0] bank1:[cartridge pointerToCHRROMBank1]];
+	}
 	
 	return; // Shouldn't be able to write to cartridge memory, right?
 }

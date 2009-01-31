@@ -42,7 +42,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 @implementation NESCartridgeEmulator
 
-@synthesize romFileDidLoad = _romFileDidLoad, hasTrainer = _hasTrainer, usesVerticalMirroring = _usesVerticalMirroring, usesBatteryBackedRAM = _usesBatteryBackedRAM, usesFourScreenVRAMLayout = _usesFourScreenVRAMLayout, isPAL = _isPAL, mapperNumber = _mapperNumber, numberOfPRGROMBanks = _numberOfPRGROMBanks, numberOfCHRROMBanks = _numberOfCHRROMBanks, numberOfRAMBanks = _numberOfRAMBanks;
+@synthesize romFileDidLoad = _romFileDidLoad, hasTrainer = _hasTrainer, usesVerticalMirroring = _usesVerticalMirroring, usesBatteryBackedRAM = _usesBatteryBackedRAM, usesCHRRAM = _usesCHRRAM, usesFourScreenVRAMLayout = _usesFourScreenVRAMLayout, isPAL = _isPAL, mapperNumber = _mapperNumber, numberOfPRGROMBanks = _numberOfPRGROMBanks, numberOfCHRROMBanks = _numberOfCHRROM8KBBanks, numberOfRAMBanks = _numberOfRAMBanks;
 
 - (void)_cleanUpPRGROMMemory
 {
@@ -62,30 +62,96 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 - (void)_cleanUpCHRROMMemory
 {
 	uint_fast8_t bank;
+	uint_fast16_t tile; // Tile counter
+	uint_fast16_t line; // Tile scanline counter
 	
-	if (_chrromBanks == NULL) return;
+	if (_chrromBanks != NULL) {
 	
-	for (bank = 0; bank < _numberOfCHRROMBanks; bank++) {
+		for (bank = 0; bank < _numberOfCHRROM8KBBanks; bank++) {
 		
-		free(_chrromBanks[bank]);
+			free(_chrromBanks[bank]);
+		}
+	
+		free(_chrromBanks);
+		_chrromBanks = NULL;
 	}
 	
-	free(_chrromBanks);
-	_chrromBanks = NULL;
+	if (_chrromCache != NULL) {
+		
+		for (bank = 0; bank < _numberOfCHRROM8KBBanks; bank++) {
+		
+			for (tile = 0; tile < 256; tile++) {
+			
+				for (line = 0; line < 8; line++) {
+				
+					free(_chrromCache[bank][tile][line]);
+				}
+				
+				free(_chrromCache[bank][tile]);
+			}
+			
+			free(_chrromCache[bank]);
+		}
+		
+		free(_chrromCache);
+		_chrromCache = NULL;
+	}
 }
 
 - (void)_cleanUpTrainerMemory
 {
 	if (_trainer == NULL) return;
 	free(_trainer);
+	_trainer = NULL;
 }
 
-- (id)init
-{
-	[super init];
+- (void)_cacheCHRROM
+{	
+	uint_fast16_t tile; // Tile counter
+	uint_fast16_t line; // Tile scanline counter
+	uint_fast8_t pixel; // Tile pixel counter
+	uint_fast8_t indexingPixel;
+	uint_fast8_t bank; // CHROM bank counter
+	uint_fast8_t numberOf4KbCHRROMBanks = _numberOfCHRROM8KBBanks * 2;
 	
+	if (_numberOfCHRROM8KBBanks == 0) return;
+	
+	_chrromCache = (uint8_t ****)malloc(sizeof(uint8_t***) * numberOf4KbCHRROMBanks);
+	
+	for (bank = 0; bank < numberOf4KbCHRROMBanks; bank++) {
+	
+		_chrromCache[bank] = (uint8_t ***)malloc(sizeof(uint8_t**) * 256);
+		
+		for (tile = 0; tile < 256; tile++) {
+			
+			_chrromCache[bank][tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
+			
+			for (line = 0; line < 8; line++) {
+				
+				_chrromCache[bank][tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
+			}
+		}
+		
+		for (tile = 0; tile < 256; tile++) {
+		
+			for (line = 0; line < 8; line++) {
+			
+				for (pixel = 0; pixel < 8; pixel++) {
+				
+					// FIXME: This logic is butchered to handle 8KB rom banks that go into 4KB switchable pattern table caches. Really I should just have 4KB in each bank.
+					indexingPixel = 7 - pixel;
+					_chrromCache[bank][tile][line][pixel] = ((_chrromBanks[bank/2][((tile << 4) | line) + (bank % 2)*4096] & (1 << (indexingPixel))) >> indexingPixel) | (((_chrromBanks[bank/2][((tile << 4) | (line + 8)) + (bank % 2)*4096] & (1 << (indexingPixel))) >> indexingPixel) << 1);
+				}
+			}
+		}
+	}
+}
+
+- (void)_resetCartridgeState
+{
 	_prgromBanks = NULL;
 	_chrromBanks = NULL;
+	_chrromCache = NULL;
 	_prgromBank0 = NULL;
 	_prgromBank1 = NULL;
 	_patternTable0 = NULL;
@@ -93,6 +159,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_trainer = NULL;
 	
 	_usesVerticalMirroring = NO;
+	_usesCHRRAM = NO;
 	_hasTrainer = NO;
 	_usesBatteryBackedRAM = NO;
 	_usesFourScreenVRAMLayout = NO;
@@ -100,17 +167,25 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	
 	_mapperNumber = 0;
 	_numberOfPRGROMBanks = 0;
-	_numberOfCHRROMBanks = 0;
+	_numberOfCHRROM8KBBanks = 0;
+	_chrromBank0Index = 0;
+	_chrromBank0Index = 1;
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
+}
+
+- (id)init
+{
+	[super init];
+	
+	[self _resetCartridgeState];
 	
 	return self;
 }
 
 - (void)dealloc
 {
-	[self clearROMdata];
-	
+	[self clearROMdata];	
 	[super dealloc];
 }
 
@@ -119,6 +194,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	[self _cleanUpPRGROMMemory];
 	[self _cleanUpCHRROMMemory];
 	[self _cleanUpTrainerMemory];
+	[self _resetCartridgeState];
 }
 
 - (NSError *)_setROMPointers
@@ -126,21 +202,52 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	switch (_mapperNumber) {
 	
 		case 0:	
-			if (_numberOfPRGROMBanks == 1) {
-	
-				_prgromBank0 = _prgromBanks[0];
-				_prgromBank1 = _prgromBanks[0];
-			}
-			else if (_numberOfPRGROMBanks > 1) {
-	
-				_prgromBank0 = _prgromBanks[0];
+			
+			// NROM (No Mapper)
+			_prgromBank0 = _prgromBanks[0];
+			_prgromBank1 = _prgromBanks[0];
+			
+			if (_numberOfPRGROMBanks > 1) {
+
 				_prgromBank1 = _prgromBanks[1];
 			}
 
-			// FIXME: More sophisticated logic will be required for mappers.
 			_patternTable0 = _chrromBanks[0];
 			_patternTable1 = _chrromBanks[0] + 4096;
+			
+			// This should be acceptable as the iNES format dictates 8kB CHRROM segments
+			_chrromBank0Index = 0;
+			_chrromBank1Index = 1;
 			break;
+		
+		case 2:
+			
+			// UxROM
+			_prgromBank0 = _prgromBanks[0];
+			_prgromBank1 = _prgromBanks[_numberOfPRGROMBanks - 1];
+			
+			_usesCHRRAM = YES;
+			break;
+			
+		case 3:
+			
+			// CNROM
+			_prgromBank0 = _prgromBanks[0];
+			_prgromBank1 = _prgromBanks[0];
+			
+			if (_numberOfPRGROMBanks > 1) {
+				
+				_prgromBank1 = _prgromBanks[1];
+			}
+			
+			_patternTable0 = _chrromBanks[0];
+			_patternTable1 = _chrromBanks[0] + 4096;
+			
+			// This should be acceptable as the iNES format dictates 8kB CHRROM segments
+			_chrromBank0Index = 0;
+			_chrromBank1Index = 1;
+			break;
+			
 		default:
 			return [NSError errorWithDomain:@"NESMapperErrorDomain" code:11 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Unsupported iNES Mapper",NSLocalizedDescriptionKey,[NSString stringWithFormat:@"Macifom was unable to load the selected file as it specifies an unsupported iNES mapper: %@",[self mapperDescription]],NSLocalizedRecoverySuggestionErrorKey,nil]];
 			break;
@@ -172,8 +279,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		videoModeByte = 0;
 	}
 	
-	_numberOfPRGROMBanks = *((uint8_t *)[header bytes]+4);
-	_numberOfCHRROMBanks = *((uint8_t *)[header bytes]+5);
+	_numberOfPRGROMBanks = *((uint_fast8_t *)[header bytes]+4);
+	_numberOfCHRROM8KBBanks = *((uint_fast8_t *)[header bytes]+5);
 	_numberOfRAMBanks = ramBanksByte; // Fayzullin's docs say to assume 1x8kB RAM when zero to account for earlier format
 	
 	_usesVerticalMirroring = (lowerOptionsByte & 1) ? YES : NO;
@@ -212,8 +319,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	}
 	
 	// Blast existing memory
-	[self _cleanUpPRGROMMemory];
-	[self _cleanUpCHRROMMemory];
+	[self clearROMdata];
 	
 	// Load ROM Options
 	if (nil != (propagatedError = [self _loadiNESROMOptions:header])) {
@@ -241,8 +347,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	}
 	
 	// Extract CHRROM Banks
-	_chrromBanks = (uint8_t **)malloc(sizeof(uint8_t*)*_numberOfCHRROMBanks);
-	for (bank = 0; bank < _numberOfCHRROMBanks; bank++) {
+	_chrromBanks = (uint8_t **)malloc(sizeof(uint8_t*)*_numberOfCHRROM8KBBanks);
+	for (bank = 0; bank < _numberOfCHRROM8KBBanks; bank++) {
 		
 		_chrromBanks[bank] = (uint8_t *)malloc(sizeof(uint8_t)*8192);
 		rom = [fileHandle readDataOfLength:8192]; // CHR-ROMs have 8kB banks
@@ -250,7 +356,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		else [rom getBytes:_chrromBanks[bank]];
 	}
 	
-	// FIXME: Always allocating SRAM, because I'm not sure how to detect it yet
+	// FIXME: Always allocating SRAM, because I'm not sure how to detect it yet, this may just be leaked
 	_sram = (uint8_t *)malloc(sizeof(uint8_t)*8192);
 	
 	// Close ROM file
@@ -261,6 +367,9 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		_romFileDidLoad = NO;
 		return [NSError errorWithDomain:@"NESFileErrorDomain" code:3 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"ROM data could not be extracted.",NSLocalizedDescriptionKey,@"Macifom was unable to extract the ROM data from the selected file. This is likely due to file corruption or inaccurate header information.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
 	}
+	
+	// Cache CHRROM data if needed
+	[self _cacheCHRROM];
 	
 	// Set ROM pointers
 	propagatedError = [self _setROMPointers];
@@ -288,7 +397,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	
 	_mapperNumber = 0;
 	_numberOfPRGROMBanks = 0;
-	_numberOfCHRROMBanks = 0;
+	_numberOfCHRROM8KBBanks = 0;
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
 	
@@ -335,6 +444,18 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// NSLog(@"Writing byte to SRAM address 0x%4.4x",address);
 }
 
+- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address
+{
+	if (_mapperNumber == 3) {
+	
+		// If we're CNROM we need to switch the CHRROM banks
+		_patternTable0 = _chrromBanks[byte & 0x3];
+		_patternTable1 = _chrromBanks[byte & 0x3] + 4096;
+		_chrromBank0Index = (byte & 0x3) * 2;
+		_chrromBank1Index = ((byte & 0x3) * 2) + 1;
+	}
+}
+
 - (NSString *)mapperDescription
 {
 	return [NSString stringWithCString:mapperDescriptions[_mapperNumber] encoding:NSASCIIStringEncoding];
@@ -358,6 +479,16 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 - (uint8_t *)pointerToCHRROMBank1
 {
 	return _patternTable1;
+}
+
+- (uint8_t ***)pointerToCHRROMBank0TileCache
+{
+	return _chrromCache[_chrromBank0Index];
+}
+
+- (uint8_t ***)pointerToCHRROMBank1TileCache
+{
+	return _chrromCache[_chrromBank1Index];
 }
 
 - (uint8_t *)pointerToSRAM

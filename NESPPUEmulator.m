@@ -347,6 +347,29 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	memcpy(originalPalette,backupPalette,sizeof(uint8_t)*32);
 }
 
+static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8_t *patternTable) {
+	
+	uint_fast16_t tile;
+	uint_fast8_t line;
+	uint_fast8_t pixel;
+	uint_fast8_t indexingPixel;
+	uint8_t pixelMask;
+	
+	for (tile = 0; tile < 256; tile++) {
+		
+		for (line = 0; line < 8; line++) {
+			
+			for (pixel = 0; pixel < 8; pixel++) {
+				
+				// FIXME: This logic is butchered to handle 8KB rom banks that go into 4KB switchable pattern table caches. Really I should just have 4KB in each bank.
+				indexingPixel = 7 - pixel;
+				pixelMask = 1 << indexingPixel;
+				tileCache[tile][line][pixel] = ((patternTable[(tile << 4) | line] & pixelMask) >> indexingPixel) | (((patternTable[(tile << 4) | (line + 8)] & pixelMask) >> indexingPixel) << 1);
+			}
+		}
+	}	
+}
+
 @implementation NESPPUEmulator
 
 - (void)printAttributeTableIndices
@@ -388,6 +411,25 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	_oddFrame = NO; // FIXME: Currently all logic assumes we only have even (341cc) frames
 	_NMIOnVBlank = NO;
 	_nameAndAttributeTablesMask = 0;	
+	_chrRAMWriteHistory = 0;
+	
+	if (_chrromBank0TileCache != NULL) {
+	
+		// Invoke method to free tile cache
+		_chrromBank0TileCache = NULL;
+	}
+	
+	if (_chrromBank1TileCache != NULL) {
+		
+		// Invoke method to free tile cache
+		_chrromBank1TileCache = NULL;
+	}
+	
+	if (_chrRAM != NULL) {
+		
+		free(_chrRAM);
+		_chrRAM = NULL;
+	}
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
@@ -401,24 +443,7 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	_palettes = (uint8_t *)malloc(sizeof(uint8_t)*32);
 	_backgroundPalette = _palettes;
 	_spritePalette = (_palettes + 0x10);
-	_chrromBank0TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
-	_chrromBank1TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
-	_backgroundTileCache = _chrromBank0TileCache;
-	_spriteTileCache = _chrromBank1TileCache;
-	
-	// Initialize the sprite buffers
-	for (int tile = 0; tile < 256; tile++) {
-	
-		_chrromBank0TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
-		_chrromBank1TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
 		
-		for (int line = 0; line < 8; line++) {
-		
-			_chrromBank0TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
-			_chrromBank1TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
-		}
-	}
-	
 	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*4096);
 	_nameTable0 = _nameAndAttributeTables;
 	_nameTable1 = _nameAndAttributeTables + 0x400;
@@ -450,36 +475,53 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	return self;
 }
 
-// Checked 1/3
-- (void)cacheCHROMFromCartridge:(NESCartridgeEmulator *)cartEmu
-{
-	NSLog(@"In cacheCHROMFromCartridge method.");
-	
-	uint16_t sprite; // Tile counter
-	uint16_t line; // Tile scanline counter
-	uint8_t pixel; // Tile pixel counter
-	_chromBank0 = [cartEmu pointerToCHRROMBank0];
-	_chromBank1 = [cartEmu pointerToCHRROMBank1];
-	
-	for (sprite = 0; sprite < 256; sprite++) {
-	
-		for (line = 0; line < 8; line++) {
-			
-			for (pixel = 0; pixel < 8; pixel++) {
-				
-				_chrromBank0TileCache[sprite][line][pixel] = ((_chromBank0[(sprite << 4) | line] & (1 << (7 - pixel))) >> (7 - pixel)) | (((_chromBank0[(sprite << 4) | (line + 8)] & (1 << (7 - pixel))) >> (7 - pixel)) << 1);
-				_chrromBank1TileCache[sprite][line][pixel] = ((_chromBank1[(sprite << 4) | line] & (1 << (7 - pixel))) >> (7 - pixel)) | (((_chromBank1[(sprite << 4) | (line + 8)] & (1 << (7 - pixel))) >> (7 - pixel)) << 1);
-			}
-		}
-	}
-}
-
 // Checked 1/4
 - (void)setMirroringType:(NESMirroringType)type
 {
 	NSLog(@"In setMirroringType method.");
 	
 	_nameAndAttributeTablesMask = nameAndAttributeTablesMasks[type];
+}
+
+- (void)configureForCHRRAM
+{
+	uint_fast16_t tile;
+	uint_fast8_t line;
+		
+	_chrromBank0TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
+	_chrromBank1TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
+	_chrRAM = (uint8_t *)malloc(sizeof(uint8_t)*8192);
+	memset(_chrRAM,0,sizeof(uint8_t)*8192);
+	
+	for (tile = 0; tile < 256; tile++) {
+		
+		_chrromBank0TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
+		_chrromBank1TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
+		
+		for (line = 0; line < 8; line++) {
+			
+			_chrromBank0TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
+			_chrromBank1TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
+		}
+	}
+	
+	// This is always or'ed with the write address to give some indication of what CHRRAM has changed.. it's a bit sloppy
+	// We start off in a dirty state to force re-caching of the pattern tables
+	_chrRAMWriteHistory = 0x1001;
+}
+
+- (void)setCHRROMTileCachePointersForBank0:(uint8_t ***)bankPointer0 bank1:(uint8_t ***)bankPointer1
+{
+	_chrromBank0TileCache = bankPointer0;
+	_chrromBank1TileCache = bankPointer1;
+	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
+	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
+}
+
+- (void)setCHRROMPointersForBank0:(uint8_t *)bankPointer0 bank1:(uint8_t *)bankPointer1
+{
+	_chromBank0 = bankPointer0;
+	_chromBank1 = bankPointer1;
 }
 
 - (void)displayBackgroundTiles {
@@ -621,6 +663,11 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	if (_backgroundEnabled || _spritesEnabled) {
 	
 		// backupPalettesForRendering(_palettes,_backupPalettes);
+		
+		// If CHRRAM writes have occurred, regenerate the pattern table tile caches prior to rendering
+		if (_chrRAMWriteHistory & 0x1000) generateTileCacheFromPatternTable(_chrromBank1TileCache,_chrRAM+4096);
+		if (_chrRAMWriteHistory) generateTileCacheFromPatternTable(_chrromBank0TileCache,_chrRAM);
+		_chrRAMWriteHistory = 0; // Clear write history
 		
 		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
 	
@@ -965,8 +1012,13 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 		// Name or attribute table write
 		_nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask] = byte;
 	}
+	else {
 	
-	// Pattern table write?	
+		// We're writing to CHRRAM
+		// FIXME: If a non-CHRRAM game tries to write here, shit's going to get fucked up
+		_chrRAM[effectiveAddress] = byte;
+		_chrRAMWriteHistory |= effectiveAddress;
+	}
 }
 
 - (uint8_t)readByteFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle

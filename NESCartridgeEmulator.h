@@ -18,17 +18,22 @@
 	uint8_t *_trainer;
 	uint8_t *_sram;
 	
+	uint8_t ****_chrromCache;
+	
 	BOOL _usesVerticalMirroring;
+	BOOL _usesCHRRAM;
 	BOOL _hasTrainer;
 	BOOL _usesBatteryBackedRAM;
 	BOOL _usesFourScreenVRAMLayout;
 	BOOL _isPAL;
 	
-	uint8_t _mapperNumber;
-	uint8_t _numberOfPRGROMBanks;
-	uint8_t _numberOfCHRROMBanks;
-	uint8_t _numberOfRAMBanks;
-	
+	uint_fast8_t _mapperNumber;
+	uint_fast8_t _numberOfPRGROMBanks;
+	uint_fast8_t _numberOfCHRROM8KBBanks;
+	uint_fast8_t _numberOfRAMBanks;
+	uint_fast8_t _chrromBank0Index;
+	uint_fast8_t _chrromBank1Index;
+
 	BOOL _romFileDidLoad;
 }
 
@@ -43,8 +48,11 @@
 - (uint8_t *)pointerToPRGROMBank1;
 - (uint8_t *)pointerToCHRROMBank0;
 - (uint8_t *)pointerToCHRROMBank1;
+- (uint8_t ***)pointerToCHRROMBank0TileCache;
+- (uint8_t ***)pointerToCHRROMBank1TileCache;
 - (uint8_t *)pointerToSRAM;
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address;
+- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address;
 - (void)clearROMdata;
 - (NSString *)mapperDescription;
 
@@ -52,6 +60,7 @@
 @property(nonatomic, readonly) BOOL hasTrainer;
 @property(nonatomic, readonly) BOOL usesVerticalMirroring;
 @property(nonatomic, readonly) BOOL usesBatteryBackedRAM;
+@property(nonatomic, readonly) BOOL usesCHRRAM;
 @property(nonatomic, readonly) BOOL usesFourScreenVRAMLayout;
 @property(nonatomic, readonly) BOOL isPAL;
 @property(nonatomic, readonly) uint8_t mapperNumber;

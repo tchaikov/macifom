@@ -30,6 +30,7 @@ typedef enum {
 	uint8_t *_spriteTable;
 	uint8_t *_selectedNameTable;
 	uint8_t *_sprRAM;
+	uint8_t *_chrRAM;
 	uint8_t *_spritePalette;
 	uint8_t *_backgroundPalette;
 	uint8_t ***_chrromBank0TileCache;
@@ -77,14 +78,17 @@ typedef enum {
 	BOOL _firstWriteOccurred;
 	BOOL _oddFrame;
 	BOOL _verticalIncrement;
+	BOOL _patternTable0TileCacheIsInvalid;
+	BOOL _patternTable1TileCacheIsInvalid;
+	uint16_t _chrRAMWriteHistory;
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
-- (void)cacheCHROMFromCartridge:(NESCartridgeEmulator *)cartEmu;
 - (void)runPPUForCPUCycles:(uint_fast32_t)cycle;
 - (BOOL)triggeredNMI;
 - (uint_fast32_t)cyclesSinceVINT;
 - (void)resetPPUstatus;
+- (void)configureForCHRRAM;
 - (uint8_t)readByteFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPPUFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeToPPUControlRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle;
@@ -101,6 +105,8 @@ typedef enum {
 - (uint8_t)readByteFromPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)setMirroringType:(NESMirroringType)type;
+- (void)setCHRROMTileCachePointersForBank0:(uint8_t ***)bankPointer0 bank1:(uint8_t ***)bankPointer1;
+- (void)setCHRROMPointersForBank0:(uint8_t *)bankPointer0 bank1:(uint8_t *)bankPointer1;
 - (void)displayBackgroundTiles;
 
 @end
