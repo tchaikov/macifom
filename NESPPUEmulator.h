@@ -80,6 +80,7 @@ typedef enum {
 	BOOL _verticalIncrement;
 	BOOL _patternTable0TileCacheIsInvalid;
 	BOOL _patternTable1TileCacheIsInvalid;
+	BOOL _usingCHRRAM;
 	uint16_t _chrRAMWriteHistory;
 }
 
