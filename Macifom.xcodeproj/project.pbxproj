@@ -16,6 +16,7 @@
 		B99E78F30E745E280019B353 /* NESCartridgeEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */; };
 		B99E79120E745EFC0019B353 /* NESApplicationController.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */; };
 		B99E791A0E7462220019B353 /* NESPlayfieldView.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E79190E7462220019B353 /* NESPlayfieldView.m */; };
+		B9D02A7C0F36269F003A44CC /* Macifom.icns in Resources */ = {isa = PBXBuildFile; fileRef = B9D02A7B0F36269F003A44CC /* Macifom.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		B99E79110E745EFC0019B353 /* NESApplicationController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESApplicationController.m; sourceTree = "<group>"; };
 		B99E79180E7462220019B353 /* NESPlayfieldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESPlayfieldView.h; sourceTree = "<group>"; };
 		B99E79190E7462220019B353 /* NESPlayfieldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESPlayfieldView.m; sourceTree = "<group>"; };
+		B9D02A7B0F36269F003A44CC /* Macifom.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Macifom.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +120,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				B9D02A7B0F36269F003A44CC /* Macifom.icns */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
 				1DDD58140DA1D0A300B32029 /* MainMenu.xib */,
@@ -179,6 +182,7 @@
 			files = (
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				1DDD58160DA1D0A300B32029 /* MainMenu.xib in Resources */,
+				B9D02A7C0F36269F003A44CC /* Macifom.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

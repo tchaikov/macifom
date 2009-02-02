@@ -596,13 +596,6 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 {
 	uint8_t nextScanline = _videoBufferIndex / 256;
 	uint_fast32_t sprRAMIndex;
-	int tempOAMIndex;
-	uint_fast8_t pixelCounter;
-	uint_fast8_t spriteHorizontalOffset;
-	uint_fast8_t spriteVerticalOffset;
-	uint_fast8_t spritePixelsToDraw;
-	uint_fast8_t spriteTileIndex;
-	uint8_t ***spriteRenderCache;
 	
 	_numberOfSpritesOnScanline = 0;
 	
@@ -618,30 +611,6 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 				break;
 			}
 			_spritesOnCurrentScanline[_numberOfSpritesOnScanline++] = sprRAMIndex;
-		}
-	}
-	
-	// Chear the priority buffer
-	// memset(_scanlinePriorityBuffer,0xFF,sizeof(uint_fast32_t)*256);
-	
-	// Prime the priority buffer with info for in-range sprites
-	for (tempOAMIndex = 0; tempOAMIndex < _numberOfSpritesOnScanline; tempOAMIndex++) {
-	
-		sprRAMIndex = _spritesOnCurrentScanline[tempOAMIndex];
-		spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
-		spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
-		spriteVerticalOffset = (_sprRAM[sprRAMIndex + 2] & 0x80 ? (_8x16Sprites ? 15 : 7) - (nextScanline - (_sprRAM[sprRAMIndex] + 1)) : nextScanline - (_sprRAM[sprRAMIndex] + 1));
-		// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
-		spriteTileIndex = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0xFE) + (spriteVerticalOffset / 8)) : _sprRAM[sprRAMIndex + 1];
-		spriteVerticalOffset &= 0x7;
-		spriteRenderCache = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0x1) ? _chrromBank1TileCache : _chrromBank0TileCache) : _spriteTileCache;
-		
-		for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
-			
-			// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
-			if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][pixelCounter])
-				_scanlinePriorityBuffer[tempOAMIndex][pixelCounter] = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
-			else _scanlinePriorityBuffer[tempOAMIndex][pixelCounter] = 0xFFFFFFFF;
 		}
 	}
 }
@@ -667,6 +636,9 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	uint_fast8_t spriteUpperColorBits;
 	uint_fast8_t spriteTileIndex;
 	uint8_t ***spriteRenderCache;
+	uint_fast32_t spritePriorityMask;
+	uint_fast32_t pixelMask;
+	uint_fast32_t pixelLockArray[256];
 	
 	// NSLog(@"In drawScanlines method.");
 	
@@ -725,7 +697,9 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
 			// incrementVRAMAddressHorizontally(&_VRAMAddress);
 			
-			// Draw sprites
+			// Clear the pixel locks and draw sprites
+			bzero(pixelLockArray,sizeof(uint_fast32_t)*256);
+			
 			for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
 			
 				tempOAMIndex = (_numberOfSpritesOnScanline - 1) - spriteCounter;
@@ -739,6 +713,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 				spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
 				spriteUpperColorBits = (_sprRAM[sprRAMIndex + 2] & 0x3) * 4;
 				spriteRenderCache = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0x1) ? _chrromBank1TileCache : _chrromBank0TileCache) : _spriteTileCache;
+				spritePriorityMask = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
 				
 				// Check for horizontal flip
 				if (_sprRAM[sprRAMIndex + 2] & 0x40) {
@@ -746,8 +721,12 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 					// Draw Flipped
 					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
 						
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= _scanlinePriorityBuffer[tempOAMIndex][7 - pixelCounter];
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][(7 - pixelCounter)] | spriteUpperColorBits]] & ~(_scanlinePriorityBuffer[tempOAMIndex][7 - pixelCounter]);
+						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][7 - pixelCounter] == 0) continue;
+							
+						pixelMask = spritePriorityMask | pixelLockArray[spriteHorizontalOffset + pixelCounter];
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][7 - pixelCounter] | spriteUpperColorBits]] & ~pixelMask;
+						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					}
 				}
 				else {
@@ -755,8 +734,12 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 					// Draw Straight
 					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
 						
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= _scanlinePriorityBuffer[tempOAMIndex][pixelCounter];
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][pixelCounter] | spriteUpperColorBits]] & ~(_scanlinePriorityBuffer[tempOAMIndex][pixelCounter]);
+						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][pixelCounter] == 0) continue;
+						
+						pixelMask = spritePriorityMask | pixelLockArray[spriteHorizontalOffset + pixelCounter];
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][pixelCounter] | spriteUpperColorBits]] & ~pixelMask;
+						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					}
 				}
 			}
