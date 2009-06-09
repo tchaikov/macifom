@@ -6,6 +6,7 @@
 //
 
 #import "NESCartridgeEmulator.h"
+#import "NESPPUEmulator.h"
 
 static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UNROM switch", "CNROM switch", "Nintendo MMC3", "Nintendo MMC5", "FFE F4xxx", "AOROM switch",
 												"FFE F3xxx", "Nintendo MMC2", "Nintendo MMC4", "ColorDreams", "FFE F6xxx", "CPROM switch", "Unknown Mapper", "100-in-1 switch",
@@ -164,7 +165,10 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_usesBatteryBackedRAM = NO;
 	_usesFourScreenVRAMLayout = NO;
 	_isPAL = NO;
+	_mapperReset = NO;
 	
+	_serialWriteCounter = 0;
+	_register = 0;
 	_mapperNumber = 0;
 	_numberOfPRGROMBanks = 0;
 	_numberOfCHRROM8KBBanks = 0;
@@ -172,13 +176,171 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_chrromBank0Index = 1;
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
+	
+	_mmc1ControlRegister = 0;
+	_mmc1CHRROMBank0Register = 0;
+	_mmc1CHRROMBank1Register = 0;
+	_mmc1PRGROMBankRegister = 0;
+	_mmc1Switch16KBPRGROMBanks = YES;
+	_mmc1SwitchFirst16KBBank = YES;
+	_mmc1Switch4KBCHRROMBanks = NO;
 }
 
-- (id)init
+- (void)_setMMC1CHRROMBank0Register:(uint8_t)byte
+{
+	// CHRROM 4KB Bank 0 Swap
+	// NSLog(@"MMC1 Attempting 4KB CHRROM Bank 0 Swap.");
+	if (_mmc1Switch4KBCHRROMBanks) {
+			
+		if (!_usesCHRRAM) {
+			
+			// NSLog(@"Switching 4KB CHRROM Bank 0.");
+			// FIXME: I have no idea what's actually going on here. Why's one 8KB and the other 4KB?
+			_patternTable0 = _chrromBanks[byte >> 1] + ((byte & 0x1) * 4096);
+			_chrromBank0Index = byte;
+			_chrromBanksDidChange = YES;
+		}
+		else {
+				
+			NSLog(@"MMC1: CHRRAM Game Attempted to Switch CHRROM Bank 0!");
+		}
+	}
+	else {
+			
+		if (!_usesCHRRAM) {
+		
+			// NSLog(@"Switching 8KB CHRROM Bank.");
+			// 8KB CHRROM Switching Mode (LSB is ignored, thus the requiring the unintuitive logic below)
+			_patternTable0 = _chrromBanks[byte >> 1];
+			_patternTable1 = _chrromBanks[byte >> 1] + 4096;
+			_chrromBank0Index = (byte >> 1) * 2;
+			_chrromBank1Index = ((byte >> 1) * 2) + 1;
+			_chrromBanksDidChange = YES;
+		}
+		else {
+		
+			// FIXME: I don't think this is supported, unless there are MMC1 games with more than 8KB of CHRRAM.
+		}
+	}
+	
+	_mmc1CHRROMBank0Register = byte;
+}
+
+- (void)_setMMC1CHRROMBank1Register:(uint8_t)byte
+{
+	// CHRRROM 4KB Bank 1 Swap
+	// NSLog(@"MMC1 Attempting 4KB CHRROM Bank 1 Swap.");
+	if (_mmc1Switch4KBCHRROMBanks) {
+		
+		if (!_usesCHRRAM) {
+		
+			//NSLog(@"Switching 4KB CHRROM Bank 1.");
+			// FIXME: I have no idea what's actually going on here. Why's one 8KB and the other 4KB?
+			_patternTable1 = _chrromBanks[byte >> 1] + ((byte & 0x1) * 4096);
+			_chrromBank1Index = byte;
+			_chrromBanksDidChange = YES;
+		}
+		else {
+			
+			// FIXME: This is apparently supported!
+			NSLog(@"MMC1: CHRRAM Game Attempted to Switch CHRROM Bank 1!");
+		}
+	}
+	
+	_mmc1CHRROMBank1Register = byte;
+}
+
+- (void)_setMMC1PRGROMBankRegister:(uint8_t)byte
+{
+	// PRGROM Bank Swap
+	if (_mmc1Switch16KBPRGROMBanks) {
+		
+		if (_mmc1SwitchFirst16KBBank) {
+			
+			_prgromBank0 = _prgromBanks[byte & 0xF];
+			// NSLog(@"MMC1 Switching PRGROM Bank 0 to Index %d",byte & 0xF);
+		}
+		else {
+			
+			_prgromBank1 = _prgromBanks[byte & 0xF];
+			// NSLog(@"MMC1 Switching PRGROM Bank 1 to Index %d",byte & 0xF);
+		}
+	}
+	else {
+		
+		// PRGROM 32KB Swap
+		_prgromBank0 = _prgromBanks[byte & 0xE];
+		_prgromBank1 = _prgromBanks[(byte & 0xE) + 1];
+		// NSLog(@"MMC1 Switching PRGROM Banks 0 and 1 to Indices %d and %d",byte & 0xE,(byte & 0xE) + 1);
+	}
+	
+	// FIXME: Bit 4 (0x10) Toggles PRGRAM on MMC1B and MMC1C (0: enabled; 1: disabled; ignored on MMC1A)
+	
+	_prgromBanksDidChange = YES;
+	_mmc1PRGROMBankRegister = byte;
+}
+
+- (void)_setMMC1ControlRegister:(uint8_t)byte
+{
+	// Set Mirroring Mode
+	switch (byte & 0x3) {
+			
+		case 0:
+			// Single-Screen Mirroring (Lower Bank)
+			// NSLog(@"MMC1 Switcing to Single-Screen (Lower Bank) Mirroring Mode");
+			[_ppu setMirroringType:NESSingleScreenMirroring];
+			break;
+		case 1:
+			// FIXME TOTALLY BROKEN: Single-Screen Mirroring (Upper Bank)
+			NSLog(@"MMC1: Switcing to Broken Single-Screen (Upper Bank) Mirroring Mode!");
+			[_ppu setMirroringType:NESSingleScreenMirroring];
+			break;
+		case 2:
+			// Vertical Mirroring
+			// NSLog(@"MMC1 Switcing to Vertical Mirroring Mode");
+			[_ppu setMirroringType:NESVerticalMirroring];
+			break;
+		case 3:
+			// Horizontal Mirroring
+			// NSLog(@"MMC1 Switcing to Horizontal Mirroring Mode");
+			[_ppu setMirroringType:NESHorizontalMirroring];
+			break;
+	}
+	
+	// PRGROM Bank Switing Mode
+	_mmc1Switch16KBPRGROMBanks = (byte & 0x8) ? YES : NO;
+	/*
+	if (_mmc1Switch16KBPRGROMBanks) NSLog(@"MMC1 Using 16KB PRGROM Banks");
+	else NSLog(@"MMC1 Using 32KB PRGROM Banks"); 
+	*/
+	_mmc1SwitchFirst16KBBank = (byte & 0x4) ? YES : NO;
+	/* 
+	if (_mmc1SwitchFirst16KBBank) NSLog(@"MMC1 Will Switch Lower PRGROM Bank in 16KB Bank Mode");
+	else NSLog(@"MMC1 Will Switch Upper PRGROM Bank in 16KB Bank Mode");
+	*/
+	
+	// CHRROM Bank Switching Mode
+	_mmc1Switch4KBCHRROMBanks = (byte & 0x10) ? YES : NO;
+	/*
+	if (_mmc1Switch4KBCHRROMBanks) NSLog(@"MMC1 Using 4KB CHRROM Banks");
+	else NSLog(@"MMC1 Using 8KB CHRROM Banks");
+	*/
+	
+	// Store the current values
+	_mmc1ControlRegister = byte;
+	
+	// Reset all pointers to reflect the changed settings
+	[self _setMMC1CHRROMBank0Register:_mmc1CHRROMBank0Register];
+	[self _setMMC1CHRROMBank1Register:_mmc1CHRROMBank1Register];
+	[self _setMMC1PRGROMBankRegister:_mmc1PRGROMBankRegister];
+}
+
+- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator
 {
 	[super init];
 	
 	[self _resetCartridgeState];
+	_ppu = ppuEmulator;
 	
 	return self;
 }
@@ -218,6 +380,28 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			// This should be acceptable as the iNES format dictates 8kB CHRROM segments
 			_chrromBank0Index = 0;
 			_chrromBank1Index = 1;
+			break;
+			
+		case 1:
+			
+			// MMC1
+			_prgromBank0 = _prgromBanks[0];
+			_prgromBank1 = _prgromBanks[_numberOfPRGROMBanks - 1];
+			
+			// FIXME: I'm assuming that MMC1 will map in the lowest 8KB of CHRROM if present. Not sure if that's correct.
+			if (_numberOfCHRROM8KBBanks > 0) {
+			
+				_patternTable0 = _chrromBanks[0];
+				_patternTable1 = _chrromBanks[0] + 4096;
+			
+				// This should be acceptable as the iNES format dictates 8kB CHRROM segments
+				_chrromBank0Index = 0;
+				_chrromBank1Index = 1;
+			}
+			else {
+			
+				_usesCHRRAM = YES;
+			}
 			break;
 		
 		case 2:
@@ -374,36 +558,20 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// Set ROM pointers
 	propagatedError = [self _setROMPointers];
 	
+	// Configure PPU
+	// FIXME: Need to support 4-screen mirroring
+	if (_usesVerticalMirroring) [_ppu setMirroringType:NESVerticalMirroring];
+	else [_ppu setMirroringType:NESHorizontalMirroring];
+	
+	if (_usesCHRRAM) [_ppu configureForCHRRAM];
+	else {
+		
+		// Allow PPU Emulator to cache CHRROM tile cache pointers
+		[_ppu setCHRROMTileCachePointersForBank0:[self pointerToCHRROMBank0TileCache] bank1:[self pointerToCHRROMBank1TileCache]];
+		[_ppu setCHRROMPointersForBank0:[self pointerToCHRROMBank0] bank1:[self pointerToCHRROMBank1]];
+	}
+	
 	return propagatedError;
-}
-
-- (id)initWithiNESFileAtPath:(NSString *)path
-{
-	[super init];
-	
-	_prgromBanks = NULL;
-	_chrromBanks = NULL;
-	_prgromBank0 = NULL;
-	_prgromBank1 = NULL;
-	_patternTable0 = NULL;
-	_patternTable1 = NULL;
-	_trainer = NULL;
-	
-	_usesVerticalMirroring = NO;
-	_hasTrainer = NO;
-	_usesBatteryBackedRAM = NO;
-	_usesFourScreenVRAMLayout = NO;
-	_isPAL = NO;
-	
-	_mapperNumber = 0;
-	_numberOfPRGROMBanks = 0;
-	_numberOfCHRROM8KBBanks = 0;
-	_numberOfRAMBanks = 0;
-	_romFileDidLoad = NO;
-	_prgromBanksDidChange = NO;
-	_chrromBanksDidChange = NO;
-	
-	return self;
 }
 
 - (NSError *)loadROMFileAtPath:(NSString *)path
@@ -449,6 +617,44 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address
 {
 	switch (_mapperNumber) {
+		case 1:
+			if (byte & 0x80) {
+			
+				// NSLog(@"MMC1 Mapper Reset Triggered");
+				[self _setMMC1ControlRegister:_mmc1ControlRegister | 0xC];
+				_register = 0;
+				_serialWriteCounter = 0;
+			}
+			else {
+				
+				_register |= ((byte & 0x1) << _serialWriteCounter++); // OR in next serial bit
+			
+				// Commit a change on the 5th Write
+				if (_serialWriteCounter == 5) {
+			
+					if (address < 0xA000) {
+					
+						// Control Register Write
+						[self _setMMC1ControlRegister:_register];
+					}
+					else if (address < 0xC000) {
+					
+						[self _setMMC1CHRROMBank0Register:_register];
+					}
+					else if (address < 0xE000) {
+					
+						[self _setMMC1CHRROMBank1Register:_register];
+					}
+					else {
+					
+						[self _setMMC1PRGROMBankRegister:_register];
+					}
+					
+					_register = 0;
+					_serialWriteCounter = 0;
+				}
+			}
+			break;
 		case 2:
 			// For UxROM, switch the lower PRGROM bank
 			_prgromBank0 = _prgromBanks[byte & (_numberOfPRGROMBanks > 8 ? 0xF : 0x7)];

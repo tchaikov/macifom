@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class NESPPUEmulator;
+
 @interface NESCartridgeEmulator : NSObject {
 
 	uint8_t **_prgromBanks;
@@ -28,8 +30,18 @@
 	BOOL _isPAL;
 	BOOL _prgromBanksDidChange;
 	BOOL _chrromBanksDidChange;
+	BOOL _mapperReset;
+	BOOL _mmc1Switch16KBPRGROMBanks;
+	BOOL _mmc1SwitchFirst16KBBank;
+	BOOL _mmc1Switch4KBCHRROMBanks;
 	
 	uint_fast8_t _mapperNumber;
+	uint_fast8_t _serialWriteCounter;
+	uint8_t _register;
+	uint8_t _mmc1ControlRegister;
+	uint8_t _mmc1CHRROMBank0Register;
+	uint8_t _mmc1CHRROMBank1Register;
+	uint8_t _mmc1PRGROMBankRegister;
 	uint_fast8_t _numberOfPRGROMBanks;
 	uint_fast8_t _numberOfCHRROM8KBBanks;
 	uint_fast8_t _numberOfRAMBanks;
@@ -37,9 +49,11 @@
 	uint_fast8_t _chrromBank1Index;
 
 	BOOL _romFileDidLoad;
+	
+	NESPPUEmulator *_ppu;
 }
 
-- (id)initWithiNESFileAtPath:(NSString *)path;
+- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
 - (NSError *)loadROMFileAtPath:(NSString *)path;
 - (uint8_t)readByteFromPRGROM:(uint16_t)address;
 - (uint8_t)readByteFromCHRROM:(uint16_t)address;

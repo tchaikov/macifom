@@ -480,7 +480,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 // Checked 1/4
 - (void)setMirroringType:(NESMirroringType)type
 {
-	NSLog(@"In setMirroringType method.");
+	// NSLog(@"In setMirroringType method.");
 	
 	_nameAndAttributeTablesMask = nameAndAttributeTablesMasks[type];
 }

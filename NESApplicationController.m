@@ -159,17 +159,6 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			NSLog(@"PRG-ROM Banks: %d x 16kB\tCHR-ROM Banks: %d x 8kB",[cartEmulator numberOfPRGROMBanks],[cartEmulator numberOfCHRROMBanks]);
 			NSLog(@"Onboard RAM Banks: %d x 8kB",[cartEmulator numberOfRAMBanks]);
 			
-			// FIXME: Need to support 4-screen mirroring
-			if ([cartEmulator usesVerticalMirroring]) [ppuEmulator setMirroringType:NESVerticalMirroring];
-			else [ppuEmulator setMirroringType:NESHorizontalMirroring];
-			
-			if ([cartEmulator usesCHRRAM]) [ppuEmulator configureForCHRRAM];
-			else {
-				// Allow PPU Emulator to cache CHRROM tile cache pointers
-				[ppuEmulator setCHRROMTileCachePointersForBank0:[cartEmulator pointerToCHRROMBank0TileCache] bank1:[cartEmulator pointerToCHRROMBank1TileCache]];
-				[ppuEmulator setCHRROMPointersForBank0:[cartEmulator pointerToCHRROMBank0] bank1:[cartEmulator pointerToCHRROMBank1]];
-			}
-			
 			// Allow CPU Interpreter to cache PRGROM pointers
 			[cpuInterpreter setPRGROMPointers];
 			
@@ -199,7 +188,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	boolean_t exactMatch;
 	
 	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
-	cartEmulator = [[NESCartridgeEmulator alloc] init];
+	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator];
 	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	andPPU:ppuEmulator];
 	_currentInstruction = nil;
 	instructions = nil;
