@@ -220,6 +220,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		else {
 		
 			// FIXME: I don't think this is supported, unless there are MMC1 games with more than 8KB of CHRRAM.
+			NSLog(@"MMC1: CHRRAM Game Attempted to Switch CHRROM Bank 0!");
 		}
 	}
 	
@@ -288,12 +289,11 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		case 0:
 			// Single-Screen Mirroring (Lower Bank)
 			// NSLog(@"MMC1 Switcing to Single-Screen (Lower Bank) Mirroring Mode");
-			[_ppu setMirroringType:NESSingleScreenMirroring];
+			[_ppu setMirroringType:NESSingleScreenLowerMirroring];
 			break;
 		case 1:
-			// FIXME TOTALLY BROKEN: Single-Screen Mirroring (Upper Bank)
-			NSLog(@"MMC1: Switcing to Broken Single-Screen (Upper Bank) Mirroring Mode!");
-			[_ppu setMirroringType:NESSingleScreenMirroring];
+			// Single-Screen Mirroring (Upper Bank)
+			[_ppu setMirroringType:NESSingleScreenUpperMirroring];
 			break;
 		case 2:
 			// Vertical Mirroring

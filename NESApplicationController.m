@@ -299,6 +299,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		[playPauseMenuItem setTitle:@"Play"];
 		[gameTimer invalidate];
 		gameTimer = nil;
+		[self updatecpuRegisters];
+		[self updateInstructions];
 	}
 }
 

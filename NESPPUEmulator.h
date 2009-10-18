@@ -9,13 +9,14 @@
 
 typedef uint8_t (*RegisterReadMethod)(id, SEL, uint_fast32_t);
 typedef void (*RegisterWriteMethod)(id, SEL, uint8_t, uint_fast32_t);
+typedef uint16_t (*NametableMirroringMethod)(uint16_t);
 
 typedef enum {
 
 	NESHorizontalMirroring = 0,
 	NESVerticalMirroring = 1,
-	NESSingleScreenMirroring = 2,
-	NESFourScreenMirroring = 3
+	NESSingleScreenLowerMirroring = 2,
+	NESSingleScreenUpperMirroring = 3
 } NESMirroringType;
 
 @class NESCartridgeEmulator;
@@ -42,10 +43,6 @@ typedef enum {
 	uint_fast8_t _numberOfSpritesOnScanline;
 	uint8_t _sprRAMAddress;
 	uint8_t *_nameAndAttributeTables;
-	uint8_t *_nameTable0;
-	uint8_t *_nameTable1;
-	uint8_t *_nameTable2;
-	uint8_t *_nameTable3;
 	uint8_t *_palettes;
 	uint8_t *_chromBank0;
 	uint8_t *_chromBank1;
@@ -62,6 +59,7 @@ typedef enum {
 	
 	uint16_t _nameAndAttributeTablesMask;
 	uint16_t *_nameAndAttributeTablesMasks;
+	NametableMirroringMethod _nameTableMirroring;
 	RegisterWriteMethod *_registerWriteMethods;
 	RegisterReadMethod *_registerReadMethods;
 	

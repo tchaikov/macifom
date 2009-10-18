@@ -17,9 +17,9 @@ static const uint_fast32_t colorPalette[64] = { 0xFF757575, 0xFF271B8F, 0xFF0000
 												0xFFFFFFFF, 0xFFABE7FF, 0xFFC7D7FF, 0xFFD7CBFF, 0xFFFFC7FF, 0xFFFFC7DB, 0xFFFFBFB3, 0xFFFFDBAB,
 												0xFFFFE7A3, 0xFFE3FFA3, 0xFFABF3BF, 0xFFB3FFCF, 0xFF9FFFF3, 0xFF000000, 0xFF000000, 0xFF000000 };
 
+/*
 static const uint16_t nameAndAttributeTablesMasks[4] = { 0x0BFF, 0x07FF, 0x03FF, 0x0FFF};
 
-/*
 static const uint16_t attributeTableIndexLookupTable[2048] = { 0x03c0, 0x03c0, 0x03c0, 0x03c0, 0x03c1, 0x03c1, 0x03c1, 0x03c1, 
 0x03c2, 0x03c2, 0x03c2, 0x03c2, 0x03c3, 0x03c3, 0x03c3, 0x03c3, 
 0x03c4, 0x03c4, 0x03c4, 0x03c4, 0x03c5, 0x03c5, 0x03c5, 0x03c5, 
@@ -370,6 +370,27 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	}	
 }
 
+static uint16_t applyHorizontalMirroring(uint16_t vramAddress) {
+
+	return (vramAddress & 0x03FF) | ((vramAddress & 0x0800) >> 1);
+	// return (vramAddress & 0x0BFF);
+}
+
+static uint16_t applyVerticalMirroring(uint16_t vramAddress) {
+	
+	return vramAddress & 0x07FF;
+}
+
+static uint16_t applySingleScreenLowerMirroring(uint16_t vramAddress) {
+	
+	return vramAddress & 0x03FF;
+}
+
+static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
+	
+	return (vramAddress & 0x03FF) | 0x0400;
+}
+
 @implementation NESPPUEmulator
 
 - (void)printAttributeTableIndices
@@ -445,12 +466,8 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	_palettes = (uint8_t *)malloc(sizeof(uint8_t)*32);
 	_backgroundPalette = _palettes;
 	_spritePalette = (_palettes + 0x10);
-		
-	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*4096);
-	_nameTable0 = _nameAndAttributeTables;
-	_nameTable1 = _nameAndAttributeTables + 0x400;
-	_nameTable2 = _nameAndAttributeTables + 0x800;
-	_nameTable3 = _nameAndAttributeTables + 0xC00;
+
+	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*2048);
 	_registerReadMethods = (RegisterReadMethod *)malloc(sizeof(uint8_t (*)(id, SEL, uint_fast32_t))*8);
 	_registerWriteMethods = (RegisterWriteMethod *)malloc(sizeof(void (*)(id, SEL, uint8_t, uint_fast32_t))*8);
 	
@@ -482,7 +499,30 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 {
 	// NSLog(@"In setMirroringType method.");
 	
-	_nameAndAttributeTablesMask = nameAndAttributeTablesMasks[type];
+	//_nameAndAttributeTablesMask = nameAndAttributeTablesMasks[type];
+	
+	switch (type) {
+			
+		case NESHorizontalMirroring:
+			_nameTableMirroring = (uint16_t (*)(uint16_t))applyHorizontalMirroring;
+			NSLog(@"Setting Horizontal Mirroring Mode.");
+			break;
+		case NESVerticalMirroring:
+			_nameTableMirroring = (uint16_t (*)(uint16_t))applyVerticalMirroring;
+			NSLog(@"Setting Vertical Mirroring Mode.");
+			break;
+		case NESSingleScreenLowerMirroring:
+			_nameTableMirroring = (uint16_t (*)(uint16_t))applySingleScreenLowerMirroring;
+			NSLog(@"Setting Single Screen Lower Mirroring Mode.");
+			break;
+		case NESSingleScreenUpperMirroring:
+			_nameTableMirroring = (uint16_t (*)(uint16_t))applySingleScreenUpperMirroring;
+			NSLog(@"Setting Single Screen Upper Mirroring Mode.");
+			break;
+		default:
+			NSLog(@"Warning: Setting unknown mirroring type!");
+			break;
+	}
 }
 
 - (void)configureForCHRRAM
@@ -515,6 +555,8 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 
 - (void)setCHRROMTileCachePointersForBank0:(uint8_t ***)bankPointer0 bank1:(uint8_t ***)bankPointer1
 {
+	if (_usingCHRRAM) NSLog(@"Attempting to change CHRROM pointers when using CHRRAM!");
+	
 	_chrromBank0TileCache = bankPointer0;
 	_chrromBank1TileCache = bankPointer1;
 	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
@@ -560,7 +602,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	
 	// Fetch first tile in the scanline
 	// Fetch the attribute byte
-	nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+	nameTableOffset = _nameTableMirroring(_VRAMAddress);
 	tileIndex = _nameAndAttributeTables[nameTableOffset];
 	tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 	tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
@@ -577,7 +619,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	
 	// Fetch the second tile in the scanline
 	// Fetch the attribute byte
-	nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+	nameTableOffset = _nameTableMirroring(_VRAMAddress);
 	tileIndex = _nameAndAttributeTables[nameTableOffset];
 	tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 	tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
@@ -598,6 +640,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	uint_fast32_t sprRAMIndex;
 	
 	_numberOfSpritesOnScanline = 0;
+	_ppuStatusRegister &= 0xDF; // Clear object overflow flag
 	
 	for (sprRAMIndex = 0; sprRAMIndex < 256; sprRAMIndex += 4) {
 	
@@ -620,8 +663,11 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	uint_fast8_t tileIndex;
 	uint_fast8_t tileCounter;
 	uint_fast8_t scanlineCounter;
+	uint_fast8_t scanlinePixelCounter;
 	uint_fast8_t verticalTileOffset;
 	uint_fast8_t pixelCounter;
+	int spritePixelIndex;
+	int spritePixelIncrement;
 	int spriteCounter;
 	int tempOAMIndex;
 	uint_fast8_t tileAttributes;
@@ -639,6 +685,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	uint_fast32_t spritePriorityMask;
 	uint_fast32_t pixelMask;
 	uint_fast32_t pixelLockArray[256];
+	uint_fast8_t bgOpacityArray[256];
 	
 	// NSLog(@"In drawScanlines method.");
 	
@@ -653,6 +700,9 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 		
 		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
 	
+			// Initialize Scanline Pixel Counter
+			scanlinePixelCounter = 0;
+			
 			// Get Vertical Tile Offset
 			verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
 		
@@ -665,7 +715,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 		
 			for (tileCounter = 0; tileCounter < 30; tileCounter++) {
 			
-				nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+				nameTableOffset = _nameTableMirroring(_VRAMAddress);
 				tileIndex = _nameAndAttributeTables[nameTableOffset];
 				tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 				tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
@@ -676,6 +726,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
 					// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
+					bgOpacityArray[scanlinePixelCounter++] = tileLowerColorBits;
 				}
 			
 				// Increment the VRAM address one tile to the right
@@ -683,7 +734,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 			}
 			
 			// Draw the 33rd title if necessary
-			nameTableOffset = _VRAMAddress & _nameAndAttributeTablesMask;
+			nameTableOffset = _nameTableMirroring(_VRAMAddress);
 			tileIndex = _nameAndAttributeTables[nameTableOffset];
 			tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 			tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
@@ -692,6 +743,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 			
 				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
 				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
+				bgOpacityArray[scanlinePixelCounter++] = tileLowerColorBits;
 			}
 			
 			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
@@ -718,29 +770,36 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 				// Check for horizontal flip
 				if (_sprRAM[sprRAMIndex + 2] & 0x40) {
 				
-					// Draw Flipped
-					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
-						
-						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][7 - pixelCounter] == 0) continue;
-							
-						pixelMask = spritePriorityMask | pixelLockArray[spriteHorizontalOffset + pixelCounter];
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][7 - pixelCounter] | spriteUpperColorBits]] & ~pixelMask;
-						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
-					}
+					spritePixelIncrement = -1;
+					spritePixelIndex = 7;
 				}
 				else {
-				
-					// Draw Straight
-					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
-						
-						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][pixelCounter] == 0) continue;
+					
+					spritePixelIncrement = 1;
+					spritePixelIndex = 0;
+				}
+								
+				// Draw Sprite Pixels
+				for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
+					
+					if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] != 0) {
+					
+						// Check for sprite 0 hit
+						if (sprRAMIndex == 0) {
+							
+							if (bgOpacityArray[spriteHorizontalOffset + pixelCounter] && (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits)) {
+							
+								_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
+							}
+						}
 						
 						pixelMask = spritePriorityMask | pixelLockArray[spriteHorizontalOffset + pixelCounter];
 						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][pixelCounter] | spriteUpperColorBits]] & ~pixelMask;
+						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits]] & ~pixelMask;
 						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					}
+					
+					spritePixelIndex += spritePixelIncrement;
 				}
 			}
 			
@@ -917,6 +976,8 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	
 		if (_cyclesSinceVINT <= (341*20)) {
 			
+			_ppuStatusRegister &= 0xBF; // Clear the Sprite 0 Hit flag
+			
 			if (_backgroundEnabled | _spritesEnabled) {
 			
 				// NSLog(@"Copying temporary VRAM address to VRAM address: 0x%4.4x",_temporaryVRAMAddress);
@@ -971,7 +1032,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	}
 	else if (effectiveAddress >= 0x2000) {
 		
-		return _nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask];
+		return _nameAndAttributeTables[_nameTableMirroring(effectiveAddress)];
 	}
 	else if (effectiveAddress >= 0x1000) {
 		
@@ -1006,7 +1067,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	else if (effectiveAddress >= 0x2000) {
 		
 		// Name or attribute table write
-		_nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask] = byte;
+		_nameAndAttributeTables[_nameTableMirroring(effectiveAddress)] = byte;
 	}
 	else {
 	
@@ -1148,12 +1209,12 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	else if (effectiveAddress < 0x3F00) { 
 		
 		// Name or Attribute Table Read
-		_bufferedVRAMRead = _nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask];
+		_bufferedVRAMRead = _nameAndAttributeTables[_nameTableMirroring(effectiveAddress)];
 	}
 	else { 
 		
 		// Palette Read (Unbuffered)
-		_bufferedVRAMRead = _nameAndAttributeTables[effectiveAddress & _nameAndAttributeTablesMask]; // 0x3000 mirrors 0x2000
+		_bufferedVRAMRead = _nameAndAttributeTables[_nameTableMirroring(effectiveAddress)]; // 0x3000 mirrors 0x2000
 		valueToReturn = _palettes[effectiveAddress & 0x1F]; // modulo 32 as there are 32 entries
 	}
 	
@@ -1215,7 +1276,7 @@ static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8
 	uint8_t valueToReturn = _ppuStatusRegister;
 	_firstWriteOccurred = NO; // Reset 0x2005 / 0x2006 read toggle
 	_ppuStatusRegister &= 0x7F; // Clear the VBLANK flag
-	
+
 	// NSLog(@"In readFromPPUStatusRegisterOnCycle: method. Returning 0x%2.2x.",valueToReturn);
 	
 	return valueToReturn;
