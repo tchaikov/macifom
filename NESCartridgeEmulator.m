@@ -259,10 +259,12 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		if (_mmc1SwitchFirst16KBBank) {
 			
 			_prgromBank0 = _prgromBanks[byte & 0xF];
+			_prgromBank1 = _prgromBanks[_numberOfPRGROMBanks - 1];
 			// NSLog(@"MMC1 Switching PRGROM Bank 0 to Index %d",byte & 0xF);
 		}
 		else {
 			
+			_prgromBank0 = _prgromBanks[0];
 			_prgromBank1 = _prgromBanks[byte & 0xF];
 			// NSLog(@"MMC1 Switching PRGROM Bank 1 to Index %d",byte & 0xF);
 		}

@@ -420,6 +420,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)resetPPUstatus
 {
 	_cyclesSinceVINT = 0;
+	_lastCPUCycle = 0;
 	_ppuStatusRegister = 0x80; // FIXME: We probably shouldn't really start with the VBLANK flag on, but the logic starts with VBLANK and I'm interested to see what happens.
 	_VRAMAddress = 0;
 	_temporaryVRAMAddress = 0;
@@ -687,7 +688,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	uint_fast32_t pixelLockArray[256];
 	uint_fast8_t bgOpacityArray[256];
 	
-	// NSLog(@"In drawScanlines method.");
+	// NSLog(@"In drawScanlines method. Drawing from %d to %d.",start,stop);
 	
 	if (_backgroundEnabled || _spritesEnabled) {
 	
@@ -710,6 +711,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			// FIXME: It might be faster to do the colorPalette indexing elsewhere and then memcpy here
 			for (pixelCounter = _fineHorizontalScroll; pixelCounter < 16; pixelCounter++) {
 			
+				// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 				_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
 			}
 		
@@ -727,6 +729,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 					// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 					bgOpacityArray[scanlinePixelCounter++] = tileLowerColorBits;
+					
+					// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 				}
 			
 				// Increment the VRAM address one tile to the right
@@ -744,6 +748,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
 				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 				bgOpacityArray[scanlinePixelCounter++] = tileLowerColorBits;
+				
+				// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 			}
 			
 			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
@@ -826,6 +832,11 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (uint_fast32_t)cyclesSinceVINT {
 	
 	return _cyclesSinceVINT;
+}
+
+- (void)resetCPUCycleCounter {
+
+	_lastCPUCycle = 0;
 }
 
 - (BOOL)triggeredNMI {
@@ -958,7 +969,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	return didCompleteScanline;
 }
 
-- (void)runPPUForCPUCycles:(uint_fast32_t)cycle
+- (BOOL)runPPUForCPUCycles:(uint_fast32_t)cycle
 {
 	uint_fast32_t endingCycle = _cyclesSinceVINT + (cycle * 3);
 	uint_fast32_t cyclesPastPrimingScanline;
@@ -970,7 +981,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	if (endingCycle < (341*20)) {
 		
 		_cyclesSinceVINT = endingCycle;
-		return;
+		return NO;
 	}
 	else {
 	
@@ -986,22 +997,22 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			}
 		}
 		
-		if (![self completePrimingScanlineStoppingOnCycle:endingCycle]) return;
+		if (![self completePrimingScanlineStoppingOnCycle:endingCycle]) return NO;
 	}
 	
 	// complete any unfinished scanlines up to this point
-	if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
-	else {
+	// if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
+	// else {
 	
 		// Determine last whole scanline to draw
 		endingScanline = ((endingCycle  - ( _oddFrame ? 7160 : 7161)) / 341);
 		endingScanline = endingScanline > 240 ? 240 : endingScanline;
 		cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
 		[self _drawScanlines:(cyclesPastPrimingScanline / 341) until:endingScanline];
-	}
+	// }
 	
 	// start next incomplete scanline, if any
-	if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
+	// if (![self completeDrawingScanlineStoppingOnCycle:endingCycle]) return;
 	
 	if (endingCycle > (_oddFrame ? 89340 : 89341)) {
 		
@@ -1010,13 +1021,25 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		
 		_cyclesSinceVINT = _oddFrame ? (endingCycle - 89341) : (endingCycle - 89342); // Set such that we're at the end of the frame
 		_ppuStatusRegister |= 0x80; // Set VLBANK flag
+		
+		return YES;
+		// NSLog(@"Ending frame in runPPUUntilCPUCycle with excess PPU cycles: %d.",_cyclesSinceVINT);
 	}
 	else {
 	
 		_cyclesSinceVINT = endingCycle;
 	}
 	
+	return NO;
 	// NSLog(@"Falling out of runPPUUntilCPUCycle at cycle %d.",_cyclesSinceVINT);
+}
+
+- (BOOL)runPPUUntilCPUCycle:(uint_fast32_t)cycle
+{
+	BOOL frameDidEnd = [self runPPUForCPUCycles:(cycle - _lastCPUCycle)];
+	_lastCPUCycle = cycle;
+	
+	return frameDidEnd;
 }
 
 - (uint8_t)readByteFromPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
@@ -1273,7 +1296,11 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 // 0x2002
 - (uint8_t)readFromPPUStatusRegisterOnCycle:(uint_fast32_t)cycle
 {
-	uint8_t valueToReturn = _ppuStatusRegister;
+	uint8_t valueToReturn;
+	
+	[self runPPUUntilCPUCycle:cycle];
+	
+	valueToReturn = _ppuStatusRegister;
 	_firstWriteOccurred = NO; // Reset 0x2005 / 0x2006 read toggle
 	_ppuStatusRegister &= 0x7F; // Clear the VBLANK flag
 

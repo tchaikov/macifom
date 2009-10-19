@@ -47,6 +47,7 @@ typedef enum {
 	uint8_t *_chromBank0;
 	uint8_t *_chromBank1;
 	
+	uint_fast32_t _lastCPUCycle;
 	uint_fast32_t _cyclesSinceVINT;
 	uint_fast32_t _videoBufferIndex;
 	
@@ -82,9 +83,11 @@ typedef enum {
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
-- (void)runPPUForCPUCycles:(uint_fast32_t)cycle;
+- (BOOL)runPPUForCPUCycles:(uint_fast32_t)cycle;
+- (BOOL)runPPUUntilCPUCycle:(uint_fast32_t)cycle;
 - (BOOL)triggeredNMI;
 - (uint_fast32_t)cyclesSinceVINT;
+- (void)resetCPUCycleCounter;
 - (void)resetPPUstatus;
 - (void)configureForCHRRAM;
 - (uint8_t)readByteFromCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
