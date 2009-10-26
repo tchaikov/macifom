@@ -701,6 +701,9 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		
 		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
 	
+			// Set video buffer index
+			_videoBufferIndex = scanlineCounter * 256;
+			
 			// Initialize Scanline Pixel Counter
 			scanlinePixelCounter = 0;
 			
@@ -826,7 +829,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	}
 	
 	// Start at scanline 0, end at 239
-	_cyclesSinceVINT = 7161 + 341 * (stop - start);
+	// _cyclesSinceVINT = 7161 + 341 * (stop - start);
 }
 
 - (uint_fast32_t)cyclesSinceVINT {
@@ -993,7 +996,6 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			
 				// NSLog(@"Copying temporary VRAM address to VRAM address: 0x%4.4x",_temporaryVRAMAddress);
 				_VRAMAddress = _temporaryVRAMAddress;
-				_videoBufferIndex = 0;
 			}
 		}
 		

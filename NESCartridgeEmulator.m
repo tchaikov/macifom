@@ -173,7 +173,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_numberOfPRGROMBanks = 0;
 	_numberOfCHRROM8KBBanks = 0;
 	_chrromBank0Index = 0;
-	_chrromBank0Index = 1;
+	_chrromBank1Index = 1;
 	_numberOfRAMBanks = 0;
 	_romFileDidLoad = NO;
 	
@@ -194,7 +194,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			
 		if (!_usesCHRRAM) {
 			
-			// NSLog(@"Switching 4KB CHRROM Bank 0.");
+			NSLog(@"Switching 4KB CHRROM Bank 0 to %d",byte);
 			// FIXME: I have no idea what's actually going on here. Why's one 8KB and the other 4KB?
 			_patternTable0 = _chrromBanks[byte >> 1] + ((byte & 0x1) * 4096);
 			_chrromBank0Index = byte;
@@ -209,7 +209,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			
 		if (!_usesCHRRAM) {
 		
-			// NSLog(@"Switching 8KB CHRROM Bank.");
+			NSLog(@"Switching 8KB CHRROM Bank.");
 			// 8KB CHRROM Switching Mode (LSB is ignored, thus the requiring the unintuitive logic below)
 			_patternTable0 = _chrromBanks[byte >> 1];
 			_patternTable1 = _chrromBanks[byte >> 1] + 4096;
@@ -235,7 +235,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		
 		if (!_usesCHRRAM) {
 		
-			//NSLog(@"Switching 4KB CHRROM Bank 1.");
+			NSLog(@"Switching 4KB CHRROM Bank 1 to %d",byte);
 			// FIXME: I have no idea what's actually going on here. Why's one 8KB and the other 4KB?
 			_patternTable1 = _chrromBanks[byte >> 1] + ((byte & 0x1) * 4096);
 			_chrromBank1Index = byte;
@@ -558,7 +558,11 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	[self _cacheCHRROM];
 	
 	// Set ROM pointers
-	propagatedError = [self _setROMPointers];
+	if (nil != (propagatedError = [self _setROMPointers])) {
+		
+		_romFileDidLoad = NO;
+		return propagatedError;
+	}
 	
 	// Configure PPU
 	// FIXME: Need to support 4-screen mirroring
