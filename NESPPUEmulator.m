@@ -437,15 +437,21 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_usingCHRRAM = NO;
 	_8x16Sprites = NO;
 	
+	if (_chrramTileCache != NULL) {
+	
+		// FIXME: Invoke method to free tile cache
+		_chrramTileCache = NULL;
+	}
+	
 	if (_chrromBank0TileCache != NULL) {
 	
-		// Invoke method to free tile cache
+		// FIXME: Invoke method to free tile cache
 		_chrromBank0TileCache = NULL;
 	}
 	
 	if (_chrromBank1TileCache != NULL) {
 		
-		// Invoke method to free tile cache
+		// FIXME: Invoke method to free tile cache
 		_chrromBank1TileCache = NULL;
 	}
 	
@@ -530,10 +536,13 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	uint_fast16_t tile;
 	uint_fast8_t line;
-		
-	_chrromBank0TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
-	_chrromBank1TileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*256);
+	
+	_chrramTileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*512);
+	_chrromBank0TileCache = _chrramTileCache;
+	_chrromBank1TileCache = _chrramTileCache + 256;
 	_chrRAM = (uint8_t *)malloc(sizeof(uint8_t)*8192);
+	_chrRAMBank0 = _chrRAM;
+	_chrRAMBank1 = _chrRAM + 4096;
 	memset(_chrRAM,0,sizeof(uint8_t)*8192);
 	
 	for (tile = 0; tile < 256; tile++) {
@@ -568,6 +577,22 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	_chromBank0 = bankPointer0;
 	_chromBank1 = bankPointer1;
+}
+
+- (void)setCHRRAMBank0Index:(uint8_t)index
+{
+	_chrromBank0TileCache = _chrramTileCache + (index * 256);
+	_chrRAMBank0 = (_chrRAM + (index * 4096));
+	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
+	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
+}
+
+- (void)setCHRRAMBank1Index:(uint8_t)index
+{
+	_chrromBank1TileCache = _chrramTileCache + (index * 256);
+	_chrRAMBank1 = (_chrRAM + (index * 4096));
+	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
+	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
 }
 
 - (void)displayBackgroundTiles {
@@ -612,7 +637,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 		
 		tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-		_playfieldBuffer[pixelCounter] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
+		_playfieldBuffer[pixelCounter] = tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0;
 	}
 	
 	// Increment the VRAM address one tile to the right
@@ -628,7 +653,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 		
 		tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-		_playfieldBuffer[pixelCounter + 8] = _backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0];
+		_playfieldBuffer[pixelCounter + 8] = tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0;
 	}
 	
 	// Increment the VRAM address one tile to the right
@@ -684,9 +709,10 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	uint_fast8_t spriteTileIndex;
 	uint8_t ***spriteRenderCache;
 	uint_fast32_t spritePriorityMask;
+	uint_fast32_t bgOpacityMask;
 	uint_fast32_t pixelMask;
 	uint_fast32_t pixelLockArray[256];
-	uint_fast8_t bgOpacityArray[256];
+	uint_fast8_t bgOpacityBuffer[256];
 	
 	// NSLog(@"In drawScanlines method. Drawing from %d to %d.",start,stop);
 	
@@ -695,9 +721,12 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		// backupPalettesForRendering(_palettes,_backupPalettes);
 		
 		// If CHRRAM writes have occurred, regenerate the pattern table tile caches prior to rendering
-		if (_chrRAMWriteHistory & 0x1000) generateTileCacheFromPatternTable(_chrromBank1TileCache,_chrRAM+4096);
-		if (_chrRAMWriteHistory) generateTileCacheFromPatternTable(_chrromBank0TileCache,_chrRAM);
-		_chrRAMWriteHistory = 0; // Clear write history
+		if (_chrRAMWriteHistory) {
+			
+			generateTileCacheFromPatternTable(_chrromBank1TileCache,_chrRAMBank1);
+			generateTileCacheFromPatternTable(_chrromBank0TileCache,_chrRAMBank0);
+			_chrRAMWriteHistory = 0; // Clear write history
+		}
 		
 		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
 	
@@ -715,7 +744,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			for (pixelCounter = _fineHorizontalScroll; pixelCounter < 16; pixelCounter++) {
 			
 				// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
-				_videoBuffer[_videoBufferIndex++] = colorPalette[_playfieldBuffer[pixelCounter]];
+				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[_playfieldBuffer[pixelCounter]]];
+				bgOpacityBuffer[scanlinePixelCounter++] = _playfieldBuffer[pixelCounter];
 			}
 		
 			for (tileCounter = 0; tileCounter < 30; tileCounter++) {
@@ -731,7 +761,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
 					// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
-					bgOpacityArray[scanlinePixelCounter++] = tileLowerColorBits;
+					bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
 					
 					// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 				}
@@ -750,13 +780,13 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			
 				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
 				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
-				bgOpacityArray[scanlinePixelCounter++] = tileLowerColorBits;
+				bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
 				
 				// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 			}
 			
 			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
-			// incrementVRAMAddressHorizontally(&_VRAMAddress);
+			incrementVRAMAddressHorizontally(&_VRAMAddress);
 			
 			// Clear the pixel locks and draw sprites
 			bzero(pixelLockArray,sizeof(uint_fast32_t)*256);
@@ -796,18 +826,20 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 						// Check for sprite 0 hit
 						if (sprRAMIndex == 0) {
 							
-							if (bgOpacityArray[spriteHorizontalOffset + pixelCounter] && (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits)) {
+							if (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] && (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits)) {
 							
 								_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
 							}
 						}
 						
-						pixelMask = spritePriorityMask | pixelLockArray[spriteHorizontalOffset + pixelCounter];
+						bgOpacityMask = bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000;
+						pixelMask = (spritePriorityMask & bgOpacityMask) | pixelLockArray[spriteHorizontalOffset + pixelCounter];
 						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
 						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits]] & ~pixelMask;
 						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					}
 					
+					// pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					spritePixelIndex += spritePixelIncrement;
 				}
 			}
@@ -1099,7 +1131,15 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		if (_usingCHRRAM) {
 			// We're writing to CHRRAM
 			// FIXME: If a non-CHRRAM game tries to write here, shit's going to get fucked up
-			_chrRAM[effectiveAddress] = byte;
+			if (effectiveAddress & 0x1000) {
+				
+				_chrRAMBank1[effectiveAddress & 0xFFF] = byte;
+			}
+			else {
+			
+				_chrRAMBank0[effectiveAddress & 0xFFF] = byte;
+			}
+			
 			_chrRAMWriteHistory |= effectiveAddress;
 		}
 	}
@@ -1120,6 +1160,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)writeToPPUControlRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	// NSLog(@"In writeToPPUControlRegister1 (0x2000) method. Writing 0x%2.2x.",byte);
+	[self runPPUUntilCPUCycle:cycle];
 	
 	_ppuControlRegister1 = byte;
 	_temporaryVRAMAddress &= 0x73FF; // Clear bits 10 and 11 (X and Y nametable selection)
@@ -1136,6 +1177,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)writeToPPUControlRegister2:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	// NSLog(@"In writeToPPUControlRegister2 (0x2001) method. Writing 0x%2.2x.",byte);
+	[self runPPUUntilCPUCycle:cycle];
 	
 	_ppuControlRegister2 = byte;
 	
@@ -1152,6 +1194,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)writeToVRAMAddressRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	// NSLog(@"In writeToVRAMAddressRegister1 (0x2005) method. Writing 0x%2.2x.",byte);
+	[self runPPUUntilCPUCycle:cycle];
 	
 	if (_firstWriteOccurred) {
 	
@@ -1187,6 +1230,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)writeToVRAMAddressRegister2:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	// NSLog(@"In writeToVRAMAddressRegister2 (0x2006) method. Writing 0x%2.2x.",byte);
+	[self runPPUUntilCPUCycle:cycle];
 	
 	// 2006 first write:
 	// t:0011111100000000=d:00111111
@@ -1266,8 +1310,14 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)DMAtransferToSPRRAM:(uint8_t *)bytes onCycle:(uint_fast32_t)cycle
 {
 	// NSLog(@"In DMAtransferToSPRRAM:onCycle: method.");
+	int copyIndex;
+	for (copyIndex = 0; copyIndex < 256; copyIndex++) {
 	
-	memcpy(_sprRAM,bytes,sizeof(uint8_t)*256); // transfer 256 bytes
+		_sprRAM[_sprRAMAddress++] = bytes[copyIndex];
+	}
+	// FIXME: This is incrementing the SPRRAM address. I'm not entirely sure that's correct.
+	
+	// memcpy(_sprRAM,bytes,sizeof(uint8_t)*256); // transfer 256 bytes
 	
 	// This takes 512 CPU cycles, run the PPU if this is mid-frame
 }

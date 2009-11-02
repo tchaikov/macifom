@@ -32,8 +32,11 @@ typedef enum {
 	uint8_t *_selectedNameTable;
 	uint8_t *_sprRAM;
 	uint8_t *_chrRAM;
+	uint8_t *_chrRAMBank0;
+	uint8_t *_chrRAMBank1;
 	uint8_t *_spritePalette;
 	uint8_t *_backgroundPalette;
+	uint8_t ***_chrramTileCache;
 	uint8_t ***_chrromBank0TileCache;
 	uint8_t ***_chrromBank1TileCache;
 	uint8_t ***_backgroundTileCache;
@@ -108,6 +111,8 @@ typedef enum {
 - (void)setMirroringType:(NESMirroringType)type;
 - (void)setCHRROMTileCachePointersForBank0:(uint8_t ***)bankPointer0 bank1:(uint8_t ***)bankPointer1;
 - (void)setCHRROMPointersForBank0:(uint8_t *)bankPointer0 bank1:(uint8_t *)bankPointer1;
+- (void)setCHRRAMBank0Index:(uint8_t)index;
+- (void)setCHRRAMBank1Index:(uint8_t)index;
 - (void)displayBackgroundTiles;
 
 @end

@@ -1032,7 +1032,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_operationMethods[0x18] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performClearCarry:)]; // CLC
 	_operationMethods[0x19] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteY:)]; // ORA Absolute,Y
 	_standardOperations[0x19] = (void (*)(CPURegisters *,uint8_t))_ORA;
-	_operationMethods[0x1A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
+	_operationMethods[0x1A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performNoOperation:)]; // NOP
 	_operationMethods[0x1B] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x1C] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x1D] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteX:)]; // ORA Absolute,X
@@ -1079,7 +1079,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_operationMethods[0x38] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performSetCarry:)]; // SEC
 	_operationMethods[0x39] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteY:)]; // AND Absolute,Y
 	_standardOperations[0x39] = (void (*)(CPURegisters *,uint8_t))_AND;
-	_operationMethods[0x3A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
+	_operationMethods[0x3A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performNoOperation:)]; // NOP
 	_operationMethods[0x3B] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x3C] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x3D] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteX:)]; // AND Absolute,X
@@ -1124,7 +1124,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_operationMethods[0x58] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performClearInterrupt:)]; // CLI
 	_operationMethods[0x59] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteY:)]; // EOR Absolute,Y
 	_standardOperations[0x59] = (void (*)(CPURegisters *,uint8_t))_EOR;
-	_operationMethods[0x5A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
+	_operationMethods[0x5A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performNoOperation:)]; // NOP
 	_operationMethods[0x5B] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x5C] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x5D] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteX:)]; // EOR Absolute,X
@@ -1169,7 +1169,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_operationMethods[0x78] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performSetInterrupt:)]; // SEI
 	_operationMethods[0x79] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteY:)]; // ADC Absolute,Y
 	_standardOperations[0x79] = (void (*)(CPURegisters *,uint8_t))_ADC;
-	_operationMethods[0x7A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
+	_operationMethods[0x7A] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performNoOperation:)]; // NOP
 	_operationMethods[0x7B] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x7C] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0x7D] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteX:)]; // ADC Absolute,X
@@ -1311,7 +1311,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_operationMethods[0xD8] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performClearDecimal:)]; // CLD
 	_operationMethods[0xD9] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteY:)]; // CMP Absolute,Y
 	_standardOperations[0xD9] = (void (*)(CPURegisters *,uint8_t))_CMP;
-	_operationMethods[0xDA] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
+	_operationMethods[0xDA] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performNoOperation:)]; // NOP
 	_operationMethods[0xDB] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0xDC] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0xDD] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteX:)]; // CMP Absolute,X
@@ -1358,7 +1358,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_operationMethods[0xF8] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performSetDecimal:)]; // SED
 	_operationMethods[0xF9] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteY:)]; // SBC Absolute,Y
 	_standardOperations[0xF9] = (void (*)(CPURegisters *,uint8_t))_SBC;
-	_operationMethods[0xFA] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
+	_operationMethods[0xFA] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performNoOperation:)]; // NOP
 	_operationMethods[0xFB] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0xFC] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_unsupportedOpcode:)]; // ???
 	_operationMethods[0xFD] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performOperationAsAbsoluteX:)]; // SBC Absolute,X
