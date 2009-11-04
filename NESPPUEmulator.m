@@ -695,7 +695,6 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	int spritePixelIndex;
 	int spritePixelIncrement;
 	int spriteCounter;
-	int tempOAMIndex;
 	uint_fast8_t tileAttributes;
 	uint_fast8_t tileUpperColorBits;
 	uint_fast8_t tileLowerColorBits;
@@ -793,8 +792,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			
 			for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
 			
-				tempOAMIndex = (_numberOfSpritesOnScanline - 1) - spriteCounter;
-				sprRAMIndex = _spritesOnCurrentScanline[tempOAMIndex];
+				sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
 				spriteVerticalOffset = (_sprRAM[sprRAMIndex + 2] & 0x80 ? (_8x16Sprites ? 15 : 7) - (((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1)) : ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1));
 				// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
 				spriteTileIndex = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0xFE) + (spriteVerticalOffset / 8)) : _sprRAM[sprRAMIndex + 1];
@@ -832,14 +830,13 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 							}
 						}
 						
-						bgOpacityMask = bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000;
+						bgOpacityMask = (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000);
 						pixelMask = (spritePriorityMask & bgOpacityMask) | pixelLockArray[spriteHorizontalOffset + pixelCounter];
 						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
 						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits]] & ~pixelMask;
 						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					}
 					
-					// pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 					spritePixelIndex += spritePixelIncrement;
 				}
 			}
@@ -855,13 +852,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			// Prime in-range object cache
 			[self _findInRangeSprites];
 		}
-		
-		// Restore original palettes
-		// restoreBackupPalettes(_palettes,_backupPalettes);
 	}
-	
-	// Start at scanline 0, end at 239
-	// _cyclesSinceVINT = 7161 + 341 * (stop - start);
 }
 
 - (uint_fast32_t)cyclesSinceVINT {
@@ -1022,7 +1013,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	
 		if (_cyclesSinceVINT <= (341*20)) {
 			
-			_ppuStatusRegister &= 0xBF; // Clear the Sprite 0 Hit flag
+			_ppuStatusRegister &= 0x3F; // Clear the Sprite 0 Hit and VBLANK flags
 			
 			if (_backgroundEnabled | _spritesEnabled) {
 			
@@ -1311,15 +1302,13 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	// NSLog(@"In DMAtransferToSPRRAM:onCycle: method.");
 	int copyIndex;
+	uint8_t sprRAMIndex = _sprRAMAddress;
+	
 	for (copyIndex = 0; copyIndex < 256; copyIndex++) {
 	
-		_sprRAM[_sprRAMAddress++] = bytes[copyIndex];
+		_sprRAM[sprRAMIndex++] = bytes[copyIndex];
 	}
 	// FIXME: This is incrementing the SPRRAM address. I'm not entirely sure that's correct.
-	
-	// memcpy(_sprRAM,bytes,sizeof(uint8_t)*256); // transfer 256 bytes
-	
-	// This takes 512 CPU cycles, run the PPU if this is mid-frame
 }
 
 - (void)writeToSPRRAMAddressRegister:(uint8_t)byte onCycle:(uint_fast32_t)cycle

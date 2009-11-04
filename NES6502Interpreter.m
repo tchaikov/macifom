@@ -372,11 +372,12 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)_performOperationAsAbsolute:(uint8_t)opcode
 {
-	currentCPUCycle += 3; // Read occurs on third cycle
+	// FIXME: Narsty bug with ivar access here prevents this from actually working
+	// currentCPUCycle += 3; // Read occurs on third cycle
 	_standardOperations[opcode](_cpuRegisters,_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),[self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter]));
 	_cpuRegisters->programCounter += 2;
 	
-	return 1; // 1 cycle executes following fetch
+	return 4; // 1 cycle executes following fetch
 }
 
 // FIXME: Should accurately model all reads
@@ -461,10 +462,11 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 {
 	uint16_t address = [self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter];
 	_cpuRegisters->programCounter += 2;
-	currentCPUCycle += 3; // Should be on 3rd cycle when write occurs
+	// FIXME: Narsty bug with ivar access prevents me from actually updating cpu cycles inline here
+	// currentCPUCycle += 3; // Should be on 3rd cycle when write occurs
 	[self writeByte:_writeOperations[opcode](_cpuRegisters,opcode) toCPUAddress:address];
 	
-	return 1; // Final cycle when next opcode is fetched
+	return 4; // Final cycle when next opcode is fetched
 }
 
 - (uint_fast32_t)_performWriteOperationWithAbsoluteX:(uint8_t)opcode

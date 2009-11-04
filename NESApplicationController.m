@@ -326,7 +326,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 		ppuCyclesToRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
 		NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
-		[ppuEmulator runPPUForCPUCycles:ppuCyclesToRun];
+		[ppuEmulator runPPUUntilCPUCycle:ppuCyclesToRun];
 		[cpuInterpreter resetCPUCycleCounter];
 		[playfieldView setNeedsDisplay:YES];
 	}

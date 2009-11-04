@@ -317,7 +317,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	else NSLog(@"MMC1 Using 32KB PRGROM Banks"); 
 	*/
 	_mmc1SwitchFirst16KBBank = (byte & 0x4) ? YES : NO;
-	/* 
+	/*
 	if (_mmc1SwitchFirst16KBBank) NSLog(@"MMC1 Will Switch Lower PRGROM Bank in 16KB Bank Mode");
 	else NSLog(@"MMC1 Will Switch Upper PRGROM Bank in 16KB Bank Mode");
 	*/
@@ -632,7 +632,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		case 1:
 			if (byte & 0x80) {
 			
-				// NSLog(@"MMC1 Mapper Reset Triggered");
+				NSLog(@"MMC1 Mapper Reset Triggered");
 				[self _setMMC1ControlRegister:_mmc1ControlRegister | 0xC];
 				_register = 0;
 				_serialWriteCounter = 0;
