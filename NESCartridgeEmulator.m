@@ -1,9 +1,25 @@
-//
-//  NESCartridgeEmulator.m
-//  Macifom
-//
-//  Created by Auston Stewart on 7/27/08.
-//
+/* NESCartridgeEmulator.m
+ * 
+ * Copyright (c) 2009 Auston Stewart
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #import "NESCartridgeEmulator.h"
 #import "NESPPUEmulator.h"
@@ -188,10 +204,13 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (void)_setMMC1CHRROMBank0Register:(uint8_t)byte
 {
+	// NSLog(@"MMC1: Setting CHRROM Bank 0 register to 0x%2x.",byte);
+	
 	// CHRROM 4KB Bank 0 Swap
-	// NSLog(@"MMC1 Attempting 4KB CHRROM Bank 0 Swap.");
 	if (_mmc1Switch4KBCHRROMBanks) {
-			
+		
+		// NSLog(@"MMC1 Attempting 4KB CHRROM Bank 0 Swap.");
+		
 		if (!_usesCHRRAM) {
 			
 			// NSLog(@"Switching 4KB CHRROM Bank 0 to %d",byte);
@@ -210,7 +229,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			
 		if (!_usesCHRRAM) {
 		
-			// NSLog(@"Switching 8KB CHRROM Bank.");
+			// NSLog(@"Switching 8KB CHRROM Bank to %d.",byte >> 1);
 			// 8KB CHRROM Switching Mode (LSB is ignored, thus the requiring the unintuitive logic below)
 			_patternTable0 = _chrromBanks[byte >> 1];
 			_patternTable1 = _chrromBanks[byte >> 1] + 4096;
@@ -230,9 +249,12 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (void)_setMMC1CHRROMBank1Register:(uint8_t)byte
 {
+	// NSLog(@"MMC1: Setting CHRROM Bank 1 register to 0x%2x.",byte);
+	
 	// CHRRROM 4KB Bank 1 Swap
-	// NSLog(@"MMC1 Attempting 4KB CHRROM Bank 1 Swap.");
 	if (_mmc1Switch4KBCHRROMBanks) {
+		
+		// NSLog(@"MMC1 Attempting 4KB CHRROM Bank 1 Swap.");
 		
 		if (!_usesCHRRAM) {
 		
@@ -254,6 +276,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (void)_setMMC1PRGROMBankRegister:(uint8_t)byte
 {
+	// NSLog(@"MMC1: Setting PRGROM Bank register to 0x%2x.",byte);
+	
 	// PRGROM Bank Swap
 	if (_mmc1Switch16KBPRGROMBanks) {
 		
@@ -286,6 +310,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (void)_setMMC1ControlRegister:(uint8_t)byte
 {
+	// NSLog(@"MMC1: Setting control register to 0x%2x.",byte);
+	
 	// Set Mirroring Mode
 	switch (byte & 0x3) {
 			
@@ -440,6 +466,15 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			_chrromBank1Index = 1;
 			break;
 			
+		case 7:
+			
+			// AOROM
+			_prgromBank0 = _prgromBanks[0];
+			_prgromBank1 = _prgromBanks[1];
+			
+			_usesCHRRAM = YES;
+			break;
+			
 		default:
 			return [NSError errorWithDomain:@"NESMapperErrorDomain" code:11 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Unsupported iNES Mapper",NSLocalizedDescriptionKey,[NSString stringWithFormat:@"Macifom was unable to load the selected file as it specifies an unsupported iNES mapper: %@",[self mapperDescription]],NSLocalizedRecoverySuggestionErrorKey,nil]];
 			break;
@@ -573,7 +608,12 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// Configure PPU
 	// FIXME: Need to support 4-screen mirroring
 	if (_usesVerticalMirroring) [_ppu setMirroringType:NESVerticalMirroring];
-	else [_ppu setMirroringType:NESHorizontalMirroring];
+	else {
+		
+		// AxROM
+		if (_mapperNumber == 7) [_ppu setMirroringType:NESSingleScreenLowerMirroring];
+		else [_ppu setMirroringType:NESHorizontalMirroring];
+	}
 	
 	if (_usesCHRRAM) [_ppu configureForCHRRAM];
 	else {
@@ -612,6 +652,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 - (uint8_t)readByteFromSRAM:(uint16_t)address 
 {
+	// NSLog(@"Reading byte 0x%2.2x from SRAM address 0x%4.4x",_sram[address & 0x1FFF],address);
 	return _sram[address & 0x1FFF];
 }
 
@@ -623,7 +664,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address
 {
 	_sram[address & 0x1FFF] = byte;
-	// NSLog(@"Writing byte to SRAM address 0x%4.4x",address);
+	// NSLog(@"Writing byte 0x%2.2x to SRAM address 0x%4.4x",byte,address);
 }
 
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address
@@ -632,7 +673,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		case 1:
 			if (byte & 0x80) {
 			
-				NSLog(@"MMC1 Mapper Reset Triggered");
+				// NSLog(@"MMC1 Mapper Reset Triggered");
 				[self _setMMC1ControlRegister:_mmc1ControlRegister | 0xC];
 				_register = 0;
 				_serialWriteCounter = 0;
@@ -641,9 +682,11 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 				
 				_register |= ((byte & 0x1) << _serialWriteCounter++); // OR in next serial bit
 			
+				// NSLog(@"MMC1: Bit %d written to address 0x%4x on write #%d.",byte & 0x1,address,_serialWriteCounter);
 				// Commit a change on the 5th Write
 				if (_serialWriteCounter == 5) {
 			
+					// NSLog(@"MMC1: 5th write has occurred, setting register.");
 					if (address < 0xA000) {
 					
 						// Control Register Write
@@ -679,6 +722,18 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			_chrromBank0Index = (byte & 0x3) * 2;
 			_chrromBank1Index = ((byte & 0x3) * 2) + 1;
 			_chrromBanksDidChange = YES;
+			break;
+		case 7:
+			
+			// For AxROM switch a 32KB PRGROM bank
+			_prgromBank0 = _prgromBanks[(byte & 0x7) * 2];
+			_prgromBank1 = _prgromBanks[((byte & 0x7) * 2) + 1];
+			
+			if (byte & 0x10) [_ppu setMirroringType:NESSingleScreenUpperMirroring];
+			else [_ppu setMirroringType:NESSingleScreenLowerMirroring];
+			
+			_prgromBanksDidChange = YES;
+			
 			break;
 		default:
 			break;

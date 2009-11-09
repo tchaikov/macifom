@@ -1,9 +1,25 @@
-//
-//  NES6502Interpreter.m
-//  Macifom
-//
-//  Created by Auston Stewart on 7/27/08.
-//
+/* NES6502Interpreter.m
+ * 
+ * Copyright (c) 2009 Auston Stewart
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #import "NES6502Interpreter.h"
 #import "NESCartridgeEmulator.h"
@@ -925,8 +941,9 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)_performBreak:(uint8_t)opcode
 {
-	// FIXME: Brad Taylor says that BRK is actually a two-byte opcode with a padding bit - http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
+	// Brad Taylor is correct in stating that BRK is actually a two-byte opcode with a padding bit - http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
 	_cpuRegisters->statusBreak = 1;
+	_cpuRegisters->programCounter++; // Increment the program counter here to account for padding bit read
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:0]; // Finally, push the processor status register to the stack
