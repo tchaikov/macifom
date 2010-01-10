@@ -737,6 +737,12 @@
 		};
 	};
 	B91C4F4310F876580057E78E /* Simple_Apu.cpp */ = {
+		isa = PBXFileReference;
+		fileEncoding = 4;
+		lastKnownFileType = sourcecode.cpp.cpp;
+		name = Simple_Apu.cpp;
+		path = /Users/auston/Projects/Software/macifom_blargg/Simple_Apu.cpp;
+		sourceTree = "<absolute>";
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {944, 1176}}";
 			sepNavSelRange = "{1536, 0}";
@@ -744,10 +750,16 @@
 		};
 	};
 	B91C4F4410F876580057E78E /* Simple_Apu.h */ = {
+		isa = PBXFileReference;
+		explicitFileType = sourcecode.cpp.h;
+		fileEncoding = 4;
+		name = Simple_Apu.h;
+		path = /Users/auston/Projects/Software/macifom_blargg/Simple_Apu.h;
+		sourceTree = "<absolute>";
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {944, 798}}";
 			sepNavSelRange = "{1435, 11}";
-			sepNavVisRange = "{690, 799}";
+			sepNavVisRange = "{688, 801}";
 		};
 	};
 	B91C4F5210F876E00057E78E /* NESAPUEmulator.h */ = {
@@ -759,9 +771,9 @@
 	};
 	B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {944, 4186}}";
-			sepNavSelRange = "{4623, 0}";
-			sepNavVisRange = "{4462, 567}";
+			sepNavIntBoundsRect = "{{0, 0}, {1073, 4130}}";
+			sepNavSelRange = "{4704, 0}";
+			sepNavVisRange = "{4579, 545}";
 			sepNavWindowFrame = "{{409, -40}, {1232, 770}}";
 		};
 	};
@@ -1288,7 +1300,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 14";
 		rLen = 0;
-		rLoc = 7220;
+		rLoc = 7229;
 		rType = 0;
 		vrLen = 215;
 		vrLoc = 0;
@@ -1308,7 +1320,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 12";
 		rLen = 0;
-		rLoc = 1943;
+		rLoc = 1952;
 		rType = 0;
 		vrLen = 213;
 		vrLoc = 0;
@@ -1338,7 +1350,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 14";
 		rLen = 0;
-		rLoc = 7215;
+		rLoc = 7224;
 		rType = 0;
 		vrLen = 249;
 		vrLoc = 0;
@@ -1378,7 +1390,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 14";
 		rLen = 0;
-		rLoc = 3035;
+		rLoc = 3044;
 		rType = 0;
 		vrLen = 240;
 		vrLoc = 0;
@@ -1428,7 +1440,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 20";
 		rLen = 0;
-		rLoc = 4332;
+		rLoc = 4341;
 		rType = 0;
 		vrLen = 273;
 		vrLoc = 0;
@@ -1458,7 +1470,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 18";
 		rLen = 0;
-		rLoc = 4313;
+		rLoc = 4322;
 		rType = 0;
 		vrLen = 703;
 		vrLoc = 37;
@@ -1478,7 +1490,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 18";
 		rLen = 0;
-		rLoc = 4313;
+		rLoc = 4322;
 		rType = 0;
 		vrLen = 732;
 		vrLoc = 37;
@@ -1518,7 +1530,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 25";
 		rLen = 0;
-		rLoc = 6224;
+		rLoc = 6233;
 		rType = 0;
 		vrLen = 831;
 		vrLoc = 147;
@@ -1538,7 +1550,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 19";
 		rLen = 0;
-		rLoc = 4313;
+		rLoc = 4322;
 		rType = 0;
 		vrLen = 722;
 		vrLoc = 147;
@@ -1608,7 +1620,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 39";
 		rLen = 0;
-		rLoc = 6631;
+		rLoc = 6640;
 		rType = 0;
 		vrLen = 752;
 		vrLoc = 247;
@@ -1628,7 +1640,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 40";
 		rLen = 0;
-		rLoc = 6633;
+		rLoc = 6642;
 		rType = 0;
 		vrLen = 864;
 		vrLoc = 333;
@@ -1648,7 +1660,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 45";
 		rLen = 0;
-		rLoc = 6765;
+		rLoc = 6774;
 		rType = 0;
 		vrLen = 746;
 		vrLoc = 488;
@@ -1668,7 +1680,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 55";
 		rLen = 0;
-		rLoc = 7118;
+		rLoc = 7127;
 		rType = 0;
 		vrLen = 707;
 		vrLoc = 555;
@@ -1688,7 +1700,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 57";
 		rLen = 0;
-		rLoc = 7077;
+		rLoc = 7086;
 		rType = 0;
 		vrLen = 701;
 		vrLoc = 600;
@@ -1708,7 +1720,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 63";
 		rLen = 0;
-		rLoc = 7119;
+		rLoc = 7128;
 		rType = 0;
 		vrLen = 602;
 		vrLoc = 0;
@@ -1728,7 +1740,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 35";
 		rLen = 0;
-		rLoc = 1048;
+		rLoc = 1054;
 		rType = 0;
 		vrLen = 1141;
 		vrLoc = 322;
@@ -1758,7 +1770,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 23";
 		rLen = 0;
-		rLoc = 951;
+		rLoc = 957;
 		rType = 0;
 		vrLen = 1044;
 		vrLoc = 148;
@@ -1788,7 +1800,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 38";
 		rLen = 0;
-		rLoc = 1570;
+		rLoc = 1579;
 		rType = 0;
 		vrLen = 969;
 		vrLoc = 247;
@@ -1808,7 +1820,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 23";
 		rLen = 0;
-		rLoc = 805;
+		rLoc = 808;
 		rType = 0;
 		vrLen = 1120;
 		vrLoc = 210;
@@ -1828,7 +1840,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 53";
 		rLen = 0;
-		rLoc = 1943;
+		rLoc = 1952;
 		rType = 0;
 		vrLen = 799;
 		vrLoc = 1346;
@@ -1848,7 +1860,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 101";
 		rLen = 0;
-		rLoc = 3441;
+		rLoc = 3450;
 		rType = 0;
 		vrLen = 1095;
 		vrLoc = 2073;
@@ -1868,7 +1880,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 137";
 		rLen = 0;
-		rLoc = 4497;
+		rLoc = 4506;
 		rType = 0;
 		vrLen = 963;
 		vrLoc = 0;
@@ -1888,7 +1900,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 24";
 		rLen = 0;
-		rLoc = 805;
+		rLoc = 808;
 		rType = 0;
 		vrLen = 1071;
 		vrLoc = 148;
@@ -1958,7 +1970,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 142";
 		rLen = 24;
-		rLoc = 4760;
+		rLoc = 4769;
 		rType = 0;
 		vrLen = 656;
 		vrLoc = 3452;
@@ -1978,7 +1990,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 219";
 		rLen = 0;
-		rLoc = 7119;
+		rLoc = 7128;
 		rType = 0;
 		vrLen = 1076;
 		vrLoc = 148;
@@ -2238,7 +2250,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 219";
 		rLen = 0;
-		rLoc = 7119;
+		rLoc = 7128;
 		rType = 0;
 		vrLen = 838;
 		vrLoc = 4588;
@@ -2298,7 +2310,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 219";
 		rLen = 0;
-		rLoc = 7119;
+		rLoc = 7128;
 		rType = 0;
 		vrLen = 838;
 		vrLoc = 4586;
@@ -2318,7 +2330,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 219";
 		rLen = 0;
-		rLoc = 7119;
+		rLoc = 7128;
 		rType = 0;
 		vrLen = 846;
 		vrLoc = 0;
@@ -2378,7 +2390,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 209";
 		rLen = 0;
-		rLoc = 6839;
+		rLoc = 6848;
 		rType = 0;
 		vrLen = 964;
 		vrLoc = 4530;
@@ -2628,7 +2640,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 209";
 		rLen = 0;
-		rLoc = 6839;
+		rLoc = 6848;
 		rType = 0;
 		vrLen = 964;
 		vrLoc = 4530;
@@ -3208,7 +3220,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 101";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1079;
 		vrLoc = 2237;
@@ -3230,7 +3242,7 @@
 		rLen = 0;
 		rLoc = 1383;
 		rType = 0;
-		vrLen = 801;
+		vrLen = 799;
 		vrLoc = 690;
 	};
 	B91C50F110F9095B0057E78E /* PBXTextBookmark */ = {
@@ -3250,7 +3262,7 @@
 		rLen = 0;
 		rLoc = 1383;
 		rType = 0;
-		vrLen = 895;
+		vrLen = 893;
 		vrLoc = 596;
 	};
 	B91C50FB10F90B630057E78E /* PBXTextBookmark */ = {
@@ -3268,7 +3280,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 101";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1075;
 		vrLoc = 2237;
@@ -3348,7 +3360,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 218";
 		rLen = 0;
-		rLoc = 7077;
+		rLoc = 7086;
 		rType = 0;
 		vrLen = 964;
 		vrLoc = 0;
@@ -3388,7 +3400,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 218";
 		rLen = 0;
-		rLoc = 7077;
+		rLoc = 7086;
 		rType = 0;
 		vrLen = 964;
 		vrLoc = 0;
@@ -3428,7 +3440,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 218";
 		rLen = 0;
-		rLoc = 7077;
+		rLoc = 7086;
 		rType = 0;
 		vrLen = 994;
 		vrLoc = 3;
@@ -3448,7 +3460,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 26";
 		rLen = 0;
-		rLoc = 951;
+		rLoc = 957;
 		rType = 0;
 		vrLen = 998;
 		vrLoc = 3;
@@ -3508,7 +3520,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 110";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1083;
 		vrLoc = 2503;
@@ -3538,7 +3550,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 110";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1083;
 		vrLoc = 2503;
@@ -3558,7 +3570,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 132";
 		rLen = 36;
-		rLoc = 4277;
+		rLoc = 4286;
 		rType = 0;
 		vrLen = 1042;
 		vrLoc = 2687;
@@ -3588,7 +3600,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 101";
 		rLen = 0;
-		rLoc = 2979;
+		rLoc = 2988;
 		rType = 0;
 		vrLen = 744;
 		vrLoc = 2150;
@@ -3608,7 +3620,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 104";
 		rLen = 0;
-		rLoc = 3022;
+		rLoc = 3031;
 		rType = 0;
 		vrLen = 785;
 		vrLoc = 2337;
@@ -3638,7 +3650,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 118";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1035;
 		vrLoc = 2500;
@@ -3678,7 +3690,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 216";
 		rLen = 0;
-		rLoc = 6629;
+		rLoc = 6638;
 		rType = 0;
 		vrLen = 734;
 		vrLoc = 5287;
@@ -3698,7 +3710,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 222";
 		rLen = 0;
-		rLoc = 6763;
+		rLoc = 6772;
 		rType = 0;
 		vrLen = 590;
 		vrLoc = 5548;
@@ -3718,7 +3730,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 231";
 		rLen = 0;
-		rLoc = 6883;
+		rLoc = 6892;
 		rType = 0;
 		vrLen = 676;
 		vrLoc = 5515;
@@ -3738,7 +3750,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 231";
 		rLen = 0;
-		rLoc = 6883;
+		rLoc = 6892;
 		rType = 0;
 		vrLen = 544;
 		vrLoc = 5702;
@@ -3758,7 +3770,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 37";
 		rLen = 0;
-		rLoc = 1311;
+		rLoc = 1320;
 		rType = 0;
 		vrLen = 982;
 		vrLoc = 345;
@@ -3778,7 +3790,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 38";
 		rLen = 0;
-		rLoc = 1311;
+		rLoc = 1320;
 		rType = 0;
 		vrLen = 893;
 		vrLoc = 379;
@@ -3798,7 +3810,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 126";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1088;
 		vrLoc = 2686;
@@ -3888,7 +3900,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 125";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1086;
 		vrLoc = 2686;
@@ -3918,7 +3930,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 125";
 		rLen = 0;
-		rLoc = 3340;
+		rLoc = 3349;
 		rType = 0;
 		vrLen = 1086;
 		vrLoc = 2686;
@@ -3938,7 +3950,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 88";
 		rLen = 0;
-		rLoc = 2560;
+		rLoc = 2569;
 		rType = 0;
 		vrLen = 1145;
 		vrLoc = 2710;
@@ -3958,7 +3970,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 35";
 		rLen = 0;
-		rLoc = 1311;
+		rLoc = 1320;
 		rType = 0;
 		vrLen = 903;
 		vrLoc = 176;
@@ -3978,7 +3990,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 177";
 		rLen = 0;
-		rLoc = 5043;
+		rLoc = 5052;
 		rType = 0;
 		vrLen = 846;
 		vrLoc = 3851;
@@ -4058,7 +4070,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 36";
 		rLen = 0;
-		rLoc = 948;
+		rLoc = 954;
 		rType = 0;
 		vrLen = 1080;
 		vrLoc = 275;
@@ -4088,7 +4100,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 234";
 		rLen = 0;
-		rLoc = 6839;
+		rLoc = 6848;
 		rType = 0;
 		vrLen = 674;
 		vrLoc = 5649;
@@ -4128,7 +4140,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 234";
 		rLen = 44;
-		rLoc = 6795;
+		rLoc = 6804;
 		rType = 0;
 		vrLen = 628;
 		vrLoc = 5712;
@@ -4148,7 +4160,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 228";
 		rLen = 52;
-		rLoc = 6674;
+		rLoc = 6683;
 		rType = 0;
 		vrLen = 853;
 		vrLoc = 5279;
@@ -4168,7 +4180,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 222";
 		rLen = 100;
-		rLoc = 6483;
+		rLoc = 6492;
 		rType = 0;
 		vrLen = 853;
 		vrLoc = 5279;
@@ -4288,7 +4300,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 115";
 		rLen = 0;
-		rLoc = 3282;
+		rLoc = 3291;
 		rType = 0;
 		vrLen = 919;
 		vrLoc = 444;
@@ -4308,7 +4320,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 32";
 		rLen = 0;
-		rLoc = 1311;
+		rLoc = 1320;
 		rType = 0;
 		vrLen = 1098;
 		vrLoc = 308;
@@ -4358,7 +4370,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 233";
 		rLen = 0;
-		rLoc = 6844;
+		rLoc = 6853;
 		rType = 0;
 		vrLen = 579;
 		vrLoc = 5876;
@@ -4448,7 +4460,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 235";
 		rLen = 0;
-		rLoc = 6871;
+		rLoc = 6880;
 		rType = 0;
 		vrLen = 585;
 		vrLoc = 5876;
@@ -4468,7 +4480,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 235";
 		rLen = 0;
-		rLoc = 6871;
+		rLoc = 6880;
 		rType = 0;
 		vrLen = 579;
 		vrLoc = 5876;
@@ -4658,7 +4670,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 118";
 		rLen = 0;
-		rLoc = 3282;
+		rLoc = 3291;
 		rType = 0;
 		vrLen = 975;
 		vrLoc = 2479;
@@ -4698,7 +4710,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 178";
 		rLen = 0;
-		rLoc = 5043;
+		rLoc = 5052;
 		rType = 0;
 		vrLen = 1071;
 		vrLoc = 308;
@@ -4718,7 +4730,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 178";
 		rLen = 0;
-		rLoc = 5043;
+		rLoc = 5052;
 		rType = 0;
 		vrLen = 1031;
 		vrLoc = 226;
@@ -4738,7 +4750,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 178";
 		rLen = 0;
-		rLoc = 5043;
+		rLoc = 5052;
 		rType = 0;
 		vrLen = 1207;
 		vrLoc = 2757;
@@ -4758,7 +4770,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 178";
 		rLen = 0;
-		rLoc = 5043;
+		rLoc = 5052;
 		rType = 0;
 		vrLen = 828;
 		vrLoc = 4080;
@@ -4778,7 +4790,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 38";
 		rLen = 0;
-		rLoc = 1311;
+		rLoc = 1320;
 		rType = 0;
 		vrLen = 983;
 		vrLoc = 308;
@@ -4798,7 +4810,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 40";
 		rLen = 0;
-		rLoc = 1112;
+		rLoc = 1121;
 		rType = 0;
 		vrLen = 884;
 		vrLoc = 4256;
@@ -4818,7 +4830,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 184";
 		rLen = 0;
-		rLoc = 5043;
+		rLoc = 5052;
 		rType = 0;
 		vrLen = 1046;
 		vrLoc = 416;
@@ -4848,7 +4860,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 182";
 		rLen = 0;
-		rLoc = 5041;
+		rLoc = 5050;
 		rType = 0;
 		vrLen = 740;
 		vrLoc = 4165;
@@ -4868,7 +4880,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 90";
 		rLen = 0;
-		rLoc = 2551;
+		rLoc = 2560;
 		rType = 0;
 		vrLen = 968;
 		vrLoc = 1798;
@@ -4888,7 +4900,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 125";
 		rLen = 0;
-		rLoc = 3195;
+		rLoc = 3204;
 		rType = 0;
 		vrLen = 1071;
 		vrLoc = 2739;
@@ -4928,7 +4940,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 0;
-		rLoc = 4850;
+		rLoc = 4859;
 		rType = 0;
 		vrLen = 1114;
 		vrLoc = 579;
@@ -4948,7 +4960,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 0;
-		rLoc = 4850;
+		rLoc = 4859;
 		rType = 0;
 		vrLen = 850;
 		vrLoc = 4256;
@@ -4968,7 +4980,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 0;
-		rLoc = 4850;
+		rLoc = 4859;
 		rType = 0;
 		vrLen = 850;
 		vrLoc = 4256;
@@ -5056,7 +5068,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 185";
 		rLen = 0;
-		rLoc = 4695;
+		rLoc = 4704;
 		rType = 0;
 		vrLen = 489;
 		vrLoc = 4587;
@@ -5146,7 +5158,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 0;
-		rLoc = 4850;
+		rLoc = 4859;
 		rType = 0;
 		vrLen = 850;
 		vrLoc = 4256;
@@ -5186,7 +5198,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 0;
-		rLoc = 4850;
+		rLoc = 4859;
 		rType = 0;
 		vrLen = 945;
 		vrLoc = 1812;
@@ -5216,7 +5228,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 0;
-		rLoc = 4850;
+		rLoc = 4859;
 		rType = 0;
 		vrLen = 945;
 		vrLoc = 1812;
@@ -5246,7 +5258,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 38";
 		rLen = 0;
-		rLoc = 1049;
+		rLoc = 1055;
 		rType = 0;
 		vrLen = 1044;
 		vrLoc = 274;
@@ -5276,7 +5288,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 44";
 		rLen = 0;
-		rLoc = 1307;
+		rLoc = 1316;
 		rType = 0;
 		vrLen = 1162;
 		vrLoc = 416;
@@ -5306,7 +5318,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 43";
 		rLen = 0;
-		rLoc = 1219;
+		rLoc = 1228;
 		rType = 0;
 		vrLen = 1134;
 		vrLoc = 416;
@@ -5326,7 +5338,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 173";
 		rLen = 63;
-		rLoc = 4521;
+		rLoc = 4530;
 		rType = 0;
 		vrLen = 492;
 		vrLoc = 4389;
@@ -5356,7 +5368,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 175";
 		rLen = 0;
-		rLoc = 4549;
+		rLoc = 4558;
 		rType = 0;
 		vrLen = 504;
 		vrLoc = 4389;
@@ -5366,7 +5378,7 @@
 		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
 		name = "NESAPUEmulator.mm: 180";
 		rLen = 0;
-		rLoc = 4623;
+		rLoc = 4632;
 		rType = 0;
 		vrLen = 567;
 		vrLoc = 4462;
@@ -5496,9 +5508,9 @@
 	};
 	B99E79110E745EFC0019B353 /* NESApplicationController.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1440, 8148}}";
-			sepNavSelRange = "{11112, 0}";
-			sepNavVisRange = "{10111, 1278}";
+			sepNavIntBoundsRect = "{{0, 0}, {1440, 7252}}";
+			sepNavSelRange = "{14610, 0}";
+			sepNavVisRange = "{13898, 968}";
 		};
 	};
 	B99E79180E7462220019B353 /* NESPlayfieldView.h */ = {

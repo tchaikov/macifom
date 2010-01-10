@@ -19,7 +19,6 @@
 		B91C4F4A10F876580057E78E /* Nes_Oscs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F3D10F876580057E78E /* Nes_Oscs.cpp */; };
 		B91C4F4B10F876580057E78E /* Nes_Vrc6.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F3F10F876580057E78E /* Nes_Vrc6.cpp */; };
 		B91C4F4C10F876580057E78E /* Nonlinear_Buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F4110F876580057E78E /* Nonlinear_Buffer.cpp */; };
-		B91C4F4D10F876580057E78E /* Simple_Apu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F4310F876580057E78E /* Simple_Apu.cpp */; };
 		B91C4F5410F876E00057E78E /* NESAPUEmulator.mm in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */; };
 		B91C50A410F8A2C10057E78E /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B91C50A210F8A2C10057E78E /* AudioToolbox.framework */; };
 		B91C50A510F8A2C10057E78E /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B91C50A310F8A2C10057E78E /* CoreAudio.framework */; };
@@ -63,8 +62,6 @@
 		B91C4F4010F876580057E78E /* Nes_Vrc6.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = Nes_Vrc6.h; sourceTree = "<group>"; };
 		B91C4F4110F876580057E78E /* Nonlinear_Buffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Nonlinear_Buffer.cpp; sourceTree = "<group>"; };
 		B91C4F4210F876580057E78E /* Nonlinear_Buffer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = Nonlinear_Buffer.h; sourceTree = "<group>"; };
-		B91C4F4310F876580057E78E /* Simple_Apu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Simple_Apu.cpp; sourceTree = "<group>"; };
-		B91C4F4410F876580057E78E /* Simple_Apu.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = Simple_Apu.h; sourceTree = "<group>"; };
 		B91C4F5210F876E00057E78E /* NESAPUEmulator.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = NESAPUEmulator.h; sourceTree = "<group>"; };
 		B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NESAPUEmulator.mm; sourceTree = "<group>"; };
 		B91C50A210F8A2C10057E78E /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = /System/Library/Frameworks/AudioToolbox.framework; sourceTree = "<absolute>"; };
@@ -158,8 +155,6 @@
 			isa = PBXGroup;
 			children = (
 				B91C4F2B10F876580057E78E /* nes_apu */,
-				B91C4F4310F876580057E78E /* Simple_Apu.cpp */,
-				B91C4F4410F876580057E78E /* Simple_Apu.h */,
 				32CA4F630368D1EE00C91783 /* Macifom_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 			);
@@ -293,7 +288,6 @@
 				B91C4F4A10F876580057E78E /* Nes_Oscs.cpp in Sources */,
 				B91C4F4B10F876580057E78E /* Nes_Vrc6.cpp in Sources */,
 				B91C4F4C10F876580057E78E /* Nonlinear_Buffer.cpp in Sources */,
-				B91C4F4D10F876580057E78E /* Simple_Apu.cpp in Sources */,
 				B91C4F5410F876E00057E78E /* NESAPUEmulator.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
