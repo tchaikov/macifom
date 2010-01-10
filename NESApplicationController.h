@@ -25,6 +25,7 @@
 
 @class NESPlayfieldView;
 @class NES6502Interpreter;
+@class NESAPUEmulator;
 @class NESPPUEmulator;
 @class NESCartridgeEmulator;
 
@@ -32,6 +33,7 @@
 
 	uint_fast32_t ppuCyclesInLastFrame;
 	NES6502Interpreter *cpuInterpreter;
+	NESAPUEmulator *apuEmulator;
 	NESPPUEmulator *ppuEmulator;
 	NESCartridgeEmulator *cartEmulator;
 	NSArray *instructions;

@@ -23,6 +23,7 @@
 
 #import "NESApplicationController.h"
 #import "NESPlayfieldView.h"
+#import "NESAPUEmulator.h"
 #import "NESPPUEmulator.h"
 #import "NESCartridgeEmulator.h"
 #import "NES6502Interpreter.h"
@@ -131,6 +132,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 - (void)dealloc
 {
 	[cpuInterpreter release];
+	[apuEmulator release];
 	[ppuEmulator release];
 	[cartEmulator release];
 	[cpuRegisters release];
@@ -184,6 +186,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			// Flip the bool to indicate that the game is loaded
 			[self setGameIsLoaded:YES];
 			
+			// Flip on audio
+			[apuEmulator beginAPUPlayback];
+			
 			// Start the game
 			[self play:nil];
 		}
@@ -204,8 +209,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	boolean_t exactMatch;
 	
 	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
+	apuEmulator = [[NESAPUEmulator alloc] init];
 	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator];
-	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	andPPU:ppuEmulator];
+	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	PPU:ppuEmulator andAPU:apuEmulator];
 	_currentInstruction = nil;
 	instructions = nil;
 	debuggerIsVisible = NO;
@@ -242,15 +248,16 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 - (void)_nextFrame {
 
-	uint_fast32_t ppuCyclesToRun;
+	uint_fast32_t actualCPUCyclesRun;
 	uint_fast32_t cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
 	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
 	
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 	
-	ppuCyclesToRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
+	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
+	[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
 	// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
-	[ppuEmulator runPPUUntilCPUCycle:ppuCyclesToRun];
+	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
 	// NSLog(@"PPU failed to complete frame prior to render. Ran for %d cycles to end on cycle %d.",ppuCyclesToRun * 3,[ppuEmulator cyclesSinceVINT]);
 	[cpuInterpreter resetCPUCycleCounter];
 	[ppuEmulator resetCPUCycleCounter];
@@ -311,14 +318,16 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 	if (gameTimer == nil) {
 		
+		[apuEmulator resume]; // Start up the APU's buffered playback
 		[playPauseMenuItem setTitle:@"Pause"];
-		gameTimer = [NSTimer scheduledTimerWithTimeInterval:.017 target:self selector:@selector(_nextFrame) userInfo:nil repeats:YES];
+		gameTimer = [NSTimer scheduledTimerWithTimeInterval:.01666 target:self selector:@selector(_nextFrame) userInfo:nil repeats:YES];
 	}
 	else {
 	
 		[playPauseMenuItem setTitle:@"Play"];
 		[gameTimer invalidate];
 		gameTimer = nil;
+		[apuEmulator pause];
 		[self updatecpuRegisters];
 		[self updateInstructions];
 	}
