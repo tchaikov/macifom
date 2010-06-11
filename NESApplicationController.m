@@ -1,6 +1,6 @@
 /* NESApplicationController.m
  * 
- * Copyright (c) 2009 Auston Stewart
+ * Copyright (c) 2010 Auston Stewart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@
 #import "NESPPUEmulator.h"
 #import "NESCartridgeEmulator.h"
 #import "NES6502Interpreter.h"
+
+static const double timingSequence[3] = { 0.01, 0.02, 0.02 };
 
 static const char *instructionNames[256] = { "BRK", "ORA", "$02", "$03", "$04", "ORA", "ASL", "$07",
 "PHP", "ORA", "ASL", "$0B", "$0C", "ORA", "ASL", "$0F",
@@ -216,6 +218,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	instructions = nil;
 	debuggerIsVisible = NO;
 	gameIsLoaded = NO;
+	timingSequenceIndex = 0;
+	lastTimingCorrection = 0;
 	
 	// FIXME: Should probably CGRelease this somewhere
 	_fullScreenMode = CGDisplayBestModeForParameters(kCGDirectMainDisplay,32,640,480,&exactMatch);
@@ -249,13 +253,17 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 - (void)_nextFrame {
 
 	uint_fast32_t actualCPUCyclesRun;
-	uint_fast32_t cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
+	uint_fast32_t cpuCyclesToRun;
+	
+	// timingSequenceIndex = ++timingSequenceIndex % 3;
+	// timingSequence[timingSequenceIndex]
+	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
+	
+	cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
 	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
-	
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
-	
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
-	[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
+	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun];
 	// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
 	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
 	// NSLog(@"PPU failed to complete frame prior to render. Ran for %d cycles to end on cycle %d.",ppuCyclesToRun * 3,[ppuEmulator cyclesSinceVINT]);
@@ -300,27 +308,13 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 }
 
-- (IBAction)toggleFullScreenMode:(id)sender
-{	
-	if ([playfieldView isInFullScreenMode]) {
-		
-		[playfieldView exitFullScreenModeWithOptions:nil];
-		[playfieldView scaleForWindowedDrawing];
-	}
-	else {
-
-		[playfieldView enterFullScreenMode:[NSScreen mainScreen] withOptions:[NSDictionary dictionaryWithObjectsAndKeys:(NSDictionary *)_fullScreenMode,NSFullScreenModeSetting,[NSNumber numberWithBool:NO],NSFullScreenModeAllScreens,nil]];
-		[playfieldView scaleForFullScreenDrawing];
-	}
-}
-
 - (IBAction)play:(id)sender {
 
 	if (gameTimer == nil) {
 		
 		[apuEmulator resume]; // Start up the APU's buffered playback
 		[playPauseMenuItem setTitle:@"Pause"];
-		gameTimer = [NSTimer scheduledTimerWithTimeInterval:.01666 target:self selector:@selector(_nextFrame) userInfo:nil repeats:YES];
+		[self _nextFrame];
 	}
 	else {
 	
@@ -330,6 +324,25 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		[apuEmulator pause];
 		[self updatecpuRegisters];
 		[self updateInstructions];
+	}
+}
+
+- (IBAction)toggleFullScreenMode:(id)sender
+{	
+	if (gameIsLoaded) {
+		
+		[self play:nil]; // Pause the game during the transition
+		if ([playfieldView isInFullScreenMode]) {
+		
+			[playfieldView exitFullScreenModeWithOptions:nil];
+			[playfieldView scaleForWindowedDrawing];
+		}
+		else {
+		
+			[playfieldView enterFullScreenMode:[NSScreen mainScreen] withOptions:[NSDictionary dictionaryWithObjectsAndKeys:(NSDictionary *)_fullScreenMode,NSFullScreenModeSetting,[NSNumber numberWithBool:NO],NSFullScreenModeAllScreens,nil]];
+			[playfieldView scaleForFullScreenDrawing];
+		}
+		[self play:nil]; // Resume the game at the end of the transition
 	}
 }
 

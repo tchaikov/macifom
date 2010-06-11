@@ -1,7 +1,7 @@
 /*
  *  NESAPUEmulator.h
  *
- * Copyright (c) 2009 Auston Stewart
+ * Copyright (c) 2010 Auston Stewart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ static void HandleOutputBuffer (
 - (uint8_t)readAPUStatusOnCycle:(uint_fast32_t)cycle;
 
 // End a 1/60 sound frame
-- (void)endFrameOnCycle:(uint_fast32_t)cycle;
+- (double)endFrameOnCycle:(uint_fast32_t)cycle;
 
 // Number of samples in buffer
 - (long)numberOfBufferedSamples;
