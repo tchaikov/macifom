@@ -23,10 +23,12 @@
  */
 
 #import "NESAPUEmulator.h"
+#import "NES6502Interpreter.h"
 
-static int null_dmc_reader( void*, cpu_addr_t )
+static int dmc_read_function( void* memoryReader, cpu_addr_t cpuAddress)
 {
-	return 0x55; // causes dmc sample to be flat
+	NESMemoryReader *memoryReadStructure = (NESMemoryReader *)memoryReader;
+	return memoryReadStructure->memoryReadFunction(memoryReadStructure->cpuInterpreter,@selector(readByteFromCPUAddressSpace:),(uint16_t)cpuAddress);
 }
 
 static void HandleOutputBuffer (
@@ -38,7 +40,7 @@ static void HandleOutputBuffer (
 	UInt32 bytesRead = 0;
 	UInt32 samplesRead;
 	UInt32 availableSamples;
-    NESAPUState *pAqData = (NESAPUState *) aqData;
+    NESAPUState *pAqData = (NESAPUState *)aqData;
    
 	// NSLog(@"In HandleOutputBuffer");
 	
@@ -55,30 +57,15 @@ static void HandleOutputBuffer (
 		samplesRead = pAqData->blipBuffer->read_samples((blip_sample_t*)inBuffer->mAudioData,pAqData->numPacketsToRead);
 		bytesRead = samplesRead * 2; // As each sample is 16-bits
 		// NSLog(@"%d samples read from blipBuffer",samplesRead);
-		// if ((availableSamples / pAqData->numPacketsToRead) > 1) pAqData->blipBuffer->remove_samples(availableSamples % pAqData->numPacketsToRead);
 	}
-	
-	// If some data was succesfully read, enqueue the buffer
-    //if (bytesRead > 0) {
-		
-        inBuffer->mAudioDataByteSize = bytesRead;
-		AudioQueueEnqueueBuffer ( 
-								 pAqData->queue,
-								 inBuffer,
-								 0,
-								 NULL
-								 );
-		
-		// pAqData->currentPacket += pAqData->numPacketsToRead; // assume we read as many as we wanted
-        
-   // } else {
-		
-		// FIXME: When CoreAudio stops hanging on asynchronous stops this should be uncommented
-		/*
-		 AudioQueueStop (pAqData->queue,false);
-		 pAqData->isRunning = NO; // Stop the show if we're out of audio
-		 */
-    // }
+			
+	inBuffer->mAudioDataByteSize = bytesRead;
+	AudioQueueEnqueueBuffer ( 
+								pAqData->queue,
+								inBuffer,
+								0,
+								NULL
+								);
 }
 
 
@@ -103,11 +90,8 @@ static void HandleOutputBuffer (
 	NSLog(@"AudioQueueNewOutput: %d",error);
 	
 	// Set buffer size
-	//[self determineBufferSizeGivenMaxPacketSize:(sizeof(short)*2) andSeconds:2];
 	nesAPUState->numPacketsToRead = 2940; // 44.1kHz at 60 fps = 735 (times 4 to reduce overhead)
 	nesAPUState->bufferByteSize = 5880; // 735 samples times four, times 16-bits per sample
-	// nesAPUState->numPacketsToRead = 735;
-	// nesAPUState->bufferByteSize = 1470;
 	
 	// Allocate those bufferes
 	for (int i = 0; i < NUM_BUFFERS; ++i) {
@@ -145,9 +129,8 @@ static void HandleOutputBuffer (
 		blipBuffer->clock_rate( 1789773 ); // Should be 1789773 for NES
 		blargg_err_t error = blipBuffer->sample_rate( 44100,600);
 		if (error) NSLog(@"Error allocating blipBuffer.");
-		nesAPU->dmc_reader( null_dmc_reader, NULL );
-		nesAPU->output(blipBuffer);
 		
+		nesAPU->output(blipBuffer);
 		nesAPUState = (NESAPUState *)malloc(sizeof(NESAPUState));
 		nesAPUState->dataFormat.mSampleRate = 44100.0;
 		nesAPUState->dataFormat.mFormatID = kAudioFormatLinearPCM;
@@ -219,35 +202,16 @@ static void HandleOutputBuffer (
 							nesAPUState->buffers[i]
 							);
 	}
-	
-	// AudioQueueStart (nesAPUState->queue,NULL);
 }
-
-/*
-- (void)determineBufferSizeGivenMaxPacketSize:(UInt32)maxPacketSize andSeconds:(Float64)seconds
-{
-    static const int maxBufferSize = 640000;                        // 5 seconds, 16-bit stereo at 32kHz
-    static const int minBufferSize = 64000;                         // .5 seconds, 16-bit stereo at 32kHz
-	
-	Float64 numPacketsForTime = spcPlayerState->dataFormat.mSampleRate / spcPlayerState->dataFormat.mFramesPerPacket * seconds;
-	spcPlayerState->bufferByteSize = numPacketsForTime * maxPacketSize;
-	
-    if (                                                             // Sets buffer size lower if maximum is exceeded
-        spcPlayerState->bufferByteSize > maxBufferSize &&
-        spcPlayerState->bufferByteSize > maxPacketSize
-		)
-        spcPlayerState->bufferByteSize = maxBufferSize;
-    else {
-        if (spcPlayerState->bufferByteSize < minBufferSize)
-            spcPlayerState->bufferByteSize = minBufferSize;
-    }
-	
-    spcPlayerState->numPacketsToRead = spcPlayerState->bufferByteSize / maxPacketSize;
-}
- */
 
 // Set function for APU to call when it needs to read memory (DMC samples)
-// -(void)setDMCReadFunction:(int(*)(void* user_data, cpu_addr_t))dmcFunction;
+-(void)setDMCReadObject:(NES6502Interpreter *)cpu {
+
+	NESMemoryReader *dmcUserData = (NESMemoryReader *)malloc(sizeof(NESMemoryReader));
+	dmcUserData->cpuInterpreter = cpu;
+	dmcUserData->memoryReadFunction = (uint8_t (*)(id, SEL, uint16_t))[cpu methodForSelector:@selector(readByteFromCPUAddressSpace:)];
+	nesAPU->dmc_reader(dmc_read_function,dmcUserData);
+}
 
 // Set output sample rate
 - (BOOL)setOutputSampleRate:(long)rate {

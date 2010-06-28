@@ -30,6 +30,15 @@
 
 #define NUM_BUFFERS 3
 
+@class NES6502Interpreter;
+
+typedef uint8_t (*CPUMemoryReadPointer)(id, SEL, uint16_t);
+
+typedef struct {
+	NES6502Interpreter *cpuInterpreter;
+	CPUMemoryReadPointer memoryReadFunction;
+} NESMemoryReader;
+
 typedef struct {
     AudioStreamBasicDescription   dataFormat;
     AudioQueueRef                 queue;
@@ -61,7 +70,7 @@ static void HandleOutputBuffer (
 - (void)beginAPUPlayback;
 
 // Set function for APU to call when it needs to read memory (DMC samples)
-// - (void)setDMCReadFunction:(int(*)(void* user_data, cpu_addr_t))dmcFunction;
+-(void)setDMCReadObject:(NES6502Interpreter *)cpu;
 
 // Set output sample rate
 - (BOOL)setOutputSampleRate:(long)rate;

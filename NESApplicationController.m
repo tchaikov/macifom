@@ -211,9 +211,10 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	boolean_t exactMatch;
 	
 	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
-	apuEmulator = [[NESAPUEmulator alloc] init];
 	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator];
+	apuEmulator = [[NESAPUEmulator alloc] init];
 	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	PPU:ppuEmulator andAPU:apuEmulator];
+	[apuEmulator setDMCReadObject:cpuInterpreter];
 	_currentInstruction = nil;
 	instructions = nil;
 	debuggerIsVisible = NO;
