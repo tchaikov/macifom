@@ -1,6 +1,6 @@
 /* NES6502Interpreter.m
  * 
- * Copyright (c) 2009 Auston Stewart
+ * Copyright (c) 2010 Auston Stewart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 #import "NES6502Interpreter.h"
 #import "NESCartridgeEmulator.h"
 #import "NESPPUEmulator.h"
+#import "NESAPUEmulator.h"
 
 static void _ADC(CPURegisters *cpuRegisters, uint8_t operand) {
 	
@@ -278,6 +279,10 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		
 			return ((_controller1 >> _controllerReadIndex++) & 0x1);
 		}
+		else if (address == 0x4015) {
+			
+			return [apu readAPUStatusOnCycle:currentCPUCycle];
+		}
 	}
 	else return [ppu readByteFromCPUAddress:address onCycle:currentCPUCycle];
 	
@@ -336,6 +341,11 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		else if (address == 0x4016) {
 		
 			_controllerReadIndex = 0; // FIXME: Really, I should be resetting this when 1 then 0 is written
+		}
+		else {
+		
+			// Write to APU Register (0x4000-0x4017, except 0x4014 and 0x4016)
+			[apu writeByte:byte toAPUFromCPUAddress:address onCycle:currentCPUCycle];
 		}
 	}
 	else if (address < 0x6000) return;
@@ -982,12 +992,13 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	currentCPUCycle += [self _performNonMaskableInterrupt:0];
 }
 
-- (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu andPPU:(NESPPUEmulator *)ppuEmu {
+- (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu PPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu {
 
 	[super init];
 	
 	cartridge = cartEmu; // Non-retained reference;
 	ppu = ppuEmu; // Non-retained reference;
+	apu = apuEmu; // Non-retained reference;
 	
 	_cpuRegisters = (CPURegisters *)malloc(sizeof(CPURegisters));
 	_zeroPage = (uint8_t *)malloc(sizeof(uint8_t)*2048);

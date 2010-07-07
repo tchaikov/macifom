@@ -1,6 +1,6 @@
 /* NES6502Interpreter.h
  * 
- * Copyright (c) 2009 Auston Stewart
+ * Copyright (c) 2010 Auston Stewart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 
 @class NESCartridgeEmulator;
 @class NESPPUEmulator;
+@class NESAPUEmulator;
 
 typedef struct cpuregs {
 	
@@ -71,12 +72,13 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 	
 	NESCartridgeEmulator *cartridge;
 	NESPPUEmulator *ppu;
+	NESAPUEmulator *apu;
 	
 	uint_fast32_t _controller1;
 	uint8_t _controllerReadIndex;
 }
 
-- (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu andPPU:(NESPPUEmulator *)ppuEmu;
+- (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu PPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu;
 - (void)reset;
 - (void)resetCPUCycleCounter;
 - (uint_fast32_t)executeUntilCycle:(uint_fast32_t)cycle;

@@ -1,6 +1,6 @@
 /* NESApplicationController.h
  * 
- * Copyright (c) 2009 Auston Stewart
+ * Copyright (c) 2010 Auston Stewart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,17 @@
 
 @class NESPlayfieldView;
 @class NES6502Interpreter;
+@class NESAPUEmulator;
 @class NESPPUEmulator;
 @class NESCartridgeEmulator;
 
 @interface NESApplicationController : NSObject {
 
 	uint_fast32_t ppuCyclesInLastFrame;
+	int timingSequenceIndex;
+	double lastTimingCorrection;
 	NES6502Interpreter *cpuInterpreter;
+	NESAPUEmulator *apuEmulator;
 	NESPPUEmulator *ppuEmulator;
 	NESCartridgeEmulator *cartEmulator;
 	NSArray *instructions;

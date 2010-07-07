@@ -1,6 +1,6 @@
 /* NESCartridgeEmulator.m
  * 
- * Copyright (c) 2009 Auston Stewart
+ * Copyright (c) 2010 Auston Stewart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -240,7 +240,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		else {
 		
 			// FIXME: I don't think this is supported, unless there are MMC1 games with more than 8KB of CHRRAM.
-			NSLog(@"MMC1: CHRRAM Game Attempted to Switch CHRROM Bank 0!");
+			// NSLog(@"MMC1: CHRRAM Game Attempted to Switch CHRROM Bank 0!");
 		}
 	}
 	
