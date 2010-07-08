@@ -435,11 +435,11 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	}
 }
 
-- (void)_drawScanlines:(uint8_t)start until:(uint8_t)stop
+- (void)_drawScanlinesStoppingOnCycle:(uint_fast32_t)endingCycle
 {
 	uint_fast8_t tileIndex;
 	uint_fast8_t tileCounter;
-	uint_fast8_t scanlineCounter;
+	uint_fast8_t currentScanline;
 	uint_fast8_t scanlinePixelCounter;
 	uint_fast8_t verticalTileOffset;
 	uint_fast8_t pixelCounter;
@@ -463,13 +463,12 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	uint_fast32_t pixelMask;
 	uint_fast32_t pixelLockArray[256];
 	uint_fast8_t bgOpacityBuffer[256];
+	uint_fast32_t cyclesPastPrimingScanline, scanlineStartingCycle, scanlineEndingCycle;
 	
 	// NSLog(@"In drawScanlines method. Drawing from %d to %d.",start,stop);
 	
 	if (_backgroundEnabled || _spritesEnabled) {
-	
-		// backupPalettesForRendering(_palettes,_backupPalettes);
-		
+			
 		// If CHRRAM writes have occurred, regenerate the pattern table tile caches prior to rendering
 		if (_chrRAMWriteHistory) {
 			
@@ -478,130 +477,151 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			_chrRAMWriteHistory = 0; // Clear write history
 		}
 		
-		for (scanlineCounter = start; scanlineCounter < stop; scanlineCounter++) {
+		// for (scanlineCounter = startingScanline; scanlineCounter < endingScanline; scanlineCounter++)
+		while ((endingCycle > _cyclesSinceVINT) && (_cyclesSinceVINT < (_oddFrame ? 89000 : 89001)))
+		{
+			// Determine current scanline
+			cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
+			currentScanline = cyclesPastPrimingScanline / 341;
+			
+			// Determine starting cycle for scanline (we'll only render if zero)
+			scanlineStartingCycle = cyclesPastPrimingScanline % 341;
+			
+			// Determine ending cycle for scanline (will only increment registers if greater than 255)
+			scanlineEndingCycle = (_cyclesSinceVINT + (341 - scanlineStartingCycle)) <= endingCycle ? 341 : endingCycle - _cyclesSinceVINT + scanlineStartingCycle;
 	
-			// Set video buffer index
-			_videoBufferIndex = scanlineCounter * 256;
+			if (scanlineStartingCycle == 0) {
+				
+				// Set video buffer index
+				// _videoBufferIndex = scanlineCounter * 256;
+				_videoBufferIndex = currentScanline * 256;
 			
-			// Initialize Scanline Pixel Counter
-			scanlinePixelCounter = 0;
+				// Initialize Scanline Pixel Counter
+				scanlinePixelCounter = 0;
 			
-			// Get Vertical Tile Offset
-			verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
+				// Get Vertical Tile Offset
+				verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
 		
-			// Draw first two cached tiles
-			// FIXME: It might be faster to do the colorPalette indexing elsewhere and then memcpy here
-			for (pixelCounter = _fineHorizontalScroll; pixelCounter < 16; pixelCounter++) {
+				// Draw first two cached tiles
+				// FIXME: It might be faster to do the colorPalette indexing elsewhere and then memcpy here
+				for (pixelCounter = _fineHorizontalScroll; pixelCounter < 16; pixelCounter++) {
 			
-				// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
-				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[_playfieldBuffer[pixelCounter]]];
-				bgOpacityBuffer[scanlinePixelCounter++] = _playfieldBuffer[pixelCounter];
-			}
+					// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
+					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[_playfieldBuffer[pixelCounter]]];
+					bgOpacityBuffer[scanlinePixelCounter++] = _playfieldBuffer[pixelCounter];
+				}
 		
-			for (tileCounter = 0; tileCounter < 30; tileCounter++) {
+				for (tileCounter = 0; tileCounter < 30; tileCounter++) {
 			
+					nameTableOffset = _nameTableMirroring(_VRAMAddress);
+					tileIndex = _nameAndAttributeTables[nameTableOffset];
+					tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
+					tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+					// NSLog(@"Loading Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
+			
+					for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
+	
+						tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+						// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
+						_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
+						bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
+					
+						// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
+					}
+			
+					// Increment the VRAM address one tile to the right
+					incrementVRAMAddressHorizontally(&_VRAMAddress);
+				}
+			
+				// Draw the 33rd title if necessary
 				nameTableOffset = _nameTableMirroring(_VRAMAddress);
 				tileIndex = _nameAndAttributeTables[nameTableOffset];
 				tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 				tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
-				// NSLog(@"Loading Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
 			
-				for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
-	
+				for (pixelCounter = 0; pixelCounter < _fineHorizontalScroll; pixelCounter++) {
+			
 					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-					// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 					bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
-					
+				
 					// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 				}
 			
-				// Increment the VRAM address one tile to the right
+				// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
 				incrementVRAMAddressHorizontally(&_VRAMAddress);
-			}
 			
-			// Draw the 33rd title if necessary
-			nameTableOffset = _nameTableMirroring(_VRAMAddress);
-			tileIndex = _nameAndAttributeTables[nameTableOffset];
-			tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
-			tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
+				// Clear the pixel locks and draw sprites
+				bzero(pixelLockArray,sizeof(uint_fast32_t)*256);
 			
-			for (pixelCounter = 0; pixelCounter < _fineHorizontalScroll; pixelCounter++) {
+				for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
 			
-				tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
-				_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
-				bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
+					sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
+					spriteVerticalOffset = (_sprRAM[sprRAMIndex + 2] & 0x80 ? (_8x16Sprites ? 15 : 7) - (((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1)) : ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1));
+					// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
+					spriteTileIndex = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0xFE) + (spriteVerticalOffset / 8)) : _sprRAM[sprRAMIndex + 1];
+					spriteVerticalOffset &= 0x7;
+					spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
+					spriteVideoBufferOffset = _videoBufferIndex - 256 + spriteHorizontalOffset;
+					spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
+					spriteUpperColorBits = (_sprRAM[sprRAMIndex + 2] & 0x3) * 4;
+					spriteRenderCache = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0x1) ? _chrromBank1TileCache : _chrromBank0TileCache) : _spriteTileCache;
+					spritePriorityMask = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
 				
-				// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
-			}
-			
-			// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
-			incrementVRAMAddressHorizontally(&_VRAMAddress);
-			
-			// Clear the pixel locks and draw sprites
-			bzero(pixelLockArray,sizeof(uint_fast32_t)*256);
-			
-			for (spriteCounter = 0; spriteCounter < _numberOfSpritesOnScanline; spriteCounter++) {
-			
-				sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
-				spriteVerticalOffset = (_sprRAM[sprRAMIndex + 2] & 0x80 ? (_8x16Sprites ? 15 : 7) - (((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1)) : ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1));
-				// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
-				spriteTileIndex = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0xFE) + (spriteVerticalOffset / 8)) : _sprRAM[sprRAMIndex + 1];
-				spriteVerticalOffset &= 0x7;
-				spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
-				spriteVideoBufferOffset = _videoBufferIndex - 256 + spriteHorizontalOffset;
-				spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
-				spriteUpperColorBits = (_sprRAM[sprRAMIndex + 2] & 0x3) * 4;
-				spriteRenderCache = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0x1) ? _chrromBank1TileCache : _chrromBank0TileCache) : _spriteTileCache;
-				spritePriorityMask = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
+					// Check for horizontal flip
+					if (_sprRAM[sprRAMIndex + 2] & 0x40) {
 				
-				// Check for horizontal flip
-				if (_sprRAM[sprRAMIndex + 2] & 0x40) {
-				
-					spritePixelIncrement = -1;
-					spritePixelIndex = 7;
-				}
-				else {
-					
-					spritePixelIncrement = 1;
-					spritePixelIndex = 0;
-				}
-								
-				// Draw Sprite Pixels
-				for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
-					
-					if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] != 0) {
-					
-						// Check for sprite 0 hit
-						if (sprRAMIndex == 0) {
-							
-							if (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] && (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits)) {
-							
-								_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
-							}
-						}
-						
-						bgOpacityMask = (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000);
-						pixelMask = (spritePriorityMask & bgOpacityMask) | pixelLockArray[spriteHorizontalOffset + pixelCounter];
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
-						_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits]] & ~pixelMask;
-						pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
+						spritePixelIncrement = -1;
+						spritePixelIndex = 7;
 					}
+					else {
 					
-					spritePixelIndex += spritePixelIncrement;
+						spritePixelIncrement = 1;
+						spritePixelIndex = 0;
+					}
+								
+					// Draw Sprite Pixels
+					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
+					
+						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] != 0) {
+					
+							// Check for sprite 0 hit
+							if (sprRAMIndex == 0) {
+							
+								if (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] && (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits)) {
+							
+									_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
+								}
+							}
+						
+							bgOpacityMask = (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000);
+							pixelMask = (spritePriorityMask & bgOpacityMask) | pixelLockArray[spriteHorizontalOffset + pixelCounter];
+							_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
+							_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits]] & ~pixelMask;
+							pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
+						}
+					
+						spritePixelIndex += spritePixelIncrement;
+					}
 				}
 			}
 			
-			// Increment the VRAM address vertically
-			incrementVRAMAddressVertically(&_VRAMAddress);
-			_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
-			_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
+			if ((scanlineEndingCycle > 255) && (scanlineStartingCycle <= 255)) {
+				
+				// Increment the VRAM address vertically
+				incrementVRAMAddressVertically(&_VRAMAddress); // FIXME: This should actually occur on scanline cycle 251 (250 if zero-indexed), not 257 (256 zero-indexed) as is done here
+			
+				_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
+				_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
 		
-			// Load in first two playfield tiles of the next scanline
-			[self _preloadTilesForScanline];
+				// Load in first two playfield tiles of the next scanline
+				[self _preloadTilesForScanline];
 		
-			// Prime in-range object cache
-			[self _findInRangeSprites];
+				// Prime in-range object cache
+				[self _findInRangeSprites];
+			}
+			
+			_cyclesSinceVINT += scanlineEndingCycle - scanlineStartingCycle;
 		}
 	}
 }
@@ -651,10 +671,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 
 - (BOOL)runPPUForCPUCycles:(uint_fast32_t)cycle
 {
-	uint_fast32_t endingCycle = _cyclesSinceVINT + (cycle * 3);
-	uint_fast32_t cyclesPastPrimingScanline;
-	uint8_t endingScanline;
-	
+	uint_fast32_t endingCycle = _cyclesSinceVINT + (cycle * 3);	
 	// NSLog(@"In runPPUUntilCPUCycle method.");
 	
 	// Just add cycles if we're still in VBLANK
@@ -678,12 +695,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		
 		if (![self completePrimingScanlineStoppingOnCycle:endingCycle]) return NO;
 	}
-
-	// Determine last whole scanline to draw
-	endingScanline = ((endingCycle  - ( _oddFrame ? 7160 : 7161)) / 341);
-	endingScanline = endingScanline > 240 ? 240 : endingScanline;
-	cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
-	[self _drawScanlines:(cyclesPastPrimingScanline / 341) until:endingScanline];
+		
+	[self _drawScanlinesStoppingOnCycle:endingCycle];
 	
 	if (endingCycle > (_oddFrame ? 89340 : 89341)) {
 		

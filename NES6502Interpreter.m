@@ -305,7 +305,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 		_zeroPage[address & 0x07FF] = byte;
 	}
-	else if (address < 0x4000) [ppu writeByte:byte toPPUFromCPUAddress:address onCycle:currentCPUCycle];
+	else if (address < 0x4000) [ppu writeByte:byte toPPUFromCPUAddress:address onCycle:currentCPUCycle + 4]; // FIXME: Nasty hack to simulate write as occurring after 4th cycle. Makes assumption of absolute addressing.
 	else if (address < 0x4020) {
 		
 		if (address == 0x4014) {
