@@ -133,6 +133,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 - (void)dealloc
 {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[cpuInterpreter release];
 	[apuEmulator release];
 	[ppuEmulator release];
@@ -192,6 +193,27 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[playfieldView setNeedsDisplay:YES];
 }
 
+- (void)_willLoseFocus:(NSNotification *)notification {
+
+	if (gameIsRunning) {
+		
+		[self play:nil];
+		playOnActivate = YES;
+	}
+	else {
+	
+		playOnActivate = NO;
+	}
+}
+
+- (void)_willGainFocus:(NSNotification *)notification {
+
+	if (playOnActivate) {
+	
+		[self play:nil];
+	}
+}
+
 - (void)awakeFromNib {
 	
 	boolean_t exactMatch;
@@ -206,10 +228,19 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	debuggerIsVisible = NO;
 	gameIsLoaded = NO;
 	gameIsRunning = NO;
+	playOnActivate = NO;
 	lastTimingCorrection = 0;
 	
 	// FIXME: Should probably CGRelease this somewhere
 	_fullScreenMode = CGDisplayBestModeForParameters(kCGDirectMainDisplay,32,640,480,&exactMatch);
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(_willLoseFocus:)
+												 name:NSApplicationWillResignActiveNotification object:nil];
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(_willGainFocus:)
+												 name:NSApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (IBAction)loadROM:(id)sender
@@ -408,7 +439,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[hexScanner scanHexInt:&scannedValue];
 	address = scannedValue; // take just 16-bits for the address
 	
-	[peekLabel setStringValue:[NSString stringWithFormat:@"0x%2.2x",[cpuInterpreter readByteFromCPUAddressSpace:address]]];
+	[pokeField setStringValue:[NSString stringWithFormat:@"0x%2.2x",[cpuInterpreter readByteFromCPUAddressSpace:address]]];
 }
 
 - (IBAction)poke:(id)sender

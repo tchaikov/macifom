@@ -46,7 +46,6 @@
 	
 	IBOutlet NESPlayfieldView *playfieldView;
 	IBOutlet NSTextField *peekField;
-	IBOutlet NSTextField *peekLabel;
 	IBOutlet NSTextField *pokeField;
 	IBOutlet NSWindow *debuggerWindow;
 	IBOutlet NSMenuItem *playPauseMenuItem;
@@ -54,6 +53,7 @@
 	BOOL debuggerIsVisible;
 	BOOL gameIsLoaded;
 	BOOL gameIsRunning;
+	BOOL playOnActivate;
 }
 
 - (IBAction)play:(id)sender;

@@ -268,6 +268,17 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_zeroPage[0x000f] = 0xBF;
 }
 
+- (void)_clearStatus
+{
+	currentCPUCycle = 0;
+	breakPoint = 0;
+	_encounteredUnsupportedOpcode = NO;
+	_encounteredBreakpoint = NO;
+	
+	_controller1 = 0x20000; // Indicate one controller attached to $4016
+	_controllerReadIndex = 0;
+}
+
 - (uint8_t)readByteFromCPUAddressSpace:(uint16_t)address
 {
 	if (address >= 0xC000) return _prgRomBank1[address & 0x3FFF];
@@ -1008,15 +1019,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	[self _clearRegisters];
 	[self _clearCPUMemory];
-	
-	currentCPUCycle = 0;
-	breakPoint = 0;
-	_encounteredUnsupportedOpcode = NO;
-	_encounteredBreakpoint = NO;
-	
-	_controller1 = 0x20000; // Indicate one controller attached to $4016
-	_controllerReadIndex = 0;
-	
+	[self _clearStatus];
+		
 	// Load valid method pointers
 	_operationMethods[0x00] = (uint_fast32_t (*)(id, SEL, uint8_t))[self methodForSelector:@selector(_performBreak:)]; // BRK
 	_operationSelectors[0x00] = @selector(_performBreak:);
@@ -1416,6 +1420,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 {
 	[self _clearRegisters];
 	[self _clearCPUMemory];
+	[self _clearStatus];
 	_cpuRegisters->programCounter = [cartridge readAddressFromPRGROM:0xFFFC];
 	currentCPUCycle = 8;
 }
