@@ -170,6 +170,11 @@ static void HandleOutputBuffer (
 	[super dealloc];
 }
 
+- (void)clearBuffer
+{
+	blipBuffer->clear(true);
+}
+
 - (void)pause
 {
 	nesAPUState->isRunning = NO;
@@ -185,13 +190,17 @@ static void HandleOutputBuffer (
 - (void)stopAPUPlayback
 {
 	nesAPUState->isRunning = NO;
-	AudioQueueStop (nesAPUState->queue,true);
+	AudioQueueStop(nesAPUState->queue,true);
 }
 
 - (void)beginAPUPlayback
 {
 	nesAPUState->isRunning = NO;
 	nesAPUState->bufferFillDelay = 4;
+	
+	// Reset the APU and Buffer
+	nesAPU->reset(false,0);
+	blipBuffer->clear(true);
 	
 	// Prime the playback buffer
 	for (int i = 0; i < NUM_BUFFERS; ++i) {

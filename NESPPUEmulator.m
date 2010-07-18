@@ -191,6 +191,11 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_usingCHRRAM = NO;
 	_8x16Sprites = NO;
 	
+	memset(_playfieldBuffer,0,sizeof(uint8_t)*16);
+	memset(_sprRAM,0,sizeof(uint8_t)*256);
+	memset(_palettes,0,sizeof(uint8_t)*32);
+	memset(_nameAndAttributeTables,0,sizeof(uint8_t)*2048);
+	
 	if (_chrramTileCache != NULL) {
 	
 		// FIXME: Invoke method to free tile cache
@@ -220,15 +225,16 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	[super init];
 	
-	[self resetPPUstatus];
 	_videoBuffer = buffer;
 	_playfieldBuffer = (uint8_t *)malloc(sizeof(uint8_t)*16);
 	_sprRAM = (uint8_t *)malloc(sizeof(uint8_t)*256);
 	_palettes = (uint8_t *)malloc(sizeof(uint8_t)*32);
 	_backgroundPalette = _palettes;
 	_spritePalette = (_palettes + 0x10);
-
 	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*2048);
+	
+	[self resetPPUstatus];
+	
 	_registerReadMethods = (RegisterReadMethod *)malloc(sizeof(uint8_t (*)(id, SEL, uint_fast32_t))*8);
 	_registerWriteMethods = (RegisterWriteMethod *)malloc(sizeof(void (*)(id, SEL, uint8_t, uint_fast32_t))*8);
 	

@@ -68,6 +68,7 @@ static void HandleOutputBuffer (
 }
 
 - (void)beginAPUPlayback;
+- (void)stopAPUPlayback;
 
 // Set function for APU to call when it needs to read memory (DMC samples)
 -(void)setDMCReadObject:(NES6502Interpreter *)cpu;
@@ -86,6 +87,8 @@ static void HandleOutputBuffer (
 
 // Number of samples in buffer
 - (long)numberOfBufferedSamples;
+
+- (void)clearBuffer;
 
 - (void)pause;
 - (void)resume;

@@ -63,6 +63,7 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 	uint_fast32_t currentCPUCycle; // FIXME: Should be 0 or 1 indexed?
 	uint16_t breakPoint;
 	BOOL _encounteredUnsupportedOpcode;
+	BOOL _encounteredBreakpoint;
 	
 	StandardOpPointer *_standardOperations;
 	WriteOpPointer *_writeOperations;
@@ -82,7 +83,7 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)reset;
 - (void)resetCPUCycleCounter;
 - (uint_fast32_t)executeUntilCycle:(uint_fast32_t)cycle;
-- (uint_fast32_t)executeUntilBreak;
+- (uint_fast32_t)executeUntilCycleWithBreak:(uint_fast32_t)cycle;
 - (void)setBreakpoint:(uint16_t)counter;
 - (uint8_t)currentOpcode;
 - (CPURegisters *)cpuRegisters;
@@ -94,5 +95,7 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)nmi;
 - (void)setPRGROMPointers;
 - (void)setController1Data:(uint_fast32_t)data;
+
+@property(nonatomic, readonly) BOOL encounteredBreakpoint;
 
 @end

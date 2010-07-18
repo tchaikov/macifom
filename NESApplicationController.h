@@ -32,7 +32,6 @@
 @interface NESApplicationController : NSObject {
 
 	uint_fast32_t ppuCyclesInLastFrame;
-	int timingSequenceIndex;
 	double lastTimingCorrection;
 	NES6502Interpreter *cpuInterpreter;
 	NESAPUEmulator *apuEmulator;
@@ -54,10 +53,10 @@
 	
 	BOOL debuggerIsVisible;
 	BOOL gameIsLoaded;
+	BOOL gameIsRunning;
 }
 
 - (IBAction)play:(id)sender;
-- (IBAction)run:(id)sender;
 - (IBAction)setBreak:(id)sender;
 - (IBAction)runUntilBreak:(id)sender;
 - (IBAction)loadROM:(id)sender;

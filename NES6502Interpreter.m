@@ -237,6 +237,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 @implementation NES6502Interpreter
 
+@synthesize encounteredBreakpoint = _encounteredBreakpoint;
+
 - (void)_clearRegisters
 {
 	_cpuRegisters->accumulator = 0;
@@ -370,14 +372,9 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	}
 }
 
-/* Note to self: May note be able to assume that all program execution is from cartridge memory.
- * Should assert in cartridge code if read is outside of cart memory. If that's the case, all memory
- * reads must be from CPU Address Space.
- *
- *
- */
 - (uint_fast32_t)_unsupportedOpcode:(uint8_t)opcode
 {
+	NSLog(@"Macifom: Encountered unsupported opcode %2.2x at program counter %4.4x on cycle %d",opcode,_cpuRegisters->programCounter,currentCPUCycle);
 	_encounteredUnsupportedOpcode = YES;
 	return 0;
 }
@@ -1015,6 +1012,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	currentCPUCycle = 0;
 	breakPoint = 0;
 	_encounteredUnsupportedOpcode = NO;
+	_encounteredBreakpoint = NO;
 	
 	_controller1 = 0x20000; // Indicate one controller attached to $4016
 	_controllerReadIndex = 0;
@@ -1417,6 +1415,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (void)reset
 {
 	[self _clearRegisters];
+	[self _clearCPUMemory];
 	_cpuRegisters->programCounter = [cartridge readAddressFromPRGROM:0xFFFC];
 	currentCPUCycle = 8;
 }
@@ -1449,15 +1448,17 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	currentCPUCycle = 0;
 }
 
-- (uint_fast32_t)executeUntilBreak
+- (uint_fast32_t)executeUntilCycleWithBreak:(uint_fast32_t)cycle
 {
 	uint8_t opcode;
 	
-	while (!_encounteredUnsupportedOpcode && (_cpuRegisters->programCounter != breakPoint)) {
+	while ((currentCPUCycle < cycle) && (_cpuRegisters->programCounter != breakPoint)) {
 	
 		opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
 		currentCPUCycle += _operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
 	}
+	
+	_encounteredBreakpoint = (_cpuRegisters->programCounter == breakPoint);
 	
 	return currentCPUCycle;
 }
