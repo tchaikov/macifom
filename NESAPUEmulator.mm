@@ -53,6 +53,11 @@ static void HandleOutputBuffer (
 	else {
 		
 		availableSamples = pAqData->blipBuffer->samples_avail();
+		if (availableSamples < pAqData->numPacketsToRead) {
+			
+			bytesRead = pAqData->bufferByteSize;
+			bzero(inBuffer->mAudioData,pAqData->bufferByteSize);
+		}
 		// NSLog(@"%d samples available from blipBuffer",availableSamples);
 		samplesRead = pAqData->blipBuffer->read_samples((blip_sample_t*)inBuffer->mAudioData,pAqData->numPacketsToRead);
 		bytesRead = samplesRead * 2; // As each sample is 16-bits
