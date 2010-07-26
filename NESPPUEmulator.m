@@ -544,7 +544,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 				}
 			
 				// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
-				incrementVRAMAddressHorizontally(&_VRAMAddress);
+				// incrementVRAMAddressHorizontally(&_VRAMAddress);
 			}
 			else {
 				
@@ -610,23 +610,30 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 				}
 			}
 		}
+
+		if (_backgroundEnabled || _spritesEnabled) {
+
+			if ((scanlineStartingCycle <= 250) && (scanlineEndingCycle > 250)) {
 			
-		if ((scanlineEndingCycle > 255) && (scanlineStartingCycle <= 255)) {
-				
-			if (_backgroundEnabled || _spritesEnabled) {
-				
-				// Increment the VRAM address vertically
+				// On dot 251 (cycle 250), increment VRAM Address vertically
+				// Increment the VRAM address vertically	
 				incrementVRAMAddressVertically(&_VRAMAddress); // FIXME: This should actually occur on scanline cycle 251 (250 if zero-indexed), not 257 (256 zero-indexed) as is done here
+			}	
+		
+			if ((scanlineStartingCycle <= 256) && (scanlineEndingCycle > 256)) {
 			
+				// On dot 257 (cycle 256), reset horizontal components of VRAM address
 				_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
 				_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
-				
-				// Load in first two playfield tiles of the next scanline
-				[self _preloadTilesForScanline];
 			}
-				
-			// Prime in-range object cache
-			[self _findInRangeSprites:currentScanline + 1];
+			
+			if (scanlineEndingCycle == 341) {
+			
+				// FIXME: For joke I'm performing these fetches at the very end of the scanline, however they should probably happen earlier
+				// FIXME: I'm not certain if these things should only occur if the background and sprites are enabled
+				[self _preloadTilesForScanline];
+				[self _findInRangeSprites:currentScanline + 1]; // Prime in-range object cache
+			}
 		}
 			
 		_cyclesSinceVINT += scanlineEndingCycle - scanlineStartingCycle;
@@ -656,35 +663,37 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	uint_fast32_t scanlineStartingCycle, scanlineEndingCycle;
 	scanlineStartingCycle = _cyclesSinceVINT - 341*20;
 	scanlineEndingCycle = (cycle > (_oddFrame ? 7160 : 7161)) ? (_oddFrame ? 340 : 341) : cycle - _cyclesSinceVINT + scanlineStartingCycle;
-			
-	// On dot 257 (clock 256)
-	if ((scanlineStartingCycle <= 256) && (scanlineEndingCycle > 256)) {
-		
-		if (_backgroundEnabled || _spritesEnabled) {
+	
+	if (_backgroundEnabled || _spritesEnabled) {
+	
+		// On dot 257 (clock 256)
+		if ((scanlineStartingCycle <= 256) && (scanlineEndingCycle > 256)) {
 		
 			// FIXME: Should vertical reset occur as well?
 			// FIXME: Should Horizontal reset occur at all?
 			_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
 			_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
-			[self _preloadTilesForScanline];
-			[self _findInRangeSprites:0];
 		}
-	}
 		
-	// On dot 304 (clock 303)
-	if ((scanlineStartingCycle <= 303) && (scanlineEndingCycle > 303)) {
+		// On dot 304 (clock 303)
+		if ((scanlineStartingCycle <= 303) && (scanlineEndingCycle > 303)) {
 	
-		if (_backgroundEnabled || _spritesEnabled) {
-			
 			// NSLog(@"Copying temporary VRAM address to VRAM address: 0x%4.4x",_temporaryVRAMAddress);
 			_VRAMAddress = _temporaryVRAMAddress;
+		}
+		
+		if (scanlineEndingCycle == (_oddFrame ? 340 : 341)) {
+			
+			// FIXME: I'm only doing this at the very end of the scanline, it should likely occur on an earlier cycle
+			[self _preloadTilesForScanline];
+			[self _findInRangeSprites:0];
 		}
 	}
 	
 	_cyclesSinceVINT += scanlineEndingCycle - scanlineStartingCycle;
 	
 	if (_cyclesSinceVINT == (_oddFrame ? 7160 : 7161)) return YES;
-
+	
 	return NO;
 }
 
