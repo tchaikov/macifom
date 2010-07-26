@@ -98,11 +98,12 @@ typedef enum {
 	BOOL _patternTable0TileCacheIsInvalid;
 	BOOL _patternTable1TileCacheIsInvalid;
 	BOOL _usingCHRRAM;
+	BOOL _frameEnded;
 	uint16_t _chrRAMWriteHistory;
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
-- (BOOL)runPPUForCPUCycles:(uint_fast32_t)cycle;
+- (void)runPPU:(uint_fast32_t)cycles;
 - (BOOL)runPPUUntilCPUCycle:(uint_fast32_t)cycle;
 - (BOOL)triggeredNMI;
 - (uint_fast32_t)cyclesSinceVINT;

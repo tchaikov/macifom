@@ -148,6 +148,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 	uint_fast32_t actualCPUCyclesRun;
 	uint_fast32_t cpuCyclesToRun;
+	uint_fast32_t ppuCyclesSinceVINT = [ppuEmulator cyclesSinceVINT];
 	
 	if ([cpuInterpreter encounteredBreakpoint]) {
 		
@@ -158,7 +159,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		
 		gameTimer = [NSTimer scheduledTimerWithTimeInterval:0.0166 target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
 		
-		cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
+		cpuCyclesToRun = 29781 - ((ppuCyclesSinceVINT % 3) > 1 ? ppuCyclesSinceVINT / 3 + 1 : ppuCyclesSinceVINT / 3);
 		[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
 		if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 		actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
@@ -177,17 +178,17 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 	uint_fast32_t actualCPUCyclesRun;
 	uint_fast32_t cpuCyclesToRun;
+	uint_fast32_t ppuCyclesSinceVINT = [ppuEmulator cyclesSinceVINT];
 	
 	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
 	
-	cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
+	cpuCyclesToRun = 29781 - ((ppuCyclesSinceVINT % 3) > 1 ? ppuCyclesSinceVINT / 3 + 1 : ppuCyclesSinceVINT / 3);
 	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
 	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun];
 	// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
 	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
-	// NSLog(@"PPU failed to complete frame prior to render. Ran for %d cycles to end on cycle %d.",ppuCyclesToRun * 3,[ppuEmulator cyclesSinceVINT]);
 	[cpuInterpreter resetCPUCycleCounter];
 	[ppuEmulator resetCPUCycleCounter];
 	[playfieldView setNeedsDisplay:YES];
@@ -250,8 +251,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	NSOpenPanel *openPanel;
 	
 	if (gameIsLoaded && gameIsRunning) [self play:nil]; // Pause game when opening rom selector
-
 	[apuEmulator stopAPUPlayback]; // Terminate audio playback
+	if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Come out of full-screen mode
 	
 	openPanel = [NSOpenPanel openPanel];
 	[openPanel setCanChooseFiles:YES];
@@ -321,7 +322,18 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 - (IBAction)runUntilBreak:(id)sender {
 
-	[self _nextFrameWithBreak];
+	if (gameIsRunning) {
+		
+		[gameTimer invalidate];
+		[self updatecpuRegisters];
+		[self updateInstructions];
+		gameIsRunning = NO;
+	}
+	else {
+		
+		gameIsRunning = YES;
+		[self _nextFrameWithBreak];
+	}
 }
 
 - (IBAction)showAndHideDebugger:(id)sender

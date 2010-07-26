@@ -86,7 +86,7 @@
 - (BOOL)prgromBanksDidChange;
 - (BOOL)chrromBanksDidChange;
 - (void)writeByte:(uint8_t)byte toSRAMwithCPUAddress:(uint16_t)address;
-- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address;
+- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)clearROMdata;
 - (NSString *)mapperDescription;
 

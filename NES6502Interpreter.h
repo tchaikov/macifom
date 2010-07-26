@@ -42,12 +42,13 @@ typedef struct cpuregs {
 	uint8_t statusBreak;
 	uint8_t statusOverflow;
 	uint8_t statusNegative;
+	uint_fast32_t cycle;
 	
 } CPURegisters;
 
 typedef void (*StandardOpPointer)(CPURegisters *,uint8_t);
 typedef uint8_t (*WriteOpPointer)(CPURegisters *,uint8_t);
-typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
+typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 
 @interface NES6502Interpreter : NSObject {
 
@@ -60,7 +61,6 @@ typedef uint_fast32_t (*OperationMethodPointer)(id, SEL, uint8_t);
 	uint8_t *_prgRomBank0;
 	uint8_t *_prgRomBank1;
 	
-	uint_fast32_t currentCPUCycle; // FIXME: Should be 0 or 1 indexed?
 	uint16_t breakPoint;
 	BOOL _encounteredUnsupportedOpcode;
 	BOOL _encounteredBreakpoint;

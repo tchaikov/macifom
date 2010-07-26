@@ -667,7 +667,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// NSLog(@"Writing byte 0x%2.2x to SRAM address 0x%4.4x",byte,address);
 }
 
-- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address
+- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
 {
 	switch (_mapperNumber) {
 		case 1:
@@ -729,6 +729,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			_prgromBank0 = _prgromBanks[(byte & 0x7) * 2];
 			_prgromBank1 = _prgromBanks[((byte & 0x7) * 2) + 1];
 			
+			[_ppu runPPUUntilCPUCycle:cycle];
 			if (byte & 0x10) [_ppu setMirroringType:NESSingleScreenUpperMirroring];
 			else [_ppu setMirroringType:NESSingleScreenLowerMirroring];
 			
