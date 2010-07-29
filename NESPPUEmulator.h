@@ -130,5 +130,6 @@ typedef enum {
 - (void)setCHRRAMBank0Index:(uint8_t)index;
 - (void)setCHRRAMBank1Index:(uint8_t)index;
 - (void)displayBackgroundTiles;
+- (uint_fast32_t)cpuCyclesUntilVblank;
 
 @end

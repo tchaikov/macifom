@@ -177,15 +177,12 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 - (void)_nextFrame {
 	
 	uint_fast32_t actualCPUCyclesRun;
-	uint_fast32_t cpuCyclesToRun;
-	uint_fast32_t ppuCyclesSinceVINT = [ppuEmulator cyclesSinceVINT];
 	
 	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
 	
-	cpuCyclesToRun = 29781 - ((ppuCyclesSinceVINT % 3) > 1 ? ppuCyclesSinceVINT / 3 + 1 : ppuCyclesSinceVINT / 3);
 	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
-	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
+	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]];
 	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun];
 	// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
 	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];

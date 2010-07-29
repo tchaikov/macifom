@@ -174,7 +174,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_firstWriteOccurred = NO;
 	_backgroundEnabled = 0;
 	_spritesEnabled = 0;
-	_oddFrame = NO; // FIXME: Currently all logic assumes we only have even (341cc) frames
+	_oddFrame = NO;
 	_NMIOnVBlank = NO;
 	_nameAndAttributeTablesMask = 0;	
 	_chrRAMWriteHistory = 0;
@@ -735,6 +735,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		
 		// NSLog(@"Ending frame in runPPUUntilCPUCycle with excess PPU cycles: %d.",_cyclesSinceVINT);
 		_frameEnded = YES;
+		_oddFrame = !_oddFrame;
 	}
 	else {
 	
@@ -1011,6 +1012,12 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	// NSLog(@"In readFromPPUStatusRegisterOnCycle: method. Returning 0x%2.2x on cycle %d.",valueToReturn,_cyclesSinceVINT);
 	
 	return valueToReturn;
+}
+
+- (uint_fast32_t)cpuCyclesUntilVblank
+{
+	uint_fast32_t remainingCycles = (((_spritesEnabled || _backgroundEnabled) ? (_oddFrame ? 89341 : 89342) : 89342) - _cyclesSinceVINT);		
+	return (remainingCycles / 3) + ((remainingCycles % 3) == 0 ? 0 : 1); 
 }
 
 @end
