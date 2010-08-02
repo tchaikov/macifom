@@ -22,7 +22,20 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#include <IOKit/hid/IOHIDManager.h>
+#include <IOKit/hid/IOHIDKeys.h>
 
+typedef enum {
+	
+	NESControllerButtonUp = 0,
+	NESControllerButtonDown,
+	NESControllerButtonLeft,
+	NESControllerButtonRight,
+	NESControllerButtonB,
+	NESControllerButtonA,
+	NESControllerButtonSelect,
+	NESControllerButtonStart
+} NESControllerButton;
 
 @interface NESPlayfieldView : NSView {
 
@@ -30,19 +43,22 @@
 	CGDataProviderRef _provider;
 	CGColorSpaceRef _colorSpace;
 	
-	uint_fast32_t _controller1;
-	uint_fast32_t _controller2;
+	uint_fast32_t *_controllers;
 	
 	CGRect _windowedRect;
 	CGRect _fullScreenRect;
 	CGRect *screenRect;
 	
 	CGFloat _scale;
+	
+	IOHIDManagerRef gIOHIDManagerRef;
 }
 
 - (uint_fast32_t *)videoBuffer;
 - (uint_fast32_t)readController1;
+- (uint_fast32_t)readController:(int)index;
 - (void)scaleForFullScreenDrawing;
 - (void)scaleForWindowedDrawing;
+- (void)setButton:(NESControllerButton)button forController:(int)index withBool:(BOOL)flag;
 
 @end

@@ -11,6 +11,7 @@
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		B90C0F9B1205FDDC00499BEB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90C0F9A1205FDDC00499BEB /* IOKit.framework */; };
 		B91C4F4510F876580057E78E /* apu_snapshot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F2C10F876580057E78E /* apu_snapshot.cpp */; };
 		B91C4F4610F876580057E78E /* Blip_Buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F3010F876580057E78E /* Blip_Buffer.cpp */; };
 		B91C4F4710F876580057E78E /* Multi_Buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F3710F876580057E78E /* Multi_Buffer.cpp */; };
@@ -40,6 +41,7 @@
 		32CA4F630368D1EE00C91783 /* Macifom_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macifom_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Macifom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macifom.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B90C0F9A1205FDDC00499BEB /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		B91C4F2C10F876580057E78E /* apu_snapshot.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = apu_snapshot.cpp; sourceTree = "<group>"; };
 		B91C4F2D10F876580057E78E /* apu_snapshot.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = apu_snapshot.h; sourceTree = "<group>"; };
 		B91C4F2E10F876580057E78E /* blargg_common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = blargg_common.h; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				B91C50A410F8A2C10057E78E /* AudioToolbox.framework in Frameworks */,
 				B91C50A510F8A2C10057E78E /* CoreAudio.framework in Frameworks */,
+				B90C0F9B1205FDDC00499BEB /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,6 +118,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B90C0F9A1205FDDC00499BEB /* IOKit.framework */,
 				B91C50A210F8A2C10057E78E /* AudioToolbox.framework */,
 				B91C50A310F8A2C10057E78E /* CoreAudio.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,

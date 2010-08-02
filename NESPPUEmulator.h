@@ -69,6 +69,8 @@ typedef enum {
 	uint_fast32_t _lastCPUCycle;
 	uint_fast32_t _cyclesSinceVINT;
 	uint_fast32_t _videoBufferIndex;
+	uint_fast32_t _lastCycleOverage;
+	uint_fast32_t _shortenPrimingScanline;
 	
 	uint16_t _VRAMAddress;
 	uint16_t _temporaryVRAMAddress;

@@ -24,6 +24,14 @@
 #import "NESPPUEmulator.h"
 #import "NESCartridgeEmulator.h"
 
+#define CYCLES_OF_VBLANK 6820
+#define CYCLES_BEFORE_RENDERING_SHORT 7160
+#define CYCLES_BEFORE_RENDERING_NORMAL 7161
+#define CYCLES_IN_SCANLINE_SHORT 340
+#define CYCLES_IN_SCANLINE_NORMAL 341
+#define CYCLES_IN_FRAME_SHORT 89341
+#define CYCLES_IN_FRAME_NORMAL 89342
+
 static const uint_fast32_t colorPalette[64] = { 0xFF757575, 0xFF271B8F, 0xFF0000AB, 0xFF47009F, 0xFF8F0077, 0xFFAB0013, 0xFFA70000, 0xFF7F0B00,
 												0xFF432F00, 0xFF004700, 0xFF005100, 0xFF003F17, 0xFF1B3F5F, 0xFF000000, 0xFF000000, 0xFF000000,
 												0xFFBCBCBC, 0xFF0073EF, 0xFF233BEF, 0xFF8300F3, 0xFFBF00BF, 0xFFE7005B, 0xFFDB2B00, 0xFFCB4F0F,
@@ -164,8 +172,10 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)resetPPUstatus
 {
 	_cyclesSinceVINT = 0;
+	_lastCycleOverage = 0;
+	_shortenPrimingScanline = NO;
 	_lastCPUCycle = 0;
-	_ppuStatusRegister = 0x80; // FIXME: We probably shouldn't really start with the VBLANK flag on, but the logic starts with VBLANK and I'm interested to see what happens.
+	_ppuStatusRegister = 0x80;
 	_VRAMAddress = 0;
 	_temporaryVRAMAddress = 0;
 	_sprRAMAddress = 0;
@@ -472,17 +482,17 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	}
 	
 	// for (scanlineCounter = startingScanline; scanlineCounter < endingScanline; scanlineCounter++)
-	while ((endingCycle > _cyclesSinceVINT) && (_cyclesSinceVINT < (_oddFrame ? 89000 : 89001)))
+	while ((endingCycle > _cyclesSinceVINT) && (_cyclesSinceVINT < (_shortenPrimingScanline ? 89000 : 89001)))
 	{
 		// Determine current scanline
-		cyclesPastPrimingScanline = _cyclesSinceVINT - ( _oddFrame ? 7160 : 7161);
-		currentScanline = cyclesPastPrimingScanline / 341;
+		cyclesPastPrimingScanline = _cyclesSinceVINT - (_shortenPrimingScanline ? CYCLES_BEFORE_RENDERING_SHORT : CYCLES_BEFORE_RENDERING_NORMAL);
+		currentScanline = cyclesPastPrimingScanline / CYCLES_IN_SCANLINE_NORMAL;
 		
 		// Determine starting cycle for scanline (we'll only render if zero)
-		scanlineStartingCycle = cyclesPastPrimingScanline % 341;
+		scanlineStartingCycle = cyclesPastPrimingScanline % CYCLES_IN_SCANLINE_NORMAL;
 			
 		// Determine ending cycle for scanline (will only increment registers if greater than 255)
-		scanlineEndingCycle = (_cyclesSinceVINT + (341 - scanlineStartingCycle)) <= endingCycle ? 341 : endingCycle - _cyclesSinceVINT + scanlineStartingCycle;
+		scanlineEndingCycle = (_cyclesSinceVINT + (CYCLES_IN_SCANLINE_NORMAL - scanlineStartingCycle)) <= endingCycle ? CYCLES_IN_SCANLINE_NORMAL : endingCycle - _cyclesSinceVINT + scanlineStartingCycle;
 	
 		if (scanlineStartingCycle == 0) {
 				
@@ -590,12 +600,9 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex]) {
 					
 							// Check for sprite 0 hit
-							if (sprRAMIndex == 0) {
+							if ((sprRAMIndex == 0) && bgOpacityBuffer[spriteHorizontalOffset + pixelCounter]) {
 							
-								if (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter]) {
-							
-									_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
-								}
+								_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
 							}
 						
 							bgOpacityMask = (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000);
@@ -627,7 +634,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 				_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
 			}
 			
-			if (scanlineEndingCycle == 341) {
+			if (scanlineEndingCycle == CYCLES_IN_SCANLINE_NORMAL) {
 			
 				// FIXME: For joke I'm performing these fetches at the very end of the scanline, however they should probably happen earlier
 				// FIXME: I'm not certain if these things should only occur if the background and sprites are enabled
@@ -661,8 +668,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	// NSLog(@"In completePrimingScanlineStoppingOnCycle method. Initial VRAM Address is 0x%4.4x",_VRAMAddress);
 	
 	uint_fast32_t scanlineStartingCycle, scanlineEndingCycle;
-	scanlineStartingCycle = _cyclesSinceVINT - 341*20;
-	scanlineEndingCycle = (cycle > (_oddFrame ? 7160 : 7161)) ? (_oddFrame ? 340 : 341) : cycle - _cyclesSinceVINT + scanlineStartingCycle;
+	scanlineStartingCycle = _cyclesSinceVINT - CYCLES_OF_VBLANK;
+	scanlineEndingCycle = (cycle > (_shortenPrimingScanline ? CYCLES_BEFORE_RENDERING_SHORT : CYCLES_BEFORE_RENDERING_NORMAL)) ? (_shortenPrimingScanline ? CYCLES_IN_SCANLINE_SHORT : CYCLES_IN_SCANLINE_NORMAL) : cycle - _cyclesSinceVINT + scanlineStartingCycle;
 	
 	if (_backgroundEnabled || _spritesEnabled) {
 	
@@ -682,7 +689,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			_VRAMAddress = _temporaryVRAMAddress;
 		}
 		
-		if (scanlineEndingCycle == (_oddFrame ? 340 : 341)) {
+		if (scanlineEndingCycle == (_shortenPrimingScanline ? CYCLES_IN_SCANLINE_SHORT : CYCLES_IN_SCANLINE_NORMAL)) {
 			
 			// FIXME: I'm only doing this at the very end of the scanline, it should likely occur on an earlier cycle
 			[self _preloadTilesForScanline];
@@ -692,7 +699,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	
 	_cyclesSinceVINT += scanlineEndingCycle - scanlineStartingCycle;
 	
-	if (_cyclesSinceVINT == (_oddFrame ? 7160 : 7161)) return YES;
+	if (_cyclesSinceVINT == (_shortenPrimingScanline ? CYCLES_BEFORE_RENDERING_SHORT : CYCLES_BEFORE_RENDERING_NORMAL)) return YES;
 	
 	return NO;
 }
@@ -704,17 +711,18 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	
 	if (_frameEnded) return; // Bail if this frame has already ended
 	
-	if (endingCycle < (341*20)) {
+	if (endingCycle < CYCLES_OF_VBLANK) {
 		
 		_cyclesSinceVINT = endingCycle; // Just add cycles if we're still in VBLANK
 		return;
 	}
-	else if (_cyclesSinceVINT < (_oddFrame ? 7160 : 7161)) {
+	else if (_cyclesSinceVINT < (_shortenPrimingScanline ? CYCLES_BEFORE_RENDERING_SHORT : CYCLES_BEFORE_RENDERING_NORMAL)) {
 	
-		if (_cyclesSinceVINT <= (341*20)) {
+		// Note: Was <=
+		if (_cyclesSinceVINT < CYCLES_OF_VBLANK) {
 		
-			// If we're just coming out of VBLANK, clear flags
-			_cyclesSinceVINT = 341*20;
+			// If we're just coming out of VBLANK, clear flags and bring to current cycle
+			_cyclesSinceVINT = CYCLES_OF_VBLANK;
 			_ppuStatusRegister &= 0x1F; // Clear the Object Overflow, Sprite 0 Hit and VBLANK flags
 		}
 		
@@ -723,22 +731,17 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		
 	[self _drawScanlinesStoppingOnCycle:endingCycle];
 	
-	if (endingCycle > (_oddFrame ? 89340 : 89341)) {
-				
-		// NSLog(@"PPU reached VBLANK.");
-		// We're at the end of the frame.. we'll ignore the overage here, we really shouldn't call this method as-is for more than a frame
-		// if (_cyclesSinceVINT <= (_oddFrame ? 89340 : 89341)) {
-			
-			_cyclesSinceVINT = _oddFrame ? (endingCycle - 89341) : (endingCycle - 89342); // Set such that we're at the end of the frame
-			_ppuStatusRegister |= 0x80; // Set VLBANK flag
-		// }
-		
-		// NSLog(@"Ending frame in runPPUUntilCPUCycle with excess PPU cycles: %d.",_cyclesSinceVINT);
-		_frameEnded = YES;
-		_oddFrame = !_oddFrame;
+	if (endingCycle >= (_shortenPrimingScanline ? CYCLES_IN_FRAME_SHORT : CYCLES_IN_FRAME_NORMAL)) {
+							
+		_cyclesSinceVINT = (_shortenPrimingScanline ? endingCycle - CYCLES_IN_FRAME_SHORT : endingCycle - CYCLES_IN_FRAME_NORMAL); // Set such that we're at the end of the frame
+		_lastCycleOverage = _cyclesSinceVINT;
+		_ppuStatusRegister |= 0x80; // Set VLBANK flag
+		_frameEnded = YES; // Indicate frame has ended
+		_oddFrame = !_oddFrame; // Toggle odd frame switch
 	}
 	else {
 	
+		// Add cycles if we're beyond the rendered scanlines but not at end of frame
 		_cyclesSinceVINT = endingCycle;
 	}
 	
@@ -1014,9 +1017,13 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	return valueToReturn;
 }
 
+/* cpuCyclesUntilVblank
+ * NOTE: This should only be called immediately after VBLANK to ensure toggling of background and sprite rendering is accounted for!
+ */
 - (uint_fast32_t)cpuCyclesUntilVblank
 {
-	uint_fast32_t remainingCycles = (((_spritesEnabled || _backgroundEnabled) ? (_oddFrame ? 89341 : 89342) : 89342) - _cyclesSinceVINT);		
+	uint_fast32_t remainingCycles = (((_spritesEnabled || _backgroundEnabled) ? (_oddFrame ? CYCLES_IN_FRAME_SHORT : CYCLES_IN_FRAME_NORMAL) : CYCLES_IN_FRAME_NORMAL) - _lastCycleOverage);
+	_shortenPrimingScanline = (_spritesEnabled || _backgroundEnabled) && _oddFrame;
 	return (remainingCycles / 3) + ((remainingCycles % 3) == 0 ? 0 : 1); 
 }
 

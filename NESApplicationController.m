@@ -181,14 +181,14 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
 	
 	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
-	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
-	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]];
-	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun];
-	// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
-	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
-	[cpuInterpreter resetCPUCycleCounter];
-	[ppuEmulator resetCPUCycleCounter];
-	[playfieldView setNeedsDisplay:YES];
+	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
+	[cpuInterpreter executeUntilCycle:2274]; // Run CPU until just past VBLANK to determine length of frame
+	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
+	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
+	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun]; // Run PPU to the end of the frame
+	[cpuInterpreter resetCPUCycleCounter]; // Reset CPU cycle counter for next frame
+	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame
+	[playfieldView setNeedsDisplay:YES]; // Redraw the screen
 }
 
 - (void)_willLoseFocus:(NSNotification *)notification {
