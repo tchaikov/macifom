@@ -182,10 +182,11 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
-	[cpuInterpreter executeUntilCycle:2274]; // Run CPU until just past VBLANK to determine length of frame
+	[cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
 	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
-	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun]; // Run PPU to the end of the frame
+	// [apuEmulator clearBuffer]; // JUST FOR TESTING
+	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
 	[cpuInterpreter resetCPUCycleCounter]; // Reset CPU cycle counter for next frame
 	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame
 	[playfieldView setNeedsDisplay:YES]; // Redraw the screen

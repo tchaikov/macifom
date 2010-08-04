@@ -413,6 +413,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	
 	// Default background for the window appears to be white
 	[[self window] setBackgroundColor:[NSColor blackColor]];
+	CGDisplayHideCursor(kCGNullDirectDisplay);
 }
 
 - (void)scaleForWindowedDrawing
@@ -421,6 +422,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	screenRect = &_windowedRect;
 	
 	[[self window] makeFirstResponder:self];
+	CGDisplayShowCursor(kCGNullDirectDisplay);
 }
 
 - (void)drawRect:(NSRect)rect {

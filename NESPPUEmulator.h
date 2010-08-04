@@ -70,7 +70,6 @@ typedef enum {
 	uint_fast32_t _cyclesSinceVINT;
 	uint_fast32_t _videoBufferIndex;
 	uint_fast32_t _lastCycleOverage;
-	uint_fast32_t _shortenPrimingScanline;
 	
 	uint16_t _VRAMAddress;
 	uint16_t _temporaryVRAMAddress;
@@ -87,6 +86,7 @@ typedef enum {
 	
 	uint_fast32_t *_videoBuffer;
 	
+	BOOL _triggeredNMI;
 	BOOL _NMIOnVBlank;
 	BOOL _8x16Sprites;
 	BOOL _monochrome;
@@ -101,6 +101,7 @@ typedef enum {
 	BOOL _patternTable1TileCacheIsInvalid;
 	BOOL _usingCHRRAM;
 	BOOL _frameEnded;
+	BOOL _shortenPrimingScanline;
 	uint16_t _chrRAMWriteHistory;
 }
 
@@ -133,5 +134,6 @@ typedef enum {
 - (void)setCHRRAMBank1Index:(uint8_t)index;
 - (void)displayBackgroundTiles;
 - (uint_fast32_t)cpuCyclesUntilVblank;
+- (uint_fast32_t)cpuCyclesUntilPrimingScanline;
 
 @end

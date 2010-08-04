@@ -408,12 +408,11 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	uint8_t operand;
 
 	// FIXME: I'm not sure if I split the cycles correctly here, need to read the 6502 reference
-	_cpuRegisters->cycle += 2;
+	_cpuRegisters->cycle += 3;
 	operand = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),[self readAddressFromCPUAddressSpace:_cpuRegisters->programCounter]);
+	_cpuRegisters->cycle += 1;
 	_standardOperations[opcode](_cpuRegisters,operand);
 	_cpuRegisters->programCounter += 2;
-	
-	_cpuRegisters->cycle += 2;
 }
 
 // FIXME: Should accurately model all reads
