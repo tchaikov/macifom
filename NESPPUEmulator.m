@@ -31,6 +31,7 @@
 #define CYCLES_IN_SCANLINE_NORMAL 341
 #define CYCLES_IN_FRAME_SHORT 89341
 #define CYCLES_IN_FRAME_NORMAL 89342
+#define NMI_DELAY 6
 
 static const uint_fast32_t colorPalette[64] = { 0xFF757575, 0xFF271B8F, 0xFF0000AB, 0xFF47009F, 0xFF8F0077, 0xFFAB0013, 0xFFA70000, 0xFF7F0B00,
 												0xFF432F00, 0xFF004700, 0xFF005100, 0xFF003F17, 0xFF1B3F5F, 0xFF000000, 0xFF000000, 0xFF000000,
@@ -171,6 +172,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 
 - (void)resetPPUstatus
 {
+	_sprite0HitCycle = 0;
+	_sprite0Hit = NO;
 	_triggeredNMI = NO;
 	_cyclesSinceVINT = 0;
 	_lastCycleOverage = 0;
@@ -231,6 +234,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	[super init];
 	
+	_ppuDebugging = NO;
 	_videoBuffer = buffer;
 	_playfieldBuffer = (uint8_t *)malloc(sizeof(uint8_t)*16);
 	_sprRAM = (uint8_t *)malloc(sizeof(uint8_t)*256);
@@ -265,6 +269,18 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_registerWriteMethods[7] = (void (*)(id, SEL, uint8_t, uint_fast32_t))[self methodForSelector:@selector(writeToVRAMIORegister:onCycle:)];
 
 	return self;
+}
+
+- (void)toggleDebugging:(BOOL)flag {
+
+	_ppuDebugging = flag;
+}
+
+- (void)changeMirroringTypeTo:(NESMirroringType)type onCycle:(uint_fast32_t)cycle
+{
+	[self runPPUUntilCPUCycle:cycle];
+	[self setMirroringType:type];
+	// if (_ppuDebugging) NSLog(@"In changeMirroringType method. Switching to mirroring mode %d on PPU scanline %d cycle %d.",type,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 }
 
 // Checked 1/4
@@ -498,7 +514,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			
 		// Determine ending cycle for scanline (will only increment registers if greater than 255)
 		scanlineEndingCycle = (_cyclesSinceVINT + (CYCLES_IN_SCANLINE_NORMAL - scanlineStartingCycle)) <= endingCycle ? CYCLES_IN_SCANLINE_NORMAL : endingCycle - _cyclesSinceVINT + scanlineStartingCycle;
-	
+			
 		if (scanlineStartingCycle == 0) {
 				
 			// Set video buffer index
@@ -562,14 +578,18 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 					bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
-				
-					// if (_videoBufferIndex > 65535) NSLog(@"Video buffer has overrun!");
 				}
-			
-				// We'll never draw the 32nd tile fetched on this scanline, so I should probably just omit this in the scanline-accurate version here.
-				// incrementVRAMAddressHorizontally(&_VRAMAddress);
+				
+				// Increment the VRAM address one tile to the right
+				incrementVRAMAddressHorizontally(&_VRAMAddress);
 			}
 			else {
+				
+				if (_spritesEnabled) {
+				
+					// If background is off but sprites are on, simulate the first 31 tile fetches
+					for (tileCounter = 0; tileCounter < 31; tileCounter++) incrementVRAMAddressHorizontally(&_VRAMAddress);
+				}
 				
 				bzero(bgOpacityBuffer,sizeof(uint_fast8_t)*256);
 				bzero(_videoBuffer + _videoBufferIndex,sizeof(uint_fast32_t)*256);
@@ -613,10 +633,16 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex]) {
 					
 							// Check for sprite 0 hit
-							if ((sprRAMIndex == 0) && bgOpacityBuffer[spriteHorizontalOffset + pixelCounter]) {
-								_ppuStatusRegister |= 0x40; // Set the Sprite 0 Hit flag when non-transparent sprite 0 pixel overlaps non-transparent bg pixel
+							if ((sprRAMIndex == 0) && bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] && (spriteHorizontalOffset + pixelCounter != 255)) {
+								
+								if (!_sprite0Hit) {
+									
+									_sprite0Hit = YES;
+									_sprite0HitCycle = spriteHorizontalOffset + pixelCounter;
+									// NSLog(@"Sprite 0 hit on pixel %d of scanline %d.",spriteHorizontalOffset + pixelCounter,currentScanline);
+								}
 							}
-						
+							
 							bgOpacityMask = (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000);
 							pixelMask = (spritePriorityMask & bgOpacityMask) | pixelLockArray[spriteHorizontalOffset + pixelCounter];
 							_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
@@ -630,29 +656,41 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			}
 		}
 
+		if (_sprite0Hit) {
+			
+			if ((scanlineStartingCycle <= _sprite0HitCycle) && (scanlineEndingCycle > _sprite0HitCycle)) {
+				
+				_ppuStatusRegister |= 0x40;
+				_sprite0Hit = NO; // Reset internal sprite 0 hit flag
+			}
+		}
+		
 		if (_backgroundEnabled || _spritesEnabled) {
 
-			if ((scanlineStartingCycle <= 250) && (scanlineEndingCycle > 250)) {
+			if ((scanlineStartingCycle <= 251) && (scanlineEndingCycle > 251)) {
 			
-				// On dot 251 (cycle 250), increment VRAM Address vertically
+				// Cycle 251, increment VRAM Address vertically
 				// Increment the VRAM address vertically	
-				incrementVRAMAddressVertically(&_VRAMAddress); // FIXME: This should actually occur on scanline cycle 251 (250 if zero-indexed), not 257 (256 zero-indexed) as is done here
+				incrementVRAMAddressVertically(&_VRAMAddress);
+			
+				// Simulate the 32nd tile fetch on cycle 251 following vertical increment
+				incrementVRAMAddressHorizontally(&_VRAMAddress);
 			}	
 		
-			if ((scanlineStartingCycle <= 256) && (scanlineEndingCycle > 256)) {
+			if ((scanlineStartingCycle <= 257) && (scanlineEndingCycle > 257)) {
 			
 				[self _findInRangeSprites:currentScanline + 1]; // Prime in-range object cache (should be finished at this time)
-				// On dot 257 (cycle 256), reset horizontal components of VRAM address
+				// On cycle 257, reset horizontal components of VRAM address
 				_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
 				_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
 			}
 			
-			if (scanlineEndingCycle == CYCLES_IN_SCANLINE_NORMAL) {
+			if ((scanlineStartingCycle <= 319) && (scanlineEndingCycle > 319)) {
 			
-				// FIXME: For joke I'm performing these fetches at the very end of the scanline, however they should probably happen earlier
+				// Final two tile accesses are performed on cycles 319 and 327, repsectively
+				// WAS: scanlineEndingCycle == CYCLES_IN_SCANLINE_NORMAL
 				// FIXME: I'm not certain if these things should only occur if the background and sprites are enabled
 				[self _preloadTilesForScanline];
-				
 			}
 		}
 			
@@ -689,27 +727,27 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	
 	if (_backgroundEnabled || _spritesEnabled) {
 	
-		// On dot 257 (clock 256)
-		if ((scanlineStartingCycle <= 256) && (scanlineEndingCycle > 256)) {
-		
+		// On clock 257
+		if ((scanlineStartingCycle <= 257) && (scanlineEndingCycle > 257)) {
+
+			[self _findInRangeSprites:0];
 			// FIXME: Should vertical reset occur as well?
 			// FIXME: Should Horizontal reset occur at all?
-			_VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
-			_VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
+			// _VRAMAddress &= 0xFBE0; // clear bit 10 and horizontal scroll
+			// _VRAMAddress |= _temporaryVRAMAddress & 0x041F; // OR in those bits from the temporary address
 		}
 		
-		// On dot 304 (clock 303)
-		if ((scanlineStartingCycle <= 303) && (scanlineEndingCycle > 303)) {
+		// On clock 304
+		if ((scanlineStartingCycle <= 304) && (scanlineEndingCycle > 304)) {
 	
 			// NSLog(@"Copying temporary VRAM address to VRAM address: 0x%4.4x",_temporaryVRAMAddress);
 			_VRAMAddress = _temporaryVRAMAddress;
 		}
 		
-		if (scanlineEndingCycle == (_shortenPrimingScanline ? CYCLES_IN_SCANLINE_SHORT : CYCLES_IN_SCANLINE_NORMAL)) {
+		if ((scanlineStartingCycle <= 319) && (scanlineEndingCycle > 319)) {
 			
-			// FIXME: I'm only doing this at the very end of the scanline, it should likely occur on an earlier cycle
+			// First two tile accesses occur on cycles 319 and 327, respectively
 			[self _preloadTilesForScanline];
-			[self _findInRangeSprites:0];
 		}
 	}
 	
@@ -732,7 +770,6 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	}
 	else if (_cyclesSinceVINT < (_shortenPrimingScanline ? CYCLES_BEFORE_RENDERING_SHORT : CYCLES_BEFORE_RENDERING_NORMAL)) {
 	
-		// Note: Was <=
 		if (_cyclesSinceVINT < CYCLES_OF_VBLANK) {
 		
 			// If we're just coming out of VBLANK, clear flags and bring to current cycle
@@ -753,7 +790,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		_triggeredNMI = _NMIOnVBlank;
 		_oddFrame = !_oddFrame; // Toggle odd frame switch
 		
-		if (_cyclesSinceVINT >= CYCLES_OF_VBLANK) NSLog(@"Frame ended past next VBLANK!");
+		// if (_cyclesSinceVINT >= CYCLES_OF_VBLANK) NSLog(@"Frame ended past next VBLANK!");
 	}
 	else {
 	
@@ -836,7 +873,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)writeToPPUControlRegister1:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	[self runPPUUntilCPUCycle:cycle];
-	// NSLog(@"In writeToPPUControlRegister1 (0x2000) method. Writing 0x%2.2x on PPU cycle %d.",byte,_cyclesSinceVINT);
+	// if (_ppuDebugging) NSLog(@"In writeToPPUControlRegister1 (0x2000) method. Writing 0x%2.2x on PPU scanline %d cycle %d.",byte,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	
 	_ppuControlRegister1 = byte;
 	_temporaryVRAMAddress &= 0x73FF; // Clear bits 10 and 11 (X and Y nametable selection)
@@ -853,7 +890,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)writeToPPUControlRegister2:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	[self runPPUUntilCPUCycle:cycle];
-	// NSLog(@"In writeToPPUControlRegister2 (0x2001) method. Writing 0x%2.2x on PPU cycle %d.",byte,_cyclesSinceVINT);
+	// if (_ppuDebugging) NSLog(@"In writeToPPUControlRegister2 (0x2001) method. Writing 0x%2.2x on PPU scanline %d cycle %d.",byte,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	
 	_ppuControlRegister2 = byte;
 	
@@ -884,7 +921,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		_temporaryVRAMAddress |= (byte & 0x7) << 12; // OR in the bits from the operand as the fine vertical scroll
 		
 		_firstWriteOccurred = NO; // Set toggle
-		// NSLog(@"In writeToVRAMAddressRegister1 (0x2005) method (second write). Writing 0x%2.2x on PPU cycle %d.",byte,_cyclesSinceVINT);
+		// if (_ppuDebugging) NSLog(@"In writeToVRAMAddressRegister1 (0x2005) method (second write). Writing 0x%2.2x on PPU scanline %d cycle %d.",byte,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	}
 	else {
 	
@@ -898,7 +935,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		_fineHorizontalScroll = byte & 0x7; // Lower three bits represent the fine horizontal scroll value (0-7)
 		
 		_firstWriteOccurred = YES; // Reset toggle
-		// NSLog(@"In writeToVRAMAddressRegister1 (0x2005) method (first write). Writing 0x%2.2x on PPU cycle %d.",byte,_cyclesSinceVINT);
+		// if (_ppuDebugging) NSLog(@"In writeToVRAMAddressRegister1 (0x2005) method (first write). Writing 0x%2.2x on PPU scanline %d cycle %d.",byte,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	}
 }
 
@@ -923,7 +960,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		_VRAMAddress = _temporaryVRAMAddress; // Copy temporary VRAM address to real VRAM address
 		
 		_firstWriteOccurred = NO; // Reset toggle
-		// NSLog(@"In writeToVRAMAddressRegister2 (0x2006) method (second write). Writing 0x%2.2x on cycle %d.",byte,_cyclesSinceVINT);
+		// if (_ppuDebugging) NSLog(@"In writeToVRAMAddressRegister2 (0x2006) method (second write). Writing 0x%2.2x on scanline %d cycle %d.",byte,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	}
 	else {
 	
@@ -932,7 +969,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 		_temporaryVRAMAddress |= ((byte & 0x3F) << 8); // OR in lower 6 bits as first six of upper byte
 		
 		_firstWriteOccurred = YES; // Set toggle
-		// NSLog(@"In writeToVRAMAddressRegister2 (0x2006) method (first write). Writing 0x%2.2x on cycle %d.",byte,_cyclesSinceVINT);
+		// if (_ppuDebugging) NSLog(@"In writeToVRAMAddressRegister2 (0x2006) method (first write). Writing 0x%2.2x on scanline %d cycle %d.",byte,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	}
 }
 
@@ -981,7 +1018,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 
 - (void)DMAtransferToSPRRAM:(uint8_t *)bytes onCycle:(uint_fast32_t)cycle
 {
-	// NSLog(@"In DMAtransferToSPRRAM:onCycle: method.");
+	// if (_ppuDebugging) NSLog(@"In DMAtransferToSPRRAM:onCycle: method on scanline %d cycle %d.",_cyclesSinceVINT / 341,_cyclesSinceVINT % 3);
 	int copyIndex;
 	uint8_t sprRAMIndex = _sprRAMAddress;
 	
@@ -1033,7 +1070,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_firstWriteOccurred = NO; // Reset 0x2005 / 0x2006 read toggle
 	_ppuStatusRegister &= 0x7F; // Clear the VBLANK flag
 
-	// NSLog(@"In readFromPPUStatusRegisterOnCycle: method. Returning 0x%2.2x on cycle %d.",valueToReturn,_cyclesSinceVINT);
+	// if (_ppuDebugging) NSLog(@"In readFromPPUStatusRegisterOnCycle: method. Returning 0x%2.2x on scanline %d cycle %d.",valueToReturn,_cyclesSinceVINT / 341,_cyclesSinceVINT % 341);
 	
 	return valueToReturn;
 }
@@ -1051,8 +1088,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	uint_fast32_t remainingCycles;
 	
-	_shortenPrimingScanline = _backgroundEnabled && _oddFrame;
-	remainingCycles = (_shortenPrimingScanline ? CYCLES_IN_FRAME_SHORT : CYCLES_IN_FRAME_NORMAL) - _lastCycleOverage;
+	_shortenPrimingScanline = (_backgroundEnabled || _spritesEnabled) && _oddFrame;
+	remainingCycles = (_shortenPrimingScanline ? CYCLES_IN_FRAME_SHORT : CYCLES_IN_FRAME_NORMAL) - _lastCycleOverage + NMI_DELAY;
 	
 	// NSLog(@"Rendering %@, background is %@.",(_oddFrame ? @"odd frame" : @"even frame"),(_backgroundEnabled ? @"enabled" : @"disabled"));
 	return (remainingCycles / 3) + ((remainingCycles % 3) == 0 ? 0 : 1); 

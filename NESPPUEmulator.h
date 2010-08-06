@@ -66,6 +66,7 @@ typedef enum {
 	uint8_t *_chromBank0;
 	uint8_t *_chromBank1;
 	
+	uint_fast32_t _sprite0HitCycle;
 	uint_fast32_t _lastCPUCycle;
 	uint_fast32_t _cyclesSinceVINT;
 	uint_fast32_t _videoBufferIndex;
@@ -86,6 +87,8 @@ typedef enum {
 	
 	uint_fast32_t *_videoBuffer;
 	
+	BOOL _ppuDebugging;
+	BOOL _sprite0Hit;
 	BOOL _triggeredNMI;
 	BOOL _NMIOnVBlank;
 	BOOL _8x16Sprites;
@@ -106,6 +109,7 @@ typedef enum {
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
+- (void)toggleDebugging:(BOOL)flag;
 - (void)runPPU:(uint_fast32_t)cycles;
 - (BOOL)runPPUUntilCPUCycle:(uint_fast32_t)cycle;
 - (BOOL)triggeredNMI;
@@ -128,6 +132,7 @@ typedef enum {
 - (uint8_t)readFromSPRRAMIORegisterOnCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)setMirroringType:(NESMirroringType)type;
+- (void)changeMirroringTypeTo:(NESMirroringType)type onCycle:(uint_fast32_t)cycle;
 - (void)setCHRROMTileCachePointersForBank0:(uint8_t ***)bankPointer0 bank1:(uint8_t ***)bankPointer1;
 - (void)setCHRROMPointersForBank0:(uint8_t *)bankPointer0 bank1:(uint8_t *)bankPointer1;
 - (void)setCHRRAMBank0Index:(uint8_t)index;

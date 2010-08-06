@@ -308,9 +308,10 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	_mmc1PRGROMBankRegister = byte;
 }
 
-- (void)_setMMC1ControlRegister:(uint8_t)byte
+- (void)_setMMC1ControlRegister:(uint8_t)byte onCycle:(uint_fast32_t)cycle
 {
 	// NSLog(@"MMC1: Setting control register to 0x%2x.",byte);
+	
 	
 	// Set Mirroring Mode
 	switch (byte & 0x3) {
@@ -318,21 +319,21 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		case 0:
 			// Single-Screen Mirroring (Lower Bank)
 			// NSLog(@"MMC1 Switcing to Single-Screen (Lower Bank) Mirroring Mode");
-			[_ppu setMirroringType:NESSingleScreenLowerMirroring];
+			[_ppu changeMirroringTypeTo:NESSingleScreenLowerMirroring onCycle:cycle];
 			break;
 		case 1:
 			// Single-Screen Mirroring (Upper Bank)
-			[_ppu setMirroringType:NESSingleScreenUpperMirroring];
+			[_ppu changeMirroringTypeTo:NESSingleScreenUpperMirroring onCycle:cycle];
 			break;
 		case 2:
 			// Vertical Mirroring
 			// NSLog(@"MMC1 Switcing to Vertical Mirroring Mode");
-			[_ppu setMirroringType:NESVerticalMirroring];
+			[_ppu changeMirroringTypeTo:NESVerticalMirroring onCycle:cycle];
 			break;
 		case 3:
 			// Horizontal Mirroring
 			// NSLog(@"MMC1 Switcing to Horizontal Mirroring Mode");
-			[_ppu setMirroringType:NESHorizontalMirroring];
+			[_ppu changeMirroringTypeTo:NESHorizontalMirroring onCycle:cycle];
 			break;
 	}
 	
@@ -674,7 +675,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			if (byte & 0x80) {
 			
 				// NSLog(@"MMC1 Mapper Reset Triggered");
-				[self _setMMC1ControlRegister:_mmc1ControlRegister | 0xC];
+				[self _setMMC1ControlRegister:_mmc1ControlRegister | 0xC onCycle:cycle];
 				_register = 0;
 				_serialWriteCounter = 0;
 			}
@@ -690,14 +691,16 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 					if (address < 0xA000) {
 					
 						// Control Register Write
-						[self _setMMC1ControlRegister:_register];
+						[self _setMMC1ControlRegister:_register onCycle:cycle];
 					}
 					else if (address < 0xC000) {
 					
+						[_ppu runPPUUntilCPUCycle:cycle];
 						[self _setMMC1CHRROMBank0Register:_register];
 					}
 					else if (address < 0xE000) {
 					
+						[_ppu runPPUUntilCPUCycle:cycle];
 						[self _setMMC1CHRROMBank1Register:_register];
 					}
 					else {
@@ -729,9 +732,8 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			_prgromBank0 = _prgromBanks[(byte & 0x7) * 2];
 			_prgromBank1 = _prgromBanks[((byte & 0x7) * 2) + 1];
 			
-			[_ppu runPPUUntilCPUCycle:cycle];
-			if (byte & 0x10) [_ppu setMirroringType:NESSingleScreenUpperMirroring];
-			else [_ppu setMirroringType:NESSingleScreenLowerMirroring];
+			if (byte & 0x10) [_ppu changeMirroringTypeTo:NESSingleScreenUpperMirroring onCycle:cycle];
+			else [_ppu changeMirroringTypeTo:NESSingleScreenLowerMirroring onCycle:cycle];
 			
 			_prgromBanksDidChange = YES;
 			

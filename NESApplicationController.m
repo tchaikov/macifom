@@ -340,6 +340,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 		[debuggerWindow orderOut:nil];
 		debuggerIsVisible = NO;
+		[ppuEmulator toggleDebugging:NO];
 	}
 	else {
 	
@@ -347,6 +348,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Switch out of full-screen if in it
 		[self updatecpuRegisters];
 		[self updateInstructions];
+		[ppuEmulator toggleDebugging:YES];
 		[debuggerWindow makeKeyAndOrderFront:nil];
 		debuggerIsVisible = YES;
 	}

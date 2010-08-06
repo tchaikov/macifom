@@ -28,6 +28,7 @@
 static int dmc_read_function( void* memoryReader, cpu_addr_t cpuAddress)
 {
 	NESMemoryReader *memoryReadStructure = (NESMemoryReader *)memoryReader;
+	[memoryReadStructure->cpuInterpreter stealCycles:4];
 	return memoryReadStructure->memoryReadFunction(memoryReadStructure->cpuInterpreter,@selector(readByteFromCPUAddressSpace:),(uint16_t)cpuAddress);
 }
 

@@ -1494,4 +1494,11 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_controller1 = data;
 }
 
+- (void)stealCycles:(uint_fast32_t)cycles
+{
+	_cpuRegisters->cycle += cycles;
+	
+	if (_cpuRegisters->cycle > 29780) NSLog(@"Cycle stealing pushed CPU clock beyond 29780!");
+}
+
 @end

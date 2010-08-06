@@ -95,6 +95,7 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)nmi;
 - (void)setPRGROMPointers;
 - (void)setController1Data:(uint_fast32_t)data;
+- (void)stealCycles:(uint_fast32_t)cycles;
 
 @property(nonatomic, readonly) BOOL encounteredBreakpoint;
 
