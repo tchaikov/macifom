@@ -23,6 +23,9 @@
 		B91C4F5410F876E00057E78E /* NESAPUEmulator.mm in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */; };
 		B91C50A410F8A2C10057E78E /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B91C50A210F8A2C10057E78E /* AudioToolbox.framework */; };
 		B91C50A510F8A2C10057E78E /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B91C50A310F8A2C10057E78E /* CoreAudio.framework */; };
+		B926BD8112147CC20046785C /* NESControllerInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = B926BD8012147CC20046785C /* NESControllerInterface.m */; };
+		B926BDF0121499860046785C /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B926BDEF121499860046785C /* Carbon.framework */; };
+		B926BF171214B75E0046785C /* NESKeyboardResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = B926BF161214B75E0046785C /* NESKeyboardResponder.m */; };
 		B99E78F00E745E280019B353 /* NESPPUEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78E90E745E270019B353 /* NESPPUEmulator.m */; };
 		B99E78F10E745E280019B353 /* NES6502Interpreter.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */; };
 		B99E78F30E745E280019B353 /* NESCartridgeEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */; };
@@ -68,6 +71,11 @@
 		B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NESAPUEmulator.mm; sourceTree = "<group>"; };
 		B91C50A210F8A2C10057E78E /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = /System/Library/Frameworks/AudioToolbox.framework; sourceTree = "<absolute>"; };
 		B91C50A310F8A2C10057E78E /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = /System/Library/Frameworks/CoreAudio.framework; sourceTree = "<absolute>"; };
+		B926BD7F12147CC20046785C /* NESControllerInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESControllerInterface.h; sourceTree = "<group>"; };
+		B926BD8012147CC20046785C /* NESControllerInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESControllerInterface.m; sourceTree = "<group>"; };
+		B926BDEF121499860046785C /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		B926BF151214B75E0046785C /* NESKeyboardResponder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESKeyboardResponder.h; sourceTree = "<group>"; };
+		B926BF161214B75E0046785C /* NESKeyboardResponder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESKeyboardResponder.m; sourceTree = "<group>"; };
 		B99E78E80E745E270019B353 /* NES6502Interpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NES6502Interpreter.h; sourceTree = "<group>"; };
 		B99E78E90E745E270019B353 /* NESPPUEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESPPUEmulator.m; sourceTree = "<group>"; };
 		B99E78EB0E745E270019B353 /* NES6502Interpreter.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = NES6502Interpreter.m; sourceTree = "<group>"; };
@@ -90,6 +98,7 @@
 				B91C50A410F8A2C10057E78E /* AudioToolbox.framework in Frameworks */,
 				B91C50A510F8A2C10057E78E /* CoreAudio.framework in Frameworks */,
 				B90C0F9B1205FDDC00499BEB /* IOKit.framework in Frameworks */,
+				B926BDF0121499860046785C /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,6 +120,10 @@
 				B99E79190E7462220019B353 /* NESPlayfieldView.m */,
 				B91C4F5210F876E00057E78E /* NESAPUEmulator.h */,
 				B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */,
+				B926BD7F12147CC20046785C /* NESControllerInterface.h */,
+				B926BD8012147CC20046785C /* NESControllerInterface.m */,
+				B926BF151214B75E0046785C /* NESKeyboardResponder.h */,
+				B926BF161214B75E0046785C /* NESKeyboardResponder.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -122,6 +135,7 @@
 				B91C50A210F8A2C10057E78E /* AudioToolbox.framework */,
 				B91C50A310F8A2C10057E78E /* CoreAudio.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+				B926BDEF121499860046785C /* Carbon.framework */,
 			);
 			name = "Linked Frameworks";
 			sourceTree = "<group>";
@@ -293,6 +307,8 @@
 				B91C4F4B10F876580057E78E /* Nes_Vrc6.cpp in Sources */,
 				B91C4F4C10F876580057E78E /* Nonlinear_Buffer.cpp in Sources */,
 				B91C4F5410F876E00057E78E /* NESAPUEmulator.mm in Sources */,
+				B926BD8112147CC20046785C /* NESControllerInterface.m in Sources */,
+				B926BF171214B75E0046785C /* NESKeyboardResponder.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

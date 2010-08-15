@@ -27,6 +27,7 @@
 #import "NESPPUEmulator.h"
 #import "NESCartridgeEmulator.h"
 #import "NES6502Interpreter.h"
+#import "NESControllerInterface.h"
 
 static const double timingSequence[3] = { 0.01, 0.02, 0.02 };
 
@@ -160,7 +161,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		gameTimer = [NSTimer scheduledTimerWithTimeInterval:0.0166 target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
 		
 		cpuCyclesToRun = 29781 - ((ppuCyclesSinceVINT % 3) > 1 ? ppuCyclesSinceVINT / 3 + 1 : ppuCyclesSinceVINT / 3);
-		[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
+		[cpuInterpreter setController1Data:[_controllerInterface readController:0]]; // Pull latest controller data
 		if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 		actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
 		[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
@@ -180,7 +181,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
 	
-	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
+	[cpuInterpreter setController1Data:[_controllerInterface readController:0]]; // Pull latest controller data
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
 	[cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
@@ -240,6 +241,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(_willGainFocus:)
 												 name:NSApplicationDidBecomeActiveNotification object:nil];
+	
 }
 
 - (IBAction)loadROM:(id)sender
@@ -421,7 +423,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	uint_fast32_t cpuCyclesToRun;
 		
 	cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
-	[cpuInterpreter setController1Data:[playfieldView readController1]]; // Pull latest controller data
+	[cpuInterpreter setController1Data:[_controllerInterface readController:0]]; // Pull latest controller data
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
 	[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
@@ -488,17 +490,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			 [NSString stringWithFormat:@"%d",registers->statusNegative],@"statusNegative",nil]];
 }
 
-- (NSDictionary *)cpuRegisters
-{
-	return cpuRegisters;
-}
-
-- (void)setCpuRegisters:(NSDictionary *)newRegisters
-{
-	[newRegisters retain];
-	[cpuRegisters release];
-	cpuRegisters = newRegisters;
-}
+@synthesize cpuRegisters;
 
 - (void)updateInstructions
 {
@@ -591,17 +583,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[_currentInstruction setObject:[NSImage imageNamed:NSImageNameRightFacingTriangleTemplate] forKey:@"current"];
 }
 
-- (NSArray *)instructions
-{
-	return instructions;
-}
-
-- (void)setInstructions:(NSArray *)newInstructions
-{
-	[newInstructions retain];
-	[instructions release];
-	instructions = newInstructions;
-}
+@synthesize instructions;
 
 - (BOOL)windowShouldClose:(id)sender
 {

@@ -23,11 +23,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class NESPlayfieldView;
-@class NES6502Interpreter;
-@class NESAPUEmulator;
-@class NESPPUEmulator;
-@class NESCartridgeEmulator;
+@class NESPlayfieldView, NES6502Interpreter, NESAPUEmulator, NESPPUEmulator, NESCartridgeEmulator, NESControllerInterface;
 
 @interface NESApplicationController : NSObject {
 
@@ -49,6 +45,7 @@
 	IBOutlet NSTextField *pokeField;
 	IBOutlet NSWindow *debuggerWindow;
 	IBOutlet NSMenuItem *playPauseMenuItem;
+	IBOutlet NESControllerInterface *_controllerInterface;
 	
 	BOOL debuggerIsVisible;
 	BOOL gameIsLoaded;
@@ -70,10 +67,9 @@
 - (BOOL)gameIsLoaded;
 - (void)setGameIsLoaded:(BOOL)flag;
 - (void)updatecpuRegisters;
-- (NSDictionary *)cpuRegisters;
-- (void)setCpuRegisters:(NSDictionary *)newRegisters;
 - (void)updateInstructions;
-- (NSArray *)instructions;
-- (void)setInstructions:(NSArray *)newInstructions;
+
+@property (retain) NSDictionary *cpuRegisters;
+@property (retain) NSArray *instructions;
 
 @end

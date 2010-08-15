@@ -31,7 +31,14 @@
 #define CYCLES_IN_SCANLINE_NORMAL 341
 #define CYCLES_IN_FRAME_SHORT 89341
 #define CYCLES_IN_FRAME_NORMAL 89342
-#define NMI_DELAY 6
+#define NMI_DELAY 6 // The earliest NMI can occur is two CPU cycles after it is triggered - see http://nesdev.parodius.com/bbs/viewtopic.php?t=1892
+// FIXME: This delay isn't correct, per Blargg:
+/* Based on recent testing, the earliest the NMI can occur is two CPU clocks after the VBL flag is set. 
+   So if VBL is set on the next to last clock of an instruction, the NMI will occur after the instruction 
+   finishes. If it's set earlier than that clock, the NMI will still occur after that instruction finishes. 
+   If it's set later than that clock, it will occur after the next instruction finishes.
+ */
+
 
 static const uint_fast32_t colorPalette[64] = { 0xFF757575, 0xFF271B8F, 0xFF0000AB, 0xFF47009F, 0xFF8F0077, 0xFFAB0013, 0xFFA70000, 0xFF7F0B00,
 												0xFF432F00, 0xFF004700, 0xFF005100, 0xFF003F17, 0xFF1B3F5F, 0xFF000000, 0xFF000000, 0xFF000000,
