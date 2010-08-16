@@ -42,6 +42,7 @@ typedef enum {
 	
 	NSNumber *_setMappingForController;
 	NESControllerButton _setMappingForButton;
+	NSUInteger _setMappingIndex;
 	NSUInteger _initialControllerOneDeviceIndex;
 	NSUInteger _initialControllerTwoDeviceIndex;
 	BOOL _listenForButton;

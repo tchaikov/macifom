@@ -275,8 +275,10 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_encounteredUnsupportedOpcode = NO;
 	_encounteredBreakpoint = NO;
 	
-	_controller1 = 0x20000; // Indicate one controller attached to $4016
-	_controllerReadIndex = 0;
+	_controllers[0] = 0x0001FF00; // Should indicate one controller on $4016 per nestech.txt
+	_controllers[1] = 0x0002FF00; // Should indicate one controller on $4017 per nestech.txt
+	_controller0ReadIndex = 0;
+	_controller1ReadIndex = 0;
 }
 
 - (uint8_t)readByteFromCPUAddressSpace:(uint16_t)address
@@ -288,13 +290,19 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	else if (address >= 0x4020) return 0;
 	else if (address >= 0x4000) {
 	
-		if (address == 0x4016) {
+		switch (address) {
 		
-			return ((_controller1 >> _controllerReadIndex++) & 0x1);
-		}
-		else if (address == 0x4015) {
-			
-			return [apu readAPUStatusOnCycle:_cpuRegisters->cycle];
+			case 0x4015:
+				return [apu readAPUStatusOnCycle:_cpuRegisters->cycle];
+				break;
+			case 0x4016:
+				return ((_controllers[0] >> _controller0ReadIndex++) & 0x1);
+				break;
+			case 0x4017:
+				return ((_controllers[1] >> _controller1ReadIndex++) & 0x1);
+				break;
+			default:
+				break;
 		}
 	}
 	else return [ppu readByteFromCPUAddress:address onCycle:_cpuRegisters->cycle];
@@ -353,7 +361,8 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		}
 		else if (address == 0x4016) {
 		
-			_controllerReadIndex = 0; // FIXME: Really, I should be resetting this when 1 then 0 is written
+			_controller0ReadIndex = 0; // FIXME: Really, I should be resetting this when 1 then 0 is written
+			_controller1ReadIndex = 0;
 		}
 		else {
 		
@@ -1005,6 +1014,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	ppu = ppuEmu; // Non-retained reference;
 	apu = apuEmu; // Non-retained reference;
 	
+	_controllers = (uint_fast32_t *)malloc(sizeof(uint_fast32_t)*2);
 	_cpuRegisters = (CPURegisters *)malloc(sizeof(CPURegisters));
 	_zeroPage = (uint8_t *)malloc(sizeof(uint8_t)*2048);
 	_stack = _zeroPage + 256;
@@ -1437,9 +1447,15 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	uint8_t opcode;
 	
 	while (_cpuRegisters->cycle < cycle) {
-		
-		opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
-		_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
+			
+		if (([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle] * 4 + _cpuRegisters->cycle) >= cycle) {
+			
+			[apu runAPUUntilCPUCycle:_cpuRegisters->cycle];
+		}
+		else {
+			opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
+			_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
+		}
 	}
 	
 	return _cpuRegisters->cycle;
@@ -1456,8 +1472,14 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	while ((_cpuRegisters->cycle < cycle) && (_cpuRegisters->programCounter != breakPoint)) {
 	
-		opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
-		_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
+		if (([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle] * 4 + _cpuRegisters->cycle) >= cycle) {
+			
+			[apu runAPUUntilCPUCycle:_cpuRegisters->cycle];
+		}
+		else {
+			opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
+			_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
+		}
 	}
 	
 	_encounteredBreakpoint = (_cpuRegisters->programCounter == breakPoint);
@@ -1489,9 +1511,9 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_prgRomBank1 = [cartridge pointerToPRGROMBank1];
 }
 
-- (void)setController1Data:(uint_fast32_t)data
+- (void)setData:(uint_fast32_t)data forController:(int)index;
 {
-	_controller1 = data;
+	_controllers[index] = data;
 }
 
 - (void)stealCycles:(uint_fast32_t)cycles

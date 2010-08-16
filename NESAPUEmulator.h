@@ -44,7 +44,6 @@ typedef struct {
     AudioQueueRef                 queue;
     AudioQueueBufferRef           buffers[NUM_BUFFERS];
     UInt32                        bufferByteSize;
-    UInt32                        bufferFillDelay;
     UInt32                        numPacketsToRead;
 	SInt64						  packetsToPlay;
     BOOL                          isRunning;
@@ -64,7 +63,6 @@ static void HandleOutputBuffer (
 	NESAPUState *nesAPUState;
 	
 	blip_time_t time;
-	blip_time_t frame_length;
 }
 
 - (void)beginAPUPlayback;
@@ -96,5 +94,8 @@ static void HandleOutputBuffer (
 // Save/load snapshot of emulation state
 - (void)saveSnapshot;
 - (void)loadSnapshot;
+
+- (int)pendingDMCReadsOnCycle:(uint_fast32_t)cycle;
+- (void)runAPUUntilCPUCycle:(uint_fast32_t)cycle;
 
 @end

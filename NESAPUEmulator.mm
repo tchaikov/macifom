@@ -56,13 +56,15 @@ static void HandleOutputBuffer (
 		availableSamples = pAqData->blipBuffer->samples_avail();
 		if (availableSamples < pAqData->numPacketsToRead) {
 			
+			NSLog(@"Insufficient audio samples for buffering. Inserting silence.");
 			bytesRead = pAqData->bufferByteSize;
 			bzero(inBuffer->mAudioData,pAqData->bufferByteSize);
 		}
-		// NSLog(@"%d samples available from blipBuffer",availableSamples);
-		samplesRead = pAqData->blipBuffer->read_samples((blip_sample_t*)inBuffer->mAudioData,pAqData->numPacketsToRead);
-		bytesRead = samplesRead * 2; // As each sample is 16-bits
-		// NSLog(@"%d samples read from blipBuffer",samplesRead);
+		else {
+			
+			samplesRead = pAqData->blipBuffer->read_samples((blip_sample_t*)inBuffer->mAudioData,pAqData->numPacketsToRead);
+			bytesRead = samplesRead * 2; // As each sample is 16-bits
+		}
 	}
 			
 	inBuffer->mAudioDataByteSize = bytesRead;
@@ -96,8 +98,8 @@ static void HandleOutputBuffer (
 	NSLog(@"AudioQueueNewOutput: %d",error);
 	
 	// Set buffer size
-	nesAPUState->numPacketsToRead = 2940; // 44.1kHz at 60 fps = 735 (times 4 to reduce overhead)
-	nesAPUState->bufferByteSize = 5880; // 735 samples times four, times 16-bits per sample
+	nesAPUState->numPacketsToRead = [(NSNumber *)[[NSUserDefaults standardUserDefaults] valueForKey:@"audioBufferLength"] unsignedIntValue]; // 44.1kHz at 60 fps = 735 (times 4 to reduce overhead)
+	nesAPUState->bufferByteSize = nesAPUState->numPacketsToRead * 2; // 735 samples times four, times 16-bits per sample
 	
 	// Allocate those bufferes
 	for (int i = 0; i < NUM_BUFFERS; ++i) {
@@ -128,12 +130,11 @@ static void HandleOutputBuffer (
 	if ([super init]) {
 		
 		time = 0;
-		frame_length = 29780;
 		
 		nesAPU = new Nes_Apu();
 		blipBuffer = new Blip_Buffer();
 		blipBuffer->clock_rate( 1789773 ); // Should be 1789773 for NES
-		blargg_err_t error = blipBuffer->sample_rate( 44100,600);
+		blargg_err_t error = blipBuffer->sample_rate(44100,600); // 600ms to accomodate up to eight times four frames of audio
 		if (error) NSLog(@"Error allocating blipBuffer.");
 		
 		nesAPU->output(blipBuffer);
@@ -153,9 +154,11 @@ static void HandleOutputBuffer (
 		nesAPUState->dataFormat.mChannelsPerFrame = 1;
 		nesAPUState->dataFormat.mBitsPerChannel = 16;
 		nesAPUState->isRunning = NO;
-		nesAPUState->bufferFillDelay = 2;
 		
 		nesAPUState->blipBuffer = blipBuffer;
+		
+		[[NSUserDefaults standardUserDefaults] registerDefaults:
+		 [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedInt:1470] forKey:@"audioBufferLength"]];
 		
 		[self initializeAudioPlaybackQueue];
 	}
@@ -184,12 +187,12 @@ static void HandleOutputBuffer (
 - (void)pause
 {
 	nesAPUState->isRunning = NO;
-	AudioQueuePause(nesAPUState->queue);
+	AudioQueuePause(nesAPUState->queue); // FIXME: I think cacheing still occurs when paused, causing buffer problems when unpausing. I may need to stop the queue here instead.
 }
 
 - (void)resume
 {
-	if (!nesAPUState->bufferFillDelay) nesAPUState->isRunning = YES;
+	nesAPUState->isRunning = YES;
 	AudioQueueStart(nesAPUState->queue,NULL);
 }
 
@@ -202,7 +205,6 @@ static void HandleOutputBuffer (
 - (void)beginAPUPlayback
 {
 	nesAPUState->isRunning = NO;
-	nesAPUState->bufferFillDelay = 4;
 	
 	// Reset the APU and Buffer
 	nesAPU->reset(false,0);
@@ -217,6 +219,8 @@ static void HandleOutputBuffer (
 							nesAPUState->buffers[i]
 							);
 	}
+	
+	AudioQueuePrime(nesAPUState->queue,0,NULL); // According to some docs, we should also call AudioQueuePrime
 }
 
 // Set function for APU to call when it needs to read memory (DMC samples)
@@ -256,18 +260,21 @@ static void HandleOutputBuffer (
 	nesAPU->end_frame(cycle);
 	blipBuffer->end_frame(cycle);
 	
-	if (nesAPUState->bufferFillDelay > 0) nesAPUState->bufferFillDelay--;
-	else {
+	nesAPUState->isRunning = YES;
+	availableSamples = nesAPUState->blipBuffer->samples_avail();
+	if (availableSamples < (nesAPUState->numPacketsToRead * 2)) {
+			
+		timingCorrection = -0.005;
+	}
+	else if (availableSamples > (nesAPUState->numPacketsToRead * 4)) {
+			
+		timingCorrection = 0.005;
+			
+		// Try to catch run-away buffer overflow
+		if (availableSamples > (nesAPUState->numPacketsToRead * 6)) {
 		
-		nesAPUState->isRunning = YES;
-		availableSamples = nesAPUState->blipBuffer->samples_avail();
-		if (availableSamples < (nesAPUState->numPacketsToRead * 2)) {
-			
-			timingCorrection = -0.005;
-		}
-		else if (availableSamples > (nesAPUState->numPacketsToRead * 4)) {
-			
-			timingCorrection = 0.005;
+			NSLog(@"Reducing samples in audio buffer to prevent overflow.");
+			blipBuffer->remove_samples(nesAPUState->numPacketsToRead);
 		}
 	}
 	
@@ -278,6 +285,16 @@ static void HandleOutputBuffer (
 - (long)numberOfBufferedSamples {
 	
 	return blipBuffer->samples_avail();
+}
+
+- (int)pendingDMCReadsOnCycle:(uint_fast32_t)cycle {
+
+	return nesAPU->count_dmc_reads(cycle, NULL);
+}
+
+- (void)runAPUUntilCPUCycle:(uint_fast32_t)cycle {
+
+	nesAPU->run_until(cycle);
 }
 
 // Save/load snapshot of emulation state

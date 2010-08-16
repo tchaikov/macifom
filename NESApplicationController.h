@@ -46,6 +46,7 @@
 	IBOutlet NSWindow *debuggerWindow;
 	IBOutlet NSMenuItem *playPauseMenuItem;
 	IBOutlet NESControllerInterface *_controllerInterface;
+	IBOutlet NSWindow *preferencesWindow;
 	
 	BOOL debuggerIsVisible;
 	BOOL gameIsLoaded;
@@ -63,11 +64,14 @@
 - (IBAction)peek:(id)sender;
 - (IBAction)poke:(id)sender;
 - (IBAction)showAndHideDebugger:(id)sender;
+- (IBAction)showPreferences:(id)sender;
 - (IBAction)toggleFullScreenMode:(id)sender;
+
 - (BOOL)gameIsLoaded;
 - (void)setGameIsLoaded:(BOOL)flag;
 - (void)updatecpuRegisters;
 - (void)updateInstructions;
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 
 @property (retain) NSDictionary *cpuRegisters;
 @property (retain) NSArray *instructions;

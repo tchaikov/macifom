@@ -67,6 +67,7 @@
 	BOOL _romFileDidLoad;
 	
 	NESPPUEmulator *_ppu;
+	NSString *_lastROMPath;
 }
 
 - (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
@@ -89,6 +90,7 @@
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)clearROMdata;
 - (NSString *)mapperDescription;
+- (BOOL)writeSRAMToDisk;
 
 @property(nonatomic, readonly) BOOL romFileDidLoad;
 @property(nonatomic, readonly) BOOL hasTrainer;

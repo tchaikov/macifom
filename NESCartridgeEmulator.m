@@ -24,6 +24,8 @@
 #import "NESCartridgeEmulator.h"
 #import "NESPPUEmulator.h"
 
+#define SRAM_SIZE 8192
+
 static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UNROM switch", "CNROM switch", "Nintendo MMC3", "Nintendo MMC5", "FFE F4xxx", "AOROM switch",
 												"FFE F3xxx", "Nintendo MMC2", "Nintendo MMC4", "ColorDreams", "FFE F6xxx", "CPROM switch", "Unknown Mapper", "100-in-1 switch",
 												"Bandai", "FFE F8xxx", "Jaleco SS8806", "Namcot 106", "Nintendo DiskSystem", "Konami VRC4a", "Konami VRC2a (1)", "Konami VRC2a (2)",
@@ -387,6 +389,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	[self _cleanUpCHRROMMemory];
 	[self _cleanUpTrainerMemory];
 	[self _resetCartridgeState];
+	[_lastROMPath release];
 }
 
 - (NSError *)_setROMPointers
@@ -526,6 +529,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 {
 	uint_fast8_t bank;
 	NSData *rom;
+	NSData *savedSram;
 	NSError *propagatedError = nil;
 	BOOL loadErrorOccurred = NO;
 	NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:path];
@@ -548,6 +552,9 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	
 	// Blast existing memory
 	[self clearROMdata];
+	
+	// Store path to rom
+	_lastROMPath = [path retain];
 	
 	// Load ROM Options
 	if (nil != (propagatedError = [self _loadiNESROMOptions:header])) {
@@ -585,7 +592,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	}
 	
 	// FIXME: Always allocating SRAM, because I'm not sure how to detect it yet, this may just be leaked
-	_sram = (uint8_t *)malloc(sizeof(uint8_t)*8192);
+	_sram = (uint8_t *)malloc(sizeof(uint8_t)*SRAM_SIZE);
 	
 	// Close ROM file
 	[fileHandle closeFile];
@@ -594,6 +601,16 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	
 		_romFileDidLoad = NO;
 		return [NSError errorWithDomain:@"NESFileErrorDomain" code:3 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"ROM data could not be extracted.",NSLocalizedDescriptionKey,@"Macifom was unable to extract the ROM data from the selected file. This is likely due to file corruption or inaccurate header information.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
+	}
+	
+	// Load SRAM data, if present
+	if (_usesBatteryBackedRAM) {
+	
+		savedSram = [NSData dataWithContentsOfFile:[NSString stringWithFormat:@"%@.sav",[_lastROMPath stringByDeletingPathExtension]]];
+		if (savedSram) {
+		
+			[savedSram getBytes:_sram length:SRAM_SIZE];
+		}
 	}
 	
 	// Cache CHRROM data if needed
@@ -795,6 +812,19 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	BOOL valueToReturn = _chrromBanksDidChange;
 	_chrromBanksDidChange = NO;
 	return valueToReturn;	
+}
+
+- (BOOL)writeSRAMToDisk
+{
+	NSData *sramData;
+	
+	if (_usesBatteryBackedRAM) {
+		
+		sramData = [NSData dataWithBytes:_sram length:SRAM_SIZE];
+		return [sramData writeToFile:[NSString stringWithFormat:@"%@.sav",[_lastROMPath stringByDeletingPathExtension]] atomically:NO];
+	}
+	
+	return NO;
 }
 
 @end

@@ -576,6 +576,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	IOReturn tIOReturn;
 	CFSetRef tCFSetRef;
 	CFIndex numMatchedDevices = 0;
+	uint_fast32_t deviceIndex;
 	void **usbHidDevices = NULL;
 	
 	[super init];
@@ -634,7 +635,10 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 			
 			usbHidDevices = (void **)malloc(sizeof(void*)*numMatchedDevices);
 			CFSetGetValues(tCFSetRef,(const void **)usbHidDevices);
-			IOHIDDeviceRegisterInputValueCallback((IOHIDDeviceRef)usbHidDevices[0],GamePadValueChanged,self); // FIXME: I shouldn't just take the first device, we need full configuration here
+			for (deviceIndex = 0; deviceIndex < numMatchedDevices; deviceIndex++) {
+			
+				IOHIDDeviceRegisterInputValueCallback((IOHIDDeviceRef)usbHidDevices[deviceIndex],GamePadValueChanged,self);
+			}
 		}
 		else NSLog(@"No matching USB HID devices were found!");
 	}
@@ -717,6 +721,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 		[propertiesWindow makeFirstResponder:keyboardResponder]; // Unnecessary if not mapping a keyboard key
 				
 		NSDictionary *mapping = (NSDictionary *)[[mappingController selectedObjects] objectAtIndex:0];
+		_setMappingIndex = [mappingController selectionIndex];
 		_setMappingForController = (NSNumber *)[mapping objectForKey:@"controller"];
 		_setMappingForButton = (NESControllerButton)[(NSNumber *)[mapping objectForKey:@"buttonIndex"] intValue];
 		_listenForButton = YES;
@@ -727,6 +732,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 
 	if (_listenForButton) {
 		
+		[mappingController setSelectionIndex:_setMappingIndex];
 		_listenForButton = NO;
 	}
 }
@@ -738,96 +744,6 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	
 	[self _updateControllerMappings];
 }
-
-/*
-- (void)setButton:(NSString *)button forController:(int)index withBool:(BOOL)flag
-{	
-	if ([button isEqualToString:@"Up"]) {
-			
-		if (flag) {
-				
-			_controllers[index] &= 0xFFFFFFCF; // FIXME: Currently, we clear up and down to prevent errors. Perhaps I should clear all directions?
-			_controllers[index] |= 0x10; // Up
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFEF; // Clear up
-		}
-	}
-	else if	([button isEqualToString:@"Left"]) {
-		
-		if (flag) {
-				
-			_controllers[index] &= 0xFFFFFF3F; // Clear left and right to prevent errors
-			_controllers[index] |= 0x40; // Left
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFBF;
-		}
-	}
-	else if	([button isEqualToString:@"Down"]) {
-			
-		if (flag) {
-				
-			_controllers[index] &= 0xFFFFFFCF;
-			_controllers[index] |= 0x20; // Down
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFDF;
-		}
-	}
-	else if	([button isEqualToString:@"Right"]) {
-			
-		if (flag) {
-				
-			_controllers[index] &= 0xFFFFFF3F;
-			_controllers[index] |= 0x80; // Right
-		}
-		else {
-			_controllers[index] &= 0xFFFFFF7F;
-		}
-	}
-	else if	([button isEqualToString:@"A"]) {
-			
-		if (flag) {
-				
-			_controllers[index] |= 0x1; // A button fire
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFFE; // A button release
-		}
-	}
-	else if	([button isEqualToString:@"B"]) {
-		
-		if (flag) {
-				
-			_controllers[index] |= 0x2; // B button fire
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFFD; // B button release
-		}
-	}
-	else if	([button isEqualToString:@"Select"]) {
-			
-		if (flag) {
-				
-			_controllers[index] |= 0x4; // Select button fire
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFFB; // Select button fire
-		}
-	}
-	else if	([button isEqualToString:@"Start"]) {
-			
-		if (flag) {
-				
-			_controllers[index] |= 0x8; // Start button fire
-		}
-		else {
-			_controllers[index] &= 0xFFFFFFF7; // Start button fire
-		}
-	}
-}
-*/
 
 - (void)keyboardKey:(unsigned short)keyCode changedTo:(BOOL)state
 {

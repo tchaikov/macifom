@@ -29,8 +29,6 @@
 #import "NES6502Interpreter.h"
 #import "NESControllerInterface.h"
 
-static const double timingSequence[3] = { 0.01, 0.02, 0.02 };
-
 static const char *instructionNames[256] = { "BRK", "ORA", "$02", "$03", "$04", "ORA", "ASL", "$07",
 "PHP", "ORA", "ASL", "$0B", "$0C", "ORA", "ASL", "$0F",
 "BPL", "ORA", "$12", "$13", "$14", "ORA", "ASL", "$17",
@@ -148,8 +146,6 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 - (void)_nextFrameWithBreak {
 	
 	uint_fast32_t actualCPUCyclesRun;
-	uint_fast32_t cpuCyclesToRun;
-	uint_fast32_t ppuCyclesSinceVINT = [ppuEmulator cyclesSinceVINT];
 	
 	if ([cpuInterpreter encounteredBreakpoint]) {
 		
@@ -160,15 +156,15 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		
 		gameTimer = [NSTimer scheduledTimerWithTimeInterval:0.0166 target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
 		
-		cpuCyclesToRun = 29781 - ((ppuCyclesSinceVINT % 3) > 1 ? ppuCyclesSinceVINT / 3 + 1 : ppuCyclesSinceVINT / 3);
-		[cpuInterpreter setController1Data:[_controllerInterface readController:0]]; // Pull latest controller data
-		if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
-		actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
-		[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
+		[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
+		[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
+		
+		if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
+		[cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
+		actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
+		[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
 		[apuEmulator clearBuffer];
-		// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
 		[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
-		// NSLog(@"PPU failed to complete frame prior to render. Ran for %d cycles to end on cycle %d.",ppuCyclesToRun * 3,[ppuEmulator cyclesSinceVINT]);
 		[cpuInterpreter resetCPUCycleCounter];
 		[ppuEmulator resetCPUCycleCounter];
 		[playfieldView setNeedsDisplay:YES];
@@ -181,12 +177,13 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
 	
-	[cpuInterpreter setController1Data:[_controllerInterface readController:0]]; // Pull latest controller data
+	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
+	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
+
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
 	[cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
 	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
-	// [apuEmulator clearBuffer]; // JUST FOR TESTING
 	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
 	[cpuInterpreter resetCPUCycleCounter]; // Reset CPU cycle counter for next frame
 	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame
@@ -250,7 +247,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	NSAlert *errorDialog;
 	NSOpenPanel *openPanel;
 	
-	if (gameIsLoaded && gameIsRunning) [self play:nil]; // Pause game when opening rom selector
+	if (gameIsLoaded) [cartEmulator writeSRAMToDisk]; // This is a decent time to save!
+	if (gameIsRunning) [self play:nil]; // Pause game when opening rom selector
 	[apuEmulator stopAPUPlayback]; // Terminate audio playback
 	if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Come out of full-screen mode
 	
@@ -356,6 +354,14 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 }
 
+- (IBAction)showPreferences:(id)sender
+{		
+	if (gameIsRunning) [self play:nil]; // Pause the game if it is running
+	if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Switch out of full-screen if in it
+	
+	[preferencesWindow makeKeyAndOrderFront:nil];
+}
+
 - (BOOL)gameIsLoaded
 {
 	return gameIsLoaded;
@@ -390,8 +396,6 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		gameIsRunning = NO;
 		[gameTimer invalidate];
 		[apuEmulator pause];
-		[self updatecpuRegisters];
-		[self updateInstructions];
 		[playPauseMenuItem setTitle:@"Play"];
 	}
 }
@@ -423,7 +427,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	uint_fast32_t cpuCyclesToRun;
 		
 	cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
-	[cpuInterpreter setController1Data:[_controllerInterface readController:0]]; // Pull latest controller data
+	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
+	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
+
 	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
 	[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
@@ -594,6 +600,15 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 	
 	return YES;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+
+	if (gameIsRunning) [self play:nil]; // Pause the game
+	[apuEmulator stopAPUPlayback]; // Terminate audio playback
+	if (gameIsLoaded) [cartEmulator writeSRAMToDisk]; // Save SRAM to disk if the game uses it
+	
+	return NSTerminateNow;
 }
 
 @end

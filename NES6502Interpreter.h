@@ -75,8 +75,9 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 	NESPPUEmulator *ppu;
 	NESAPUEmulator *apu;
 	
-	uint_fast32_t _controller1;
-	uint8_t _controllerReadIndex;
+	uint_fast32_t *_controllers;
+	uint8_t _controller0ReadIndex;
+	uint8_t _controller1ReadIndex;
 }
 
 - (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu PPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu;
@@ -94,7 +95,7 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)setProgramCounter:(uint16_t)jump;
 - (void)nmi;
 - (void)setPRGROMPointers;
-- (void)setController1Data:(uint_fast32_t)data;
+- (void)setData:(uint_fast32_t)data forController:(int)index;
 - (void)stealCycles:(uint_fast32_t)cycles;
 
 @property(nonatomic, readonly) BOOL encounteredBreakpoint;
