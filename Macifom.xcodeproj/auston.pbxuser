@@ -81,10 +81,11 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 303872214;
-			PBXWorkspaceStateSaveDate = 303872214;
+			PBXPerProjectTemplateStateSaveDate = 303879129;
+			PBXWorkspaceStateSaveDate = 303879129;
 		};
 		perUserProjectItems = {
+			B9028935121CD685004995D3 /* PBXTextBookmark */ = B9028935121CD685004995D3 /* PBXTextBookmark */;
 			B9031D8F10A0E6C700AA13B1 /* PBXTextBookmark */ = B9031D8F10A0E6C700AA13B1 /* PBXTextBookmark */;
 			B909AE6712189B95002EC4A9 /* PBXTextBookmark */ = B909AE6712189B95002EC4A9 /* PBXTextBookmark */;
 			B91C4FA410F89A7E0057E78E /* PBXTextBookmark */ = B91C4FA410F89A7E0057E78E /* PBXTextBookmark */;
@@ -129,7 +130,6 @@
 			B9A365D4121CBBD40078EA5B /* PBXTextBookmark */ = B9A365D4121CBBD40078EA5B /* PBXTextBookmark */;
 			B9A365D5121CBBD40078EA5B /* PBXTextBookmark */ = B9A365D5121CBBD40078EA5B /* PBXTextBookmark */;
 			B9A365D6121CBBD40078EA5B /* PlistBookmark */ = B9A365D6121CBBD40078EA5B /* PlistBookmark */;
-			B9A365D7121CBBD40078EA5B /* PBXTextBookmark */ = B9A365D7121CBBD40078EA5B /* PBXTextBookmark */;
 			B9A365D9121CBBEA0078EA5B /* PBXTextBookmark */ = B9A365D9121CBBEA0078EA5B /* PBXTextBookmark */;
 			B9AC40821218F6A900442737 /* PBXTextBookmark */ = B9AC40821218F6A900442737 /* PBXTextBookmark */;
 			B9BDB79F10A1465D00C0B609 /* PBXTextBookmark */ = B9BDB79F10A1465D00C0B609 /* PBXTextBookmark */;
@@ -144,6 +144,16 @@
 		executables = (
 			B99E78D60E745DFB0019B353 /* Macifom */,
 		);
+	};
+	B9028935121CD685004995D3 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79100E745EFC0019B353 /* NESApplicationController.h */;
+		name = "NESApplicationController.h: 75";
+		rLen = 0;
+		rLoc = 2700;
+		rType = 0;
+		vrLen = 1365;
+		vrLoc = 1516;
 	};
 	B9031D8F10A0E6C700AA13B1 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -938,17 +948,7 @@
 		);
 		name = /Users/auston/Projects/Software/macifom_trunk/Info.plist;
 		rLen = 0;
-		rLoc = 9223372036854775807;
-	};
-	B9A365D7121CBBD40078EA5B /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B99E79100E745EFC0019B353 /* NESApplicationController.h */;
-		name = "NESApplicationController.h: 75";
-		rLen = 0;
-		rLoc = 2700;
-		rType = 0;
-		vrLen = 1365;
-		vrLoc = 1516;
+		rLoc = 9223372036854775808;
 	};
 	B9A365D9121CBBEA0078EA5B /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
