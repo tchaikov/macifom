@@ -62,7 +62,7 @@ static const char *instructionNames[256] = { "BRK", "ORA", "$02", "$03", "$04", 
 "BEQ", "SBC", "$F2", "$F3", "$F4", "SBC", "INC", "$F7",
 "SED", "SBC", "$FA", "$FB", "$FC", "SBC", "INC", "$FF" };
 
-static const uint8_t instructionArguments[256] = { 1, 1, 0, 0, 0, 1, 1, 0, 
+static const uint8_t instructionArguments[256] = { 0, 1, 0, 0, 0, 1, 1, 0, 
 0, 1, 0, 0, 0, 2, 2, 0,
 1, 1, 0, 0, 0, 1, 1, 0,
 0, 2, 0, 0, 0, 2, 2, 0,
