@@ -62,7 +62,7 @@ static const char *instructionNames[256] = { "BRK", "ORA", "$02", "$03", "$04", 
 "BEQ", "SBC", "$F2", "$F3", "$F4", "SBC", "INC", "$F7",
 "SED", "SBC", "$FA", "$FB", "$FC", "SBC", "INC", "$FF" };
 
-static const uint8_t instructionArguments[256] = { 0, 1, 0, 0, 0, 1, 1, 0, 
+static const uint8_t instructionArguments[256] = { 1, 1, 0, 0, 0, 1, 1, 0, 
 0, 1, 0, 0, 0, 2, 2, 0,
 1, 1, 0, 0, 0, 1, 1, 0,
 0, 2, 0, 0, 0, 2, 2, 0,
@@ -143,74 +143,6 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[super dealloc];
 }
 
-- (void)_nextFrameWithBreak {
-	
-	uint_fast32_t actualCPUCyclesRun;
-	
-	if ([cpuInterpreter encounteredBreakpoint]) {
-		
-		[self updatecpuRegisters];
-		[self updateInstructions];
-	}
-	else {
-		
-		gameTimer = [NSTimer scheduledTimerWithTimeInterval:0.0166 target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
-		
-		[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
-		[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
-		
-		if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
-		[cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
-		actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
-		[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
-		[apuEmulator clearBuffer];
-		[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
-		[cpuInterpreter resetCPUCycleCounter];
-		[ppuEmulator resetCPUCycleCounter];
-		[playfieldView setNeedsDisplay:YES];
-	}
-}
-
-- (void)_nextFrame {
-	
-	uint_fast32_t actualCPUCyclesRun;
-	
-	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
-	
-	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
-	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
-
-	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi]; // Invoke NMI if triggered by the PPU
-	[cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
-	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until end of VBLANK
-	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
-	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
-	[cpuInterpreter resetCPUCycleCounter]; // Reset CPU cycle counter for next frame
-	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame
-	[playfieldView setNeedsDisplay:YES]; // Redraw the screen
-}
-
-- (void)_willLoseFocus:(NSNotification *)notification {
-
-	if (gameIsRunning) {
-		
-		[self play:nil];
-		playOnActivate = YES;
-	}
-	else {
-	
-		playOnActivate = NO;
-	}
-}
-
-- (void)_willGainFocus:(NSNotification *)notification {
-
-	if (playOnActivate) {
-	
-		[self play:nil];
-	}
-}
-
 - (void)awakeFromNib {
 	
 	boolean_t exactMatch;
@@ -258,10 +190,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[openPanel setAllowsMultipleSelection:NO];
 	
 	if (NSOKButton == [openPanel runModalForDirectory:nil file:nil types:[NSArray arrayWithObject:@"nes"]]) {
-				
-		// Reset the PPU
-		[ppuEmulator resetPPUstatus];
-		
+						
 		if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:[[openPanel filenames] objectAtIndex:0]])) {
 		
 			// Friendly Debugging Info
@@ -272,6 +201,12 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			NSLog(@"Four-Screen VRAM Layout: %@",([cartEmulator usesFourScreenVRAMLayout] ? @"Yes" : @"No"));
 			NSLog(@"PRG-ROM Banks: %d x 16kB\tCHR-ROM Banks: %d x 8kB",[cartEmulator numberOfPRGROMBanks],[cartEmulator numberOfCHRROMBanks]);
 			NSLog(@"Onboard RAM Banks: %d x 8kB",[cartEmulator numberOfRAMBanks]);
+			
+			// Reset the PPU
+			[ppuEmulator resetPPUstatus];
+			
+			// Configure initial PPU state
+			[cartEmulator configureInitialPPUState];
 			
 			// Allow CPU Interpreter to cache PRGROM pointers
 			[cpuInterpreter setPRGROMPointers];
@@ -289,10 +224,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 			[self play:nil];
 		}
 		else {
-		
-			// There's no game loaded
-			[self setGameIsLoaded:NO];
-			
+					
 			// Throw an error
 			errorDialog = [NSAlert alertWithError:propagatedError];
 			[errorDialog runModal];
@@ -300,57 +232,49 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 }
 
+- (void)_nextFrame {
+	
+	uint_fast32_t actualCPUCyclesRun;
+	
+	gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrame) userInfo:nil repeats:NO];
+	
+	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
+	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
+	
+	if ([ppuEmulator triggeredNMI]) [cpuInterpreter _performNonMaskableInterrupt:0]; // Invoke NMI if triggered by the PPU
+	[cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
+	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until the beginning of next VBLANK
+	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
+	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
+	[cpuInterpreter resetCPUCycleCounter]; // Reset CPU cycle counter for next frame
+	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame
+	[playfieldView setNeedsDisplay:YES]; // Redraw the screen
+}
+
 - (IBAction)resetCPU:(id)sender {
 	
-	[cpuInterpreter reset];
-	[self updatecpuRegisters];
-	[self updateInstructions];
-}
-
-- (IBAction)setBreak:(id)sender {
-	
-	uint16_t address;
-	unsigned int scannedValue;
-	NSScanner *hexScanner = [NSScanner scannerWithString:[peekField stringValue]];
-	[hexScanner scanHexInt:&scannedValue];
-	address = scannedValue; // take just 16-bits for the address
-	
-	[cpuInterpreter setBreakpoint:address];
-}
-
-- (IBAction)runUntilBreak:(id)sender {
-
-	if (gameIsRunning) {
+	if (gameIsLoaded) {
 		
-		[gameTimer invalidate];
-		[self updatecpuRegisters];
-		[self updateInstructions];
-		gameIsRunning = NO;
-	}
-	else {
+		// Reset the PPU
+		[ppuEmulator resetPPUstatus];
 		
-		gameIsRunning = YES;
-		[self _nextFrameWithBreak];
-	}
-}
-
-- (IBAction)showAndHideDebugger:(id)sender
-{
-	if (debuggerIsVisible) {
+		// Reset ROM bank mapping
+		[cartEmulator setInitialROMPointers];
+		
+		// Configure initial PPU state
+		[cartEmulator configureInitialPPUState];
+		
+		// Allow CPU Interpreter to cache PRGROM pointers
+		[cpuInterpreter setPRGROMPointers];
+		
+		// Reset the CPU to prepare for execution
+		[cpuInterpreter reset];
 	
-		[debuggerWindow orderOut:nil];
-		debuggerIsVisible = NO;
-		[ppuEmulator toggleDebugging:NO];
-	}
-	else {
-	
-		if (gameIsRunning) [self play:nil]; // Pause the game if it is running
-		if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Switch out of full-screen if in it
-		[self updatecpuRegisters];
-		[self updateInstructions];
-		[ppuEmulator toggleDebugging:YES];
-		[debuggerWindow makeKeyAndOrderFront:nil];
-		debuggerIsVisible = YES;
+		if (debuggerIsVisible) {
+		
+			[self updatecpuRegisters];
+			[self updateInstructions:YES];
+		}
 	}
 }
 
@@ -372,18 +296,20 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	gameIsLoaded = flag;
 	
 	if (flag) {
-	
+		
 		[playPauseMenuItem setEnabled:YES];
+		[resetMenuItem setEnabled:YES];
 	}
 	else {
 		
 		[playPauseMenuItem setTitle:@"Play"];
 		[playPauseMenuItem setEnabled:NO];
+		[resetMenuItem setEnabled:NO];
 	}
 }
 
 - (IBAction)play:(id)sender {
-
+	
 	if (!gameIsRunning) {
 		
 		gameIsRunning = YES;
@@ -392,9 +318,10 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		[playPauseMenuItem setTitle:@"Pause"];
 	}
 	else {
-	
+		
 		gameIsRunning = NO;
 		[gameTimer invalidate];
+		gameTimer = nil;
 		[apuEmulator pause];
 		[playPauseMenuItem setTitle:@"Play"];
 	}
@@ -408,12 +335,12 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		
 		if (gameWasRunning) [self play:nil]; // Pause the game during the transition
 		if ([playfieldView isInFullScreenMode]) {
-		
+			
 			[playfieldView exitFullScreenModeWithOptions:nil];
 			[playfieldView scaleForWindowedDrawing];
 		}
 		else {
-		
+			
 			[playfieldView enterFullScreenMode:[NSScreen mainScreen] withOptions:[NSDictionary dictionaryWithObjectsAndKeys:(NSDictionary *)_fullScreenMode,NSFullScreenModeSetting,[NSNumber numberWithBool:NO],NSFullScreenModeAllScreens,nil]];
 			[playfieldView scaleForFullScreenDrawing];
 		}
@@ -421,34 +348,141 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 }
 
+/* BEGIN Debugging functionality and alternate (non-optimized) codepaths */
+
+- (void)_nextFrameWithBreak {
+	
+	uint_fast32_t actualCPUCyclesRun;
+	
+	if ([cpuInterpreter encounteredBreakpoint]) {
+		
+		gameIsRunning = NO;
+		[self updatecpuRegisters];
+		[self updateInstructions:NO];
+		[cpuInterpreter setEncounteredBreakpoint:NO];
+		[runDebugButton setTitle:@"Run"];
+	}
+	else {
+		
+		gameTimer = [NSTimer scheduledTimerWithTimeInterval:0.0166 target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
+		
+		[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
+		[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
+		
+		if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt:0]; // Invoke NMI if triggered by the PPU
+		actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
+		
+		if (![cpuInterpreter encounteredBreakpoint]) {
+			
+			actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until the beginning of the next VBLANK
+			[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
+		}
+		
+		if (![cpuInterpreter encounteredBreakpoint]) {
+			
+			[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
+			[cpuInterpreter resetCPUCycleCounter];
+			[ppuEmulator resetCPUCycleCounter];
+		}
+		
+		[apuEmulator clearBuffer];
+		[playfieldView setNeedsDisplay:YES];
+	}
+}
+
+- (IBAction)setBreak:(id)sender {
+	
+	uint16_t address;
+	unsigned int scannedValue;
+	NSScanner *hexScanner = [NSScanner scannerWithString:[peekField stringValue]];
+	[hexScanner scanHexInt:&scannedValue];
+	address = scannedValue; // take just 16-bits for the address
+	
+	[cpuInterpreter setBreakPoint:address];
+	[self updateInstructions:YES];
+}
+
+- (IBAction)runUntilBreak:(id)sender {
+
+	if (gameIsRunning) {
+		
+		[gameTimer invalidate];
+		gameIsRunning = NO;
+		
+		if (debuggerIsVisible) {
+			
+			[self updatecpuRegisters];
+			[self updateInstructions:NO];
+		}
+		[runDebugButton setTitle:@"Run"];
+	}
+	else {
+		
+		gameIsRunning = YES;
+		[self _nextFrameWithBreak];
+		[runDebugButton setTitle:@"Stop"];
+	}
+}
+
+- (IBAction)showAndHideDebugger:(id)sender
+{
+	if (debuggerIsVisible) {
+	
+		[debuggerWindow orderOut:nil];
+		debuggerIsVisible = NO;
+		[ppuEmulator toggleDebugging:NO];
+	}
+	else {
+	
+		if (gameIsRunning) [self play:nil]; // Pause the game if it is running
+		if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Switch out of full-screen if in it
+		[self updatecpuRegisters];
+		[self updateInstructions:NO];
+		[ppuEmulator toggleDebugging:YES];
+		[debuggerWindow makeKeyAndOrderFront:nil];
+		debuggerIsVisible = YES;
+	}
+}
+
 - (IBAction)advanceFrame:(id)sender {
 
 	uint_fast32_t actualCPUCyclesRun;
-	uint_fast32_t cpuCyclesToRun;
 		
-	cpuCyclesToRun = 29781 - [ppuEmulator cyclesSinceVINT] / 3;
 	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
 	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
-
-	if ([ppuEmulator triggeredNMI]) [cpuInterpreter nmi];
-	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:cpuCyclesToRun];
-	[apuEmulator endFrameOnCycle:actualCPUCyclesRun];
+	
+	if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt:0]; // Invoke NMI if triggered by the PPU
+	actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
+	
+	if (![cpuInterpreter encounteredBreakpoint]) {
+		
+		actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until the beginning of the next VBLANK
+		[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
+	}
+	
+	if (![cpuInterpreter encounteredBreakpoint]) {
+		
+		[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
+		[cpuInterpreter resetCPUCycleCounter];
+		[ppuEmulator resetCPUCycleCounter];
+	}
+	
 	[apuEmulator clearBuffer];
-	// NSLog(@"PPU Cycles to run: %d",ppuCyclesToRun * 3);
-	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
-	// NSLog(@"PPU failed to complete frame prior to render. Ran for %d cycles to end on cycle %d.",ppuCyclesToRun * 3,[ppuEmulator cyclesSinceVINT]);
-	[cpuInterpreter resetCPUCycleCounter];
-	[ppuEmulator resetCPUCycleCounter];
 	[playfieldView setNeedsDisplay:YES];
-	[self updatecpuRegisters];
-	[self updateInstructions];
+	
+	if (debuggerIsVisible) {
+		
+		[self updatecpuRegisters];
+		[self updateInstructions:NO];
+	}
 }
 
 - (IBAction)step:(id)sender {
 	
+	// FIXME: This needs to work with the PPU to be really useful
 	[cpuInterpreter interpretOpcode];
 	[self updatecpuRegisters];
-	[self updateInstructions];
+	[self updateInstructions:NO];
 }
 
 - (IBAction)peek:(id)sender 
@@ -497,12 +531,14 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 }
 
 @synthesize cpuRegisters;
+@synthesize instructions;
 
-- (void)updateInstructions
+- (void)updateInstructions:(BOOL)force
 {
 	uint16_t edgeOfPage = 0x00FF | ([cpuInterpreter cpuRegisters]->programCounter & 0xFF00);
 	uint16_t addressOfCurrentInstruction = [cpuInterpreter cpuRegisters]->programCounter;
 	uint16_t currentInstr = addressOfCurrentInstruction;
+	uint16_t breakPoint = [cpuInterpreter breakPoint];
 	uint8_t currentOpcode;
 	uint16_t address;
 	uint8_t operand;
@@ -515,7 +551,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	unsigned int firstInstruction = [[[instructions objectAtIndex:0] objectForKey:@"address"] unsignedIntValue];
 	unsigned int lastInstruction = [[[instructions lastObject] objectForKey:@"address"] unsignedIntValue];
 	
-	if (([cpuInterpreter cpuRegisters]->programCounter < firstInstruction) || ([cpuInterpreter cpuRegisters]->programCounter > lastInstruction)) {
+	if (([cpuInterpreter cpuRegisters]->programCounter < firstInstruction) || ([cpuInterpreter cpuRegisters]->programCounter > lastInstruction) || force) {
 		
 		instructionArray = [NSMutableArray array];
 		
@@ -532,6 +568,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 											 [NSString stringWithFormat:@"0x%4.4x",address],@"argument",
 											 [NSString stringWithFormat:@"%s",instructionDescriptions[[cpuInterpreter readByteFromCPUAddressSpace:addressOfCurrentInstruction]]],@"description",
 											 [NSNumber numberWithUnsignedInt:addressOfCurrentInstruction],@"address",
+											 addressOfCurrentInstruction == breakPoint ? [NSNumber numberWithBool:YES] : [NSNumber numberWithBool:NO],@"break",
 											 nil]];
 				addressOfCurrentInstruction += 3;
 			}
@@ -543,6 +580,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 											 [NSString stringWithFormat:@"0x%2.2x",operand],@"argument",
 											 [NSString stringWithFormat:@"%s",instructionDescriptions[[cpuInterpreter readByteFromCPUAddressSpace:addressOfCurrentInstruction]]],@"description",
 											 [NSNumber numberWithUnsignedInt:addressOfCurrentInstruction],@"address",
+											 addressOfCurrentInstruction == breakPoint ? [NSNumber numberWithBool:YES] : [NSNumber numberWithBool:NO],@"break",
 											 nil]];
 				
 				addressOfCurrentInstruction += 2;
@@ -553,6 +591,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 											 @"(Implied)",@"argument",
 											 [NSString stringWithFormat:@"%s",instructionDescriptions[[cpuInterpreter readByteFromCPUAddressSpace:addressOfCurrentInstruction]]],@"description",
 											 [NSNumber numberWithUnsignedInt:addressOfCurrentInstruction],@"address",
+											 addressOfCurrentInstruction == breakPoint ? [NSNumber numberWithBool:YES] : [NSNumber numberWithBool:NO],@"break",
 											 nil]];
 				
 				addressOfCurrentInstruction++;
@@ -589,7 +628,30 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[_currentInstruction setObject:[NSImage imageNamed:NSImageNameRightFacingTriangleTemplate] forKey:@"current"];
 }
 
-@synthesize instructions;
+/* END Debugging functionality and alternate (non-optimized) codepaths */
+
+/* BEGIN Windowing system event handlers */
+
+- (void)_willLoseFocus:(NSNotification *)notification {
+	
+	if (gameIsRunning) {
+		
+		[self play:nil];
+		playOnActivate = YES;
+	}
+	else {
+		
+		playOnActivate = NO;
+	}
+}
+
+- (void)_willGainFocus:(NSNotification *)notification {
+	
+	if (playOnActivate) {
+		
+		[self play:nil];
+	}
+}
 
 - (BOOL)windowShouldClose:(id)sender
 {
@@ -610,5 +672,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	
 	return NSTerminateNow;
 }
+
+/* END Windowing system event handlers */
 
 @end

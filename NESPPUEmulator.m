@@ -637,7 +637,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 					// Draw Sprite Pixels
 					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
 					
-						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex]) {
+						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] && ((spriteHorizontalOffset + pixelCounter > 7) || !_clipSprites)) {
 					
 							// Check for sprite 0 hit
 							if ((sprRAMIndex == 0) && bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] && (spriteHorizontalOffset + pixelCounter != 255)) {

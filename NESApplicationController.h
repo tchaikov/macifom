@@ -45,8 +45,10 @@
 	IBOutlet NSTextField *pokeField;
 	IBOutlet NSWindow *debuggerWindow;
 	IBOutlet NSMenuItem *playPauseMenuItem;
+	IBOutlet NSMenuItem *resetMenuItem;
 	IBOutlet NESControllerInterface *_controllerInterface;
 	IBOutlet NSWindow *preferencesWindow;
+	IBOutlet NSButton *runDebugButton;
 	
 	BOOL debuggerIsVisible;
 	BOOL gameIsLoaded;
@@ -70,7 +72,7 @@
 - (BOOL)gameIsLoaded;
 - (void)setGameIsLoaded:(BOOL)flag;
 - (void)updatecpuRegisters;
-- (void)updateInstructions;
+- (void)updateInstructions:(BOOL)force;
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 
 @property (retain) NSDictionary *cpuRegisters;

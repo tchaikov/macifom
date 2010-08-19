@@ -85,7 +85,8 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)resetCPUCycleCounter;
 - (uint_fast32_t)executeUntilCycle:(uint_fast32_t)cycle;
 - (uint_fast32_t)executeUntilCycleWithBreak:(uint_fast32_t)cycle;
-- (void)setBreakpoint:(uint16_t)counter;
+- (uint16_t)breakPoint;
+- (void)setBreakPoint:(uint16_t)counter;
 - (uint8_t)currentOpcode;
 - (CPURegisters *)cpuRegisters;
 - (uint8_t)readByteFromCPUAddressSpace:(uint16_t)address;
@@ -93,11 +94,11 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)writeByte:(uint8_t)byte toCPUAddress:(uint16_t)address;
 - (uint_fast32_t)interpretOpcode;
 - (void)setProgramCounter:(uint16_t)jump;
-- (void)nmi;
+- (void)_performNonMaskableInterrupt:(uint8_t)opcode;
 - (void)setPRGROMPointers;
 - (void)setData:(uint_fast32_t)data forController:(int)index;
 - (void)stealCycles:(uint_fast32_t)cycles;
 
-@property(nonatomic, readonly) BOOL encounteredBreakpoint;
+@property(nonatomic) BOOL encounteredBreakpoint;
 
 @end

@@ -1001,11 +1001,6 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_cpuRegisters->cycle += 7;
 }
 
-- (void)nmi {
-
-	[self _performNonMaskableInterrupt:0];
-}
-
 - (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu PPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu {
 
 	[super init];
@@ -1432,7 +1427,12 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_cpuRegisters->cycle = 8;
 }
 
-- (void)setBreakpoint:(uint16_t)counter
+- (uint16_t)breakPoint
+{
+	return breakPoint;
+}
+
+- (void)setBreakPoint:(uint16_t)counter
 {
 	breakPoint = counter;
 }

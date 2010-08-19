@@ -392,7 +392,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	[_lastROMPath release];
 }
 
-- (NSError *)_setROMPointers
+- (NSError *)setInitialROMPointers
 {
 	switch (_mapperNumber) {
 	
@@ -491,7 +491,6 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 {
 	if ([header length] < 16) {
 	
-		_romFileDidLoad = NO;
 		return [NSError errorWithDomain:@"NESFileErrorDomain" code:4 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"iNES file is corrupt.",NSLocalizedDescriptionKey,@"Macifom was unable to parse the selected file as the iNES header is corrupt.",NSLocalizedRecoverySuggestionErrorKey,nil]];
 	}
 	
@@ -536,7 +535,6 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	
 	if (fileHandle == nil) {
 		
-		_romFileDidLoad = NO;
 		return [NSError errorWithDomain:@"NESFileErrorDomain" code:1 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"File could not be opened.",NSLocalizedDescriptionKey,@"Macifom was unable to open the file selected.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
 	}
 	
@@ -546,7 +544,6 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// Should check if the file is 4 chars long, need to figure out fourth char in header format
 	if ((*((const char *)[header bytes]) != 'N') || (*((const char *)[header bytes]+1) != 'E') || (*((const char *)[header bytes]+2) != 'S')) {
 	
-		_romFileDidLoad = NO;
 		return [NSError errorWithDomain:@"NESFileErrorDomain" code:2 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"File is not in iNES format.",NSLocalizedDescriptionKey,@"Macifom was unable to parse the selected file as it does not appear to be in iNES format.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
 	}
 	
@@ -559,7 +556,6 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	// Load ROM Options
 	if (nil != (propagatedError = [self _loadiNESROMOptions:header])) {
 	
-		_romFileDidLoad = NO;
 		return propagatedError;
 	}
 	
@@ -590,18 +586,17 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		if ([rom length] != 8192) loadErrorOccurred = YES;
 		else [rom getBytes:_chrromBanks[bank]];
 	}
-	
-	// FIXME: Always allocating SRAM, because I'm not sure how to detect it yet, this may just be leaked
-	_sram = (uint8_t *)malloc(sizeof(uint8_t)*SRAM_SIZE);
-	
+		
 	// Close ROM file
 	[fileHandle closeFile];
 	
 	if (loadErrorOccurred) {
 	
-		_romFileDidLoad = NO;
 		return [NSError errorWithDomain:@"NESFileErrorDomain" code:3 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"ROM data could not be extracted.",NSLocalizedDescriptionKey,@"Macifom was unable to extract the ROM data from the selected file. This is likely due to file corruption or inaccurate header information.",NSLocalizedRecoverySuggestionErrorKey,path,NSFilePathErrorKey,nil]];
 	}
+	
+	// FIXME: Always allocating 8KB of SRAM (WRAM) as iNES assumes its presence
+	_sram = (uint8_t *)malloc(sizeof(uint8_t)*SRAM_SIZE);
 	
 	// Load SRAM data, if present
 	if (_usesBatteryBackedRAM) {
@@ -617,12 +612,15 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 	[self _cacheCHRROM];
 	
 	// Set ROM pointers
-	if (nil != (propagatedError = [self _setROMPointers])) {
+	propagatedError = [self setInitialROMPointers];
 		
-		_romFileDidLoad = NO;
-		return propagatedError;
-	}
+	if (propagatedError == nil) _romFileDidLoad = YES;
 	
+	return propagatedError;
+}
+
+- (void)configureInitialPPUState
+{
 	// Configure PPU
 	// FIXME: Need to support 4-screen mirroring
 	if (_usesVerticalMirroring) [_ppu setMirroringType:NESVerticalMirroring];
@@ -640,13 +638,12 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 		[_ppu setCHRROMTileCachePointersForBank0:[self pointerToCHRROMBank0TileCache] bank1:[self pointerToCHRROMBank1TileCache]];
 		[_ppu setCHRROMPointersForBank0:[self pointerToCHRROMBank0] bank1:[self pointerToCHRROMBank1]];
 	}
-	
-	return propagatedError;
 }
 
 - (NSError *)loadROMFileAtPath:(NSString *)path
 {
 	// Right now, only iNES format is supported
+	_romFileDidLoad = NO;
 	return [self _loadiNESFileAtPath:path];
 }
 
