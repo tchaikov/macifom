@@ -1,4 +1,4 @@
-/* NESCartridgeEmulator.h
+/*  NESSNROMCartridge.h
  * 
  * Copyright (c) 2010 Auston Stewart
  *
@@ -22,44 +22,20 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "NESCartridge.h"
 
-@class NESPPUEmulator;
-@class NESCartridge;
+@interface NESSNROMCartridge : NESCartridge {
 
-typedef struct {
-	
-	BOOL usesVerticalMirroring;
-	BOOL hasTrainer;
-	BOOL usesBatteryBackedRAM;
-	BOOL usesFourScreenVRAMLayout;
-	BOOL isPAL;
-	
-	NSString *pathToFile;
-	uint_fast8_t mapperNumber;
-	uint_fast32_t prgromSize;
-	uint_fast32_t chrromSize;
-	uint_fast8_t numberOf16kbPRGROMBanks;
-	uint_fast8_t numberOf8kbCHRROMBanks;
-	uint_fast8_t numberOf8kbWRAMBanks;
-	
-} iNESFlags;
+	BOOL _mmc1Switch16KBPRGROMBanks;
+	BOOL _mmc1SwitchFirst16KBBank;
+	BOOL _mmc1Switch4KBCHRROMBanks;
 
-@interface NESCartridgeEmulator : NSObject {
-	
-	BOOL _romFileDidLoad;
-	
-	NSString *_lastROMPath;
-	NESCartridge *_cartridge;
-	NESPPUEmulator *_ppu;
-	iNESFlags *_lastHeader;
-	uint8_t *_prgrom;
-	uint8_t *_chrrom;
-	uint8_t *_trainer;
+	uint8_t _mmc1ControlRegister;
+	uint8_t _mmc1CHRROMBank0Register;
+	uint8_t _mmc1CHRROMBank1Register;
+	uint8_t _mmc1PRGROMBankRegister;
+	uint_fast8_t _serialWriteCounter;
+	uint8_t _register;
 }
-
-- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
-- (NSError *)loadROMFileAtPath:(NSString *)path;
-- (NESCartridge *)cartridge;
-- (NSString *)mapperDescription;
 
 @end

@@ -1,4 +1,4 @@
-/* NESCartridgeEmulator.h
+/*  NESAxROMCartridge.m
  * 
  * Copyright (c) 2010 Auston Stewart
  *
@@ -21,45 +21,34 @@
  * THE SOFTWARE.
  */
 
-#import <Cocoa/Cocoa.h>
+#import "NESAxROMCartridge.h"
+#import "NESPPUEmulator.h"
 
-@class NESPPUEmulator;
-@class NESCartridge;
+@implementation NESAxROMCartridge
 
-typedef struct {
+- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
+{		
+	uint_fast32_t bankCounter;
 	
-	BOOL usesVerticalMirroring;
-	BOOL hasTrainer;
-	BOOL usesBatteryBackedRAM;
-	BOOL usesFourScreenVRAMLayout;
-	BOOL isPAL;
+	// AxROM switches 32KB PRGROM banks
+	uint_fast32_t selected32KprgromBank = (byte & 0x7) * BANK_SIZE_32KB / PRGROM_BANK_SIZE;
 	
-	NSString *pathToFile;
-	uint_fast8_t mapperNumber;
-	uint_fast32_t prgromSize;
-	uint_fast32_t chrromSize;
-	uint_fast8_t numberOf16kbPRGROMBanks;
-	uint_fast8_t numberOf8kbCHRROMBanks;
-	uint_fast8_t numberOf8kbWRAMBanks;
+	// Rebuild PRGROM pointers
+	for (bankCounter = 0; bankCounter < (PRGROM_APERTURE_SIZE / PRGROM_BANK_SIZE); bankCounter++) {
+		
+		_prgromBankIndices[bankCounter] = selected32KprgromBank + bankCounter;
+	}
+	[self rebuildPRGROMPointers];
 	
-} iNESFlags;
-
-@interface NESCartridgeEmulator : NSObject {
-	
-	BOOL _romFileDidLoad;
-	
-	NSString *_lastROMPath;
-	NESCartridge *_cartridge;
-	NESPPUEmulator *_ppu;
-	iNESFlags *_lastHeader;
-	uint8_t *_prgrom;
-	uint8_t *_chrrom;
-	uint8_t *_trainer;
+	// AxROM also changes the single-screen mirroring mode
+	if (byte & 0x10) [_ppu changeMirroringTypeTo:NESSingleScreenUpperMirroring onCycle:cycle];
+	else [_ppu changeMirroringTypeTo:NESSingleScreenLowerMirroring onCycle:cycle];
 }
 
-- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
-- (NSError *)loadROMFileAtPath:(NSString *)path;
-- (NESCartridge *)cartridge;
-- (NSString *)mapperDescription;
+- (void)configureInitialPPUState
+{
+	[super configureInitialPPUState];
+	[_ppu setMirroringType:NESSingleScreenLowerMirroring];
+}
 
 @end

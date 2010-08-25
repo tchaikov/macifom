@@ -1,4 +1,4 @@
-/* NESCartridgeEmulator.h
+/*  NESTxROMCartridge.h
  * 
  * Copyright (c) 2010 Auston Stewart
  *
@@ -22,44 +22,20 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "NESCartridge.h"
 
-@class NESPPUEmulator;
-@class NESCartridge;
+@interface NESTxROMCartridge : NESCartridge {
 
-typedef struct {
+	BOOL _mmc3IRQEnabled;
+	BOOL _mmc3HighPRGROMSwappable;
+	BOOL _mmc3LowCHRROMIn1kbBanks;
+	BOOL _mmc3WRAMWriteDisable;
+	BOOL _mmc3WRAMChipEnable;
 	
-	BOOL usesVerticalMirroring;
-	BOOL hasTrainer;
-	BOOL usesBatteryBackedRAM;
-	BOOL usesFourScreenVRAMLayout;
-	BOOL isPAL;
-	
-	NSString *pathToFile;
-	uint_fast8_t mapperNumber;
-	uint_fast32_t prgromSize;
-	uint_fast32_t chrromSize;
-	uint_fast8_t numberOf16kbPRGROMBanks;
-	uint_fast8_t numberOf8kbCHRROMBanks;
-	uint_fast8_t numberOf8kbWRAMBanks;
-	
-} iNESFlags;
-
-@interface NESCartridgeEmulator : NSObject {
-	
-	BOOL _romFileDidLoad;
-	
-	NSString *_lastROMPath;
-	NESCartridge *_cartridge;
-	NESPPUEmulator *_ppu;
-	iNESFlags *_lastHeader;
-	uint8_t *_prgrom;
-	uint8_t *_chrrom;
-	uint8_t *_trainer;
+	uint8_t _mmc3BankRegisters[8];
+	uint8_t _mmc3IRQCounter;
+	uint8_t _mmc3IRQCounterReloadValue;
+	uint8_t _bankRegisterToUpdate;
 }
-
-- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
-- (NSError *)loadROMFileAtPath:(NSString *)path;
-- (NESCartridge *)cartridge;
-- (NSString *)mapperDescription;
 
 @end

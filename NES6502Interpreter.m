@@ -22,7 +22,7 @@
  */
 
 #import "NES6502Interpreter.h"
-#import "NESCartridgeEmulator.h"
+#import "NESCartridge.h"
 #import "NESPPUEmulator.h"
 #import "NESAPUEmulator.h"
 
@@ -248,7 +248,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_cpuRegisters->stackPointer = 0xFF; // FIXME: http://nesdevwiki.org/wiki/Power-Up_State says this should be $FD
 	_cpuRegisters->statusCarry = 0;
 	_cpuRegisters->statusZero = 0;
-	_cpuRegisters->statusIRQDisable = 0;
+	_cpuRegisters->statusIRQDisable = 1; // Tepples indicates that IRQs are disabled on boot-up, as though SEI was invoked
 	_cpuRegisters->statusDecimal = 0;
 	_cpuRegisters->statusBreak = 0; // FIXME: http://nesdevwiki.org/wiki/Power-Up_State says this should be on
 	_cpuRegisters->statusOverflow = 0;
@@ -283,10 +283,9 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint8_t)readByteFromCPUAddressSpace:(uint16_t)address
 {
-	if (address >= 0xC000) return _prgRomBank1[address & 0x3FFF];
-	else if (address >= 0x8000) return _prgRomBank0[address & 0x3FFF];
+	if (address >= 0x8000) return _prgromBankPointers[(address & 0x7FFF) / PRGROM_BANK_SIZE][address & (PRGROM_BANK_SIZE - 1)];
 	else if (address < 0x2000) return _zeroPage[address & 0x07FF];
-	else if (address >= 0x6000) return [cartridge readByteFromSRAM:address];
+	else if (address >= 0x6000) return _wram[address & (WRAM_SIZE - 1)];
 	else if (address >= 0x4020) return 0;
 	else if (address >= 0x4000) {
 	
@@ -312,8 +311,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint16_t)readAddressFromCPUAddressSpace:(uint16_t)address
 {	
-	if (address >= 0xC000) return _prgRomBank1[address & 0x3FFF] + ((uint16_t)_prgRomBank1[(address + 1) & 0x3FFF] * 256);
-	else if (address >= 0x8000) return _prgRomBank0[address & 0x3FFF] + ((uint16_t)_prgRomBank0[(address + 1) & 0x3FFF] * 256);
+	if (address >= 0x8000) return _prgromBankPointers[(address & 0x7FFF) / PRGROM_BANK_SIZE][address & (PRGROM_BANK_SIZE - 1)] + ((uint16_t)_prgromBankPointers[((address + 1) & 0x7FFF) / PRGROM_BANK_SIZE][(address + 1) & (PRGROM_BANK_SIZE - 1)] * 256);
 	
 	return _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),address) + ((uint16_t)_readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),address + 1) * 256);
 }
@@ -330,30 +328,24 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	else if (address < 0x4020) {
 		
 		if (address == 0x4014) {
-			
+						
 			if (byte < 32) {
 				
 				// NSLog(@"Initiating DMA SPRRAM transfer from CPU RAM: 0x%4.4x", (0x100 * byte));
 				DMAorigin = _zeroPage + (0x100 * (byte & 0x7));
 			}
-			else if (byte >= 192) {
-				
-				// NSLog(@"Initiating DMA SPRRAM transfer from PRGROMBank0: 0x%4.4x", (0x100 * byte));
-				DMAorigin = _prgRomBank0 + (0x100 * (byte & 0x7));
-			}
 			else if (byte >= 128) {
 				
-				// NSLog(@"Initiating DMA SPRRAM transfer from PRGROMBank1: 0x%4.4x", (0x100 * byte));
-				DMAorigin = _prgRomBank1 + (0x100 * (byte & 0x7));
+				DMAorigin = _prgromBankPointers[(0x100 * (byte & 0x7F)) / PRGROM_BANK_SIZE] + ((0x100 * (byte & 0x7F)) & (PRGROM_BANK_SIZE - 1)); 
 			}
 			else if (byte >= 96) {
 				
-				// NSLog(@"Initiating DMA SPRRAM transfer from SRAM: 0x%4.4x", (0x100 * byte));
-				DMAorigin = [cartridge pointerToSRAM] + (0x100 * (byte & 0x1F));
+				// NSLog(@"Initiating DMA SPRRAM transfer from WRAM: 0x%4.4x", (0x100 * byte));
+				DMAorigin = _wram + (0x100 * (byte & 0x1F));
 			}
 			else {
 				
-				// NSLog(@"!! Initiating DMA SPRRAM transfer from place I don't have a pointer to: 0x%4.4x", (0x100 * byte));
+				// NSLog(@"Initiating DMA SPRRAM transfer from place I don't have a pointer to: 0x%4.4x", (0x100 * byte));
 				DMAorigin = NULL; // Crap! Don't know what to do about DMA transfers from registers
 			}
 			[ppu DMAtransferToSPRRAM:DMAorigin onCycle:_cpuRegisters->cycle];
@@ -373,22 +365,11 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	else if (address < 0x6000) return;
 	else if (address < 0x8000) {
 		
-		[cartridge writeByte:byte toSRAMwithCPUAddress:address];
+		_wram[address & (WRAM_SIZE - 1)] = byte;
 	}
 	else {
 		
 		[cartridge writeByte:byte toPRGROMwithCPUAddress:address onCycle:_cpuRegisters->cycle];
-		
-		if ([cartridge prgromBanksDidChange]) {
-			
-			[self setPRGROMPointers];
-		}
-		
-		if ([cartridge chrromBanksDidChange]) {
-		
-			[ppu setCHRROMTileCachePointersForBank0:[cartridge pointerToCHRROMBank0TileCache] bank1:[cartridge pointerToCHRROMBank1TileCache]];
-			[ppu setCHRROMPointersForBank0:[cartridge pointerToCHRROMBank0] bank1:[cartridge pointerToCHRROMBank1]];
-		}
 	}
 }
 
@@ -965,13 +946,13 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (void)_performBreak:(uint8_t)opcode
 {
-	// Brad Taylor is correct in stating that BRK is actually a two-byte opcode with a padding bit - http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
+	// Brad Taylor is correct in stating that BRK is actually a two-byte opcode, the second being padding - http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
 	_cpuRegisters->statusBreak = 1;
-	_cpuRegisters->programCounter++; // Increment the program counter here to account for padding bit read
+	_cpuRegisters->programCounter++; // Increment the program counter here to account for padding byte read
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:opcode]; // Finally, push the processor status register to the stack
-	_cpuRegisters->programCounter = [cartridge readAddressFromPRGROM:0xFFFE];
+	_cpuRegisters->programCounter = [self readAddressFromCPUAddressSpace:0xfffe];
 	_cpuRegisters->statusIRQDisable = 1;
 	
 	_cpuRegisters->cycle += 7;
@@ -983,7 +964,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:0xff]; // Finally, push the processor status register to the stack
-	_cpuRegisters->programCounter = [cartridge readAddressFromPRGROM:0xFFFE];
+	_cpuRegisters->programCounter = [self readAddressFromCPUAddressSpace:0xfffe];
 	_cpuRegisters->statusIRQDisable = 1;
 	
 	_cpuRegisters->cycle += 7;
@@ -995,17 +976,17 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
 	_stack[_cpuRegisters->stackPointer--] = _cpuRegisters->programCounter; // store program counter low byte on stack
 	[self _pushProcessorStatusToStack:0xff]; // Finally, push the processor status register to the stack
-	_cpuRegisters->programCounter = [cartridge readAddressFromPRGROM:0xFFFA];
+	_cpuRegisters->programCounter = [self readAddressFromCPUAddressSpace:0xfffa];
 	_cpuRegisters->statusIRQDisable = 1;
 	
 	_cpuRegisters->cycle += 7;
 }
 
-- (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu PPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu {
+- (id)initWithPPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu {
 
 	[super init];
 	
-	cartridge = cartEmu; // Non-retained reference;
+	cartridge = nil;
 	ppu = ppuEmu; // Non-retained reference;
 	apu = apuEmu; // Non-retained reference;
 	
@@ -1417,13 +1398,23 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	[super dealloc];
 }
+
+- (void)setCartridge:(NESCartridge *)cart
+{
+	[cart retain];
+	if (cartridge != nil) [cartridge release];
+	cartridge = cart;
+	
+	_prgromBankPointers = [cartridge prgromBankPointers];
+	_wram = [cartridge wram];
+}
  
 - (void)reset
 {
 	[self _clearRegisters];
 	[self _clearCPUMemory];
 	[self _clearStatus];
-	_cpuRegisters->programCounter = [cartridge readAddressFromPRGROM:0xFFFC];
+	_cpuRegisters->programCounter = [self readAddressFromCPUAddressSpace:0xfffc];
 	_cpuRegisters->cycle = 8;
 }
 
@@ -1503,12 +1494,6 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (CPURegisters *)cpuRegisters
 {
 	return _cpuRegisters;
-}
-
-- (void)setPRGROMPointers
-{
-	_prgRomBank0 = [cartridge pointerToPRGROMBank0];
-	_prgRomBank1 = [cartridge pointerToPRGROMBank1];
 }
 
 - (void)setData:(uint_fast32_t)data forController:(int)index;

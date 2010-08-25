@@ -23,9 +23,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class NESCartridgeEmulator;
 @class NESPPUEmulator;
 @class NESAPUEmulator;
+@class NESCartridge;
 
 typedef struct cpuregs {
 	
@@ -58,8 +58,8 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 	uint8_t *_stack;
 	uint8_t *_cpuRAM;
 	
-	uint8_t *_prgRomBank0;
-	uint8_t *_prgRomBank1;
+	uint8_t **_prgromBankPointers;
+	uint8_t *_wram;
 	
 	uint16_t breakPoint;
 	BOOL _encounteredUnsupportedOpcode;
@@ -71,7 +71,7 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 	SEL *_operationSelectors;
 	uint8_t (*_readByteFromCPUAddressSpace)(id, SEL, uint16_t);
 	
-	NESCartridgeEmulator *cartridge;
+	NESCartridge *cartridge;
 	NESPPUEmulator *ppu;
 	NESAPUEmulator *apu;
 	
@@ -80,7 +80,8 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 	uint8_t _controller1ReadIndex;
 }
 
-- (id)initWithCartridge:(NESCartridgeEmulator *)cartEmu PPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu;
+- (id)initWithPPU:(NESPPUEmulator *)ppuEmu andAPU:(NESAPUEmulator *)apuEmu;
+- (void)setCartridge:(NESCartridge *)cart;
 - (void)reset;
 - (void)resetCPUCycleCounter;
 - (uint_fast32_t)executeUntilCycle:(uint_fast32_t)cycle;
@@ -95,7 +96,6 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 - (uint_fast32_t)interpretOpcode;
 - (void)setProgramCounter:(uint16_t)jump;
 - (void)_performNonMaskableInterrupt:(uint8_t)opcode;
-- (void)setPRGROMPointers;
 - (void)setData:(uint_fast32_t)data forController:(int)index;
 - (void)stealCycles:(uint_fast32_t)cycles;
 

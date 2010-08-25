@@ -22,7 +22,7 @@
  */
 
 #import "NESPPUEmulator.h"
-#import "NESCartridgeEmulator.h"
+#import "NESCartridge.h"
 
 #define CYCLES_OF_VBLANK 6820
 #define CYCLES_BEFORE_RENDERING_SHORT 7160
@@ -108,27 +108,26 @@ static inline void restoreBackupPalettes(uint8_t *originalPalette, uint8_t *back
 	memcpy(originalPalette,backupPalette,sizeof(uint8_t)*32);
 }
 
-static inline void generateTileCacheFromPatternTable(uint8_t ***tileCache, uint8_t *patternTable) {
-	
+static inline void generateTileCacheForCHRROMSegment(uint8_t ***tileCache, uint8_t *chrromSegment)
+{
 	uint_fast16_t tile;
 	uint_fast8_t line;
 	uint_fast8_t pixel;
 	uint_fast8_t indexingPixel;
 	uint8_t pixelMask;
 	
-	for (tile = 0; tile < 256; tile++) {
+	for (tile = 0; tile < (CHRROM_BANK_SIZE / 16); tile++) {
 		
 		for (line = 0; line < 8; line++) {
 			
 			for (pixel = 0; pixel < 8; pixel++) {
 				
-				// FIXME: This logic is butchered to handle 8KB rom banks that go into 4KB switchable pattern table caches. Really I should just have 4KB in each bank.
 				indexingPixel = 7 - pixel;
 				pixelMask = 1 << indexingPixel;
-				tileCache[tile][line][pixel] = ((patternTable[(tile << 4) | line] & pixelMask) >> indexingPixel) | (((patternTable[(tile << 4) | (line + 8)] & pixelMask) >> indexingPixel) << 1);
+				tileCache[tile][line][pixel] = ((chrromSegment[(tile << 4) | line] & pixelMask) >> indexingPixel) | (((chrromSegment[(tile << 4) | (line + 8)] & pixelMask) >> indexingPixel) << 1);
 			}
 		}
-	}	
+	}
 }
 
 static uint16_t applyHorizontalMirroring(uint16_t vramAddress) {
@@ -202,38 +201,24 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_oddFrame = NO;
 	_NMIOnVBlank = NO;
 	_nameAndAttributeTablesMask = 0;	
-	_chrRAMWriteHistory = 0;
+	// _chrRAMWriteHistory = 0;
 	_usingCHRRAM = NO;
 	_8x16Sprites = NO;
 	_frameEnded = NO;
+	
+	// FIXME: I'm not sure what the default for these should actually be
+	_spriteTileCacheIndex = 0;
+	_backgroundTileCacheIndex = 0;
 	
 	memset(_playfieldBuffer,0,sizeof(uint8_t)*16);
 	memset(_sprRAM,0,sizeof(uint8_t)*256);
 	memset(_palettes,0,sizeof(uint8_t)*32);
 	memset(_nameAndAttributeTables,0,sizeof(uint8_t)*2048);
 	
-	if (_chrramTileCache != NULL) {
+	if (_tileCache != NULL) {
 	
 		// FIXME: Invoke method to free tile cache
-		_chrramTileCache = NULL;
-	}
-	
-	if (_chrromBank0TileCache != NULL) {
-	
-		// FIXME: Invoke method to free tile cache
-		_chrromBank0TileCache = NULL;
-	}
-	
-	if (_chrromBank1TileCache != NULL) {
-		
-		// FIXME: Invoke method to free tile cache
-		_chrromBank1TileCache = NULL;
-	}
-	
-	if (_chrRAM != NULL) {
-		
-		free(_chrRAM);
-		_chrRAM = NULL;
+		_tileCache = NULL;
 	}
 }
 
@@ -249,6 +234,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_backgroundPalette = _palettes;
 	_spritePalette = (_palettes + 0x10);
 	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*2048);
+	_tileCache = NULL;
 	
 	[self resetPPUstatus];
 	
@@ -319,86 +305,40 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	}
 }
 
-- (void)configureForCHRRAM
+- (void)cacheCHRROM:(uint8_t *)chrrom length:(uint_fast32_t)size bankIndices:(uint_fast32_t *)indices isWritable:(BOOL)isWritable
 {
-	uint_fast16_t tile;
-	uint_fast8_t line;
+	uint_fast32_t bankIndex, tileIndex, lineIndex;
+	_tileCache = (uint8_t ****)malloc(sizeof(uint8_t***) * (size / CHRROM_BANK_SIZE));
 	
-	_chrramTileCache = (uint8_t ***)malloc(sizeof(uint8_t**)*512);
-	_chrromBank0TileCache = _chrramTileCache;
-	_chrromBank1TileCache = _chrramTileCache + 256;
-	_chrRAM = (uint8_t *)malloc(sizeof(uint8_t)*8192);
-	_chrRAMBank0 = _chrRAM;
-	_chrRAMBank1 = _chrRAM + 4096;
-	memset(_chrRAM,0,sizeof(uint8_t)*8192);
-	
-	for (tile = 0; tile < 256; tile++) {
+	for (bankIndex = 0; bankIndex < (size / CHRROM_BANK_SIZE); bankIndex++) {
 		
-		_chrromBank0TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
-		_chrromBank1TileCache[tile] = (uint8_t **)malloc(sizeof(uint8_t*)*8);
+		// 16 bytes per 8x8 tile
+		_tileCache[bankIndex] = (uint8_t ***)malloc(sizeof(uint8_t**) * (CHRROM_BANK_SIZE / 16));
 		
-		for (line = 0; line < 8; line++) {
+		for (tileIndex = 0; tileIndex < (CHRROM_BANK_SIZE / 16); tileIndex++) {
 			
-			_chrromBank0TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
-			_chrromBank1TileCache[tile][line] = (uint8_t *)malloc(sizeof(uint8_t)*8);
+			_tileCache[bankIndex][tileIndex] = (uint8_t **)malloc(sizeof(uint8_t *) * 8);
+			
+			for (lineIndex = 0; lineIndex < 8; lineIndex++) {
+				
+				_tileCache[bankIndex][tileIndex][lineIndex] = (uint8_t *)malloc(sizeof(uint8_t) * 8);
+			}
 		}
+		
+		generateTileCacheForCHRROMSegment(_tileCache[bankIndex],chrrom + (bankIndex * CHRROM_BANK_SIZE));
 	}
 	
-	// This is always or'ed with the write address to give some indication of what CHRRAM has changed.. it's a bit sloppy
-	// We start off in a dirty state to force re-caching of the pattern tables
-	_chrRAMWriteHistory = 0x1001;
-	_usingCHRRAM = YES;
-}
-
-- (void)setCHRROMTileCachePointersForBank0:(uint8_t ***)bankPointer0 bank1:(uint8_t ***)bankPointer1
-{
-	if (_usingCHRRAM) NSLog(@"Attempting to change CHRROM pointers when using CHRRAM!");
+	_chrrom = chrrom;
+	_chrromBankIndices = indices;
 	
-	_chrromBank0TileCache = bankPointer0;
-	_chrromBank1TileCache = bankPointer1;
-	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
-	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
-}
-
-- (void)setCHRROMPointersForBank0:(uint8_t *)bankPointer0 bank1:(uint8_t *)bankPointer1
-{
-	_chromBank0 = bankPointer0;
-	_chromBank1 = bankPointer1;
-}
-
-- (void)setCHRRAMBank0Index:(uint8_t)index
-{
-	_chrromBank0TileCache = _chrramTileCache + (index * 256);
-	_chrRAMBank0 = (_chrRAM + (index * 4096));
-	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
-	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
-}
-
-- (void)setCHRRAMBank1Index:(uint8_t)index
-{
-	_chrromBank1TileCache = _chrramTileCache + (index * 256);
-	_chrRAMBank1 = (_chrRAM + (index * 4096));
-	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
-	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
-}
-
-- (void)displayBackgroundTiles {
-
-	uint8_t nextPixel;
-	unsigned int line;
-	unsigned int tile;
-	unsigned int pixel;
-	unsigned int videoBufferPosition = 0;
-	
-	for (line = 0; line < 64; line++) {
+	if (isWritable) {
 		
-		for (tile = 0; tile < 32; tile++) {
-			
-			for (pixel = 0; pixel < 8; pixel++) {
-			
-				nextPixel = _backgroundPalette[_backgroundTileCache[((line / 8) * 32) + tile][line % 8][pixel]];
-				_videoBuffer[videoBufferPosition++] = colorPalette[nextPixel];
-			}
+		_usingCHRRAM = YES;
+		_chrramWriteHistory = (BOOL *)malloc(sizeof(BOOL) * (size / CHRROM_BANK_SIZE));
+		
+		for (bankIndex = 0; bankIndex < (size / CHRROM_BANK_SIZE); bankIndex++) {
+				
+			_chrramWriteHistory[bankIndex] = NO;
 		}
 	}
 }
@@ -406,6 +346,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (void)_preloadTilesForScanline
 {
 	uint8_t tileIndex;
+	uint_fast32_t bankIndex;
 	uint8_t verticalTileOffset;
 	uint8_t pixelCounter;
 	uint8_t	tileAttributes;
@@ -417,13 +358,15 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	// Fetch the attribute byte
 	nameTableOffset = _nameTableMirroring(_VRAMAddress);
 	tileIndex = _nameAndAttributeTables[nameTableOffset];
+	bankIndex = _chrromBankIndices[_backgroundTileCacheIndex + (tileIndex / (CHRROM_BANK_SIZE / 16))];
+	tileIndex &= ((CHRROM_BANK_SIZE / 16) - 1);
 	tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 	tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
 	verticalTileOffset = (_VRAMAddress & 0x7000) / 4096;
 	
 	for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 		
-		tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+		tileLowerColorBits = _tileCache[bankIndex][tileIndex][verticalTileOffset][pixelCounter];
 		_playfieldBuffer[pixelCounter] = tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0;
 	}
 	
@@ -434,12 +377,14 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	// Fetch the attribute byte
 	nameTableOffset = _nameTableMirroring(_VRAMAddress);
 	tileIndex = _nameAndAttributeTables[nameTableOffset];
+	bankIndex = _chrromBankIndices[_backgroundTileCacheIndex + (tileIndex / (CHRROM_BANK_SIZE / 16))];
+	tileIndex &= ((CHRROM_BANK_SIZE / 16) - 1);
 	tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 	tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
 	
 	for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 		
-		tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+		tileLowerColorBits = _tileCache[bankIndex][tileIndex][verticalTileOffset][pixelCounter];
 		_playfieldBuffer[pixelCounter + 8] = tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0;
 	}
 	
@@ -471,6 +416,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 
 - (void)_drawScanlinesStoppingOnCycle:(uint_fast32_t)endingCycle
 {
+	uint_fast32_t bankIndex;
 	uint_fast8_t tileIndex;
 	uint_fast8_t tileCounter;
 	uint_fast8_t currentScanline;
@@ -489,9 +435,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	uint_fast8_t spriteHorizontalOffset;
 	uint_fast32_t spriteVideoBufferOffset;
 	uint_fast8_t spritePixelsToDraw;
+	uint_fast8_t spriteLowerColorBits;
 	uint_fast8_t spriteUpperColorBits;
-	uint_fast8_t spriteTileIndex;
-	uint8_t ***spriteRenderCache;
 	uint_fast32_t spritePriorityMask;
 	uint_fast32_t bgOpacityMask;
 	uint_fast32_t pixelMask;
@@ -502,11 +447,16 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	// NSLog(@"In drawScanlines method. Drawing from %d to %d.",start,stop);
 	
 	// If CHRRAM writes have occurred, regenerate the pattern table tile caches prior to rendering
-	if (_chrRAMWriteHistory) {
+	if (_usingCHRRAM) {
+	
+		for (bankIndex = 0; bankIndex < (CHRROM_APERTURE_SIZE / CHRROM_BANK_SIZE); bankIndex++) {
 			
-		generateTileCacheFromPatternTable(_chrromBank1TileCache,_chrRAMBank1);
-		generateTileCacheFromPatternTable(_chrromBank0TileCache,_chrRAMBank0);
-		_chrRAMWriteHistory = 0; // Clear write history
+			if (_chrramWriteHistory[bankIndex]) {
+			
+				generateTileCacheForCHRROMSegment(_tileCache[bankIndex],_chrrom + (_chrromBankIndices[bankIndex] * CHRROM_BANK_SIZE));
+				_chrramWriteHistory[bankIndex] = NO;
+			}
+		}
 	}
 	
 	// for (scanlineCounter = startingScanline; scanlineCounter < endingScanline; scanlineCounter++)
@@ -556,13 +506,15 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			
 					nameTableOffset = _nameTableMirroring(_VRAMAddress);
 					tileIndex = _nameAndAttributeTables[nameTableOffset];
+					bankIndex = _chrromBankIndices[_backgroundTileCacheIndex + (tileIndex / (CHRROM_BANK_SIZE / 16))];
+					tileIndex &= ((CHRROM_BANK_SIZE / 16) - 1);
 					tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 					tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
 					// NSLog(@"Loading Tile Cache. VRAMAddress: 0x%4.4x NameTableOffset: %d TileIndex: %d VerticalTileOffset: %d",_VRAMAddress,nameTableOffset,tileIndex,verticalTileOffset);
 			
 					for (pixelCounter = 0; pixelCounter < 8; pixelCounter++) {
 	
-						tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+						tileLowerColorBits = _tileCache[bankIndex][tileIndex][verticalTileOffset][pixelCounter];
 						// Profiling shows that this trinary doesn't affect performance compared to an optimized palette
 						_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 						bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
@@ -577,12 +529,14 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 				// Draw the 33rd title if necessary
 				nameTableOffset = _nameTableMirroring(_VRAMAddress);
 				tileIndex = _nameAndAttributeTables[nameTableOffset];
+				bankIndex = _chrromBankIndices[_backgroundTileCacheIndex + (tileIndex / (CHRROM_BANK_SIZE / 16))];
+				tileIndex &= ((CHRROM_BANK_SIZE / 16) - 1);
 				tileAttributes = _nameAndAttributeTables[attributeTableIndexForNametableIndex(nameTableOffset)];
 				tileUpperColorBits = upperColorBitsFromAttributeByte(tileAttributes, nameTableOffset);
 			
 				for (pixelCounter = 0; pixelCounter < _fineHorizontalScroll; pixelCounter++) {
 			
-					tileLowerColorBits = _backgroundTileCache[tileIndex][verticalTileOffset][pixelCounter];
+					tileLowerColorBits = _tileCache[bankIndex][tileIndex][verticalTileOffset][pixelCounter];
 					_videoBuffer[_videoBufferIndex++] = colorPalette[_backgroundPalette[tileLowerColorBits ? (tileLowerColorBits | tileUpperColorBits) : 0]];
 					bgOpacityBuffer[scanlinePixelCounter++] = tileLowerColorBits;
 				}
@@ -613,13 +567,14 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 					sprRAMIndex = _spritesOnCurrentScanline[spriteCounter];
 					spriteVerticalOffset = (_sprRAM[sprRAMIndex + 2] & 0x80 ? (_8x16Sprites ? 15 : 7) - (((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1)) : ((_videoBufferIndex / 256) - 1) - (_sprRAM[sprRAMIndex] + 1));
 					// FIXME: If it turns out that sprites on scanline 0 have Y coords of 0xFF then I'll need to add back (uint8_t) to make sure the addition overflows.
-					spriteTileIndex = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0xFE) + (spriteVerticalOffset / 8)) : _sprRAM[sprRAMIndex + 1];
+					tileIndex = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0xFE) + (spriteVerticalOffset / 8)) : _sprRAM[sprRAMIndex + 1];
+					bankIndex = _chrromBankIndices[(_8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0x1) ? (BANK_SIZE_4KB / CHRROM_BANK_SIZE) : 0) : _spriteTileCacheIndex) + (tileIndex / (CHRROM_BANK_SIZE / 16))];
+					tileIndex &= ((CHRROM_BANK_SIZE / 16) - 1);
 					spriteVerticalOffset &= 0x7;
 					spriteHorizontalOffset = _sprRAM[sprRAMIndex + 3];
 					spriteVideoBufferOffset = _videoBufferIndex - 256 + spriteHorizontalOffset;
 					spritePixelsToDraw = spriteHorizontalOffset < 249 ? 8 : 256 - spriteHorizontalOffset;
 					spriteUpperColorBits = (_sprRAM[sprRAMIndex + 2] & 0x3) * 4;
-					spriteRenderCache = _8x16Sprites ? ((_sprRAM[sprRAMIndex + 1] & 0x1) ? _chrromBank1TileCache : _chrromBank0TileCache) : _spriteTileCache;
 					spritePriorityMask = 0xFFFFFFFF * ((_sprRAM[sprRAMIndex + 2] & 0x20) / 32);
 				
 					// Check for horizontal flip
@@ -637,7 +592,9 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 					// Draw Sprite Pixels
 					for (pixelCounter = 0; pixelCounter < spritePixelsToDraw; pixelCounter++) {
 					
-						if (spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] && ((spriteHorizontalOffset + pixelCounter > 7) || !_clipSprites)) {
+						spriteLowerColorBits = _tileCache[bankIndex][tileIndex][spriteVerticalOffset][spritePixelIndex];
+						
+						if (spriteLowerColorBits && ((spriteHorizontalOffset + pixelCounter > 7) || !_clipSprites)) {
 					
 							// Check for sprite 0 hit
 							if ((sprRAMIndex == 0) && bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] && (spriteHorizontalOffset + pixelCounter != 255)) {
@@ -653,7 +610,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 							bgOpacityMask = (bgOpacityBuffer[spriteHorizontalOffset + pixelCounter] ? 0xFFFFFFFF : 0x00000000);
 							pixelMask = (spritePriorityMask & bgOpacityMask) | pixelLockArray[spriteHorizontalOffset + pixelCounter];
 							_videoBuffer[spriteVideoBufferOffset + pixelCounter] &= pixelMask;
-							_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteRenderCache[spriteTileIndex][spriteVerticalOffset][spritePixelIndex] | spriteUpperColorBits]] & ~pixelMask;
+							_videoBuffer[spriteVideoBufferOffset + pixelCounter] |= colorPalette[_spritePalette[spriteLowerColorBits | spriteUpperColorBits]] & ~pixelMask;
 							pixelLockArray[spriteHorizontalOffset + pixelCounter] = 0xFFFFFFFF;
 						}
 					
@@ -721,7 +678,6 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 - (BOOL)triggeredNMI {
 	
 	return _triggeredNMI;
-	// WAS: return _NMIOnVBlank && (_ppuStatusRegister & 0x80);
 }
 
 - (BOOL)completePrimingScanlineStoppingOnCycle:(uint_fast32_t)cycle
@@ -849,18 +805,9 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	else {
 	
 		if (_usingCHRRAM) {
-			// We're writing to CHRRAM
-			// FIXME: If a non-CHRRAM game tries to write here, shit's going to get fucked up
-			if (effectiveAddress & 0x1000) {
-				
-				_chrRAMBank1[effectiveAddress & 0xFFF] = byte;
-			}
-			else {
 			
-				_chrRAMBank0[effectiveAddress & 0xFFF] = byte;
-			}
-			
-			_chrRAMWriteHistory |= effectiveAddress;
+			_chrrom[(_chrromBankIndices[effectiveAddress / CHRROM_BANK_SIZE] * CHRROM_BANK_SIZE) + (effectiveAddress & (CHRROM_BANK_SIZE - 1))] = byte;
+			_chrramWriteHistory[effectiveAddress / CHRROM_BANK_SIZE] = YES;
 		}
 	}
 }
@@ -886,8 +833,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_temporaryVRAMAddress &= 0x73FF; // Clear bits 10 and 11 (X and Y nametable selection)
 	_temporaryVRAMAddress |= (byte & 0x3) << 10; // Put selected nametables into temporary PPU address
 	_addressIncrement = (_ppuControlRegister1 & 0x4) ? 32 : 1; // Increment on write to $2007 by 32 if true
-	_spriteTileCache = (_ppuControlRegister1 & 0x8) ? _chrromBank1TileCache : _chrromBank0TileCache; // Get base address for spriteTable
-	_backgroundTileCache = (_ppuControlRegister1 & 0x10) ? _chrromBank1TileCache : _chrromBank0TileCache;
+	_spriteTileCacheIndex = (_ppuControlRegister1 & 0x8) ? BANK_SIZE_4KB / CHRROM_BANK_SIZE : 0;
+	_backgroundTileCacheIndex = (_ppuControlRegister1 & 0x10) ? BANK_SIZE_4KB / CHRROM_BANK_SIZE : 0;
 	_8x16Sprites = (_ppuControlRegister1 & 0x20) ? YES : NO;
 	_NMIOnVBlank = (_ppuControlRegister1 & 0x80) ? YES : NO;
 }
@@ -985,15 +932,9 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	uint8_t valueToReturn = _bufferedVRAMRead;
 	uint16_t effectiveAddress = _VRAMAddress & 0x3FFF; // addresses above 0x3FFF are mirrored
 	
-	if (effectiveAddress < 0x1000) { 
-
-		// CHRROM Bank 0 Read
-		_bufferedVRAMRead = (_usingCHRRAM ? _chrRAMBank0[effectiveAddress] : _chromBank0[effectiveAddress]);
-	}
-	else if (effectiveAddress < 0x2000) { 
-		
-		// CHRROM Bank 1 Read
-		_bufferedVRAMRead = (_usingCHRRAM ? _chrRAMBank1[effectiveAddress & 0xFFF] : _chromBank1[effectiveAddress & 0xFFF]);
+	if (effectiveAddress < 0x2000) {
+	
+		_bufferedVRAMRead = _chrrom[(_chrromBankIndices[effectiveAddress / CHRROM_BANK_SIZE] * CHRROM_BANK_SIZE) + (effectiveAddress & (CHRROM_BANK_SIZE - 1))];
 	}
 	else if (effectiveAddress < 0x3F00) { 
 		

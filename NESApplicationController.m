@@ -28,6 +28,7 @@
 #import "NESCartridgeEmulator.h"
 #import "NES6502Interpreter.h"
 #import "NESControllerInterface.h"
+#import "NESCartridge.h"
 
 static const char *instructionNames[256] = { "BRK", "ORA", "$02", "$03", "$04", "ORA", "ASL", "$07",
 "PHP", "ORA", "ASL", "$0B", "$0C", "ORA", "ASL", "$0F",
@@ -150,7 +151,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
 	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator];
 	apuEmulator = [[NESAPUEmulator alloc] init];
-	cpuInterpreter = [[NES6502Interpreter alloc] initWithCartridge:cartEmulator	PPU:ppuEmulator andAPU:apuEmulator];
+	cpuInterpreter = [[NES6502Interpreter alloc] initWithPPU:ppuEmulator andAPU:apuEmulator];
 	[apuEmulator setDMCReadObject:cpuInterpreter];
 	_currentInstruction = nil;
 	instructions = nil;
@@ -161,7 +162,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	lastTimingCorrection = 0;
 	
 	// FIXME: Should probably CGRelease this somewhere
-	_fullScreenMode = CGDisplayBestModeForParameters(kCGDirectMainDisplay,32,640,480,&exactMatch);
+	_fullScreenMode = CGDisplayBestModeForParameters(kCGDirectMainDisplay,32,640,480,&exactMatch); // FIXME: This call is deprecated as of Mac OS X 10.6
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(_willLoseFocus:)
@@ -179,37 +180,45 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	NSAlert *errorDialog;
 	NSOpenPanel *openPanel;
 	
-	if (gameIsLoaded) [cartEmulator writeSRAMToDisk]; // This is a decent time to save!
 	if (gameIsRunning) [self play:nil]; // Pause game when opening rom selector
-	[apuEmulator stopAPUPlayback]; // Terminate audio playback
+	if (gameIsLoaded) [[cartEmulator cartridge] writeWRAMToDisk]; // This is a decent time to save!
 	if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Come out of full-screen mode
 	
 	openPanel = [NSOpenPanel openPanel];
 	[openPanel setCanChooseFiles:YES];
 	[openPanel setCanChooseDirectories:NO];
 	[openPanel setAllowsMultipleSelection:NO];
+	[openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"nes"]];
 	
-	if (NSOKButton == [openPanel runModalForDirectory:nil file:nil types:[NSArray arrayWithObject:@"nes"]]) {
+	if (NSOKButton == [openPanel runModal]) {
 						
-		if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:[[openPanel filenames] objectAtIndex:0]])) {
+		if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:(NSString *)[[openPanel filenames] objectAtIndex:0]])) {
 		
-			// Friendly Debugging Info
+			NESCartridge *cartridge = [cartEmulator cartridge];
+			iNESFlags *cartridgeData = [cartridge iNesFlags];
+			
+			// Friendly Cartridge Info
 			NSLog(@"Cartridge Information:");
-			NSLog(@"Mapper #: %d\t\tDescription: %@",[cartEmulator mapperNumber],[cartEmulator mapperDescription]);
-			NSLog(@"Trainer: %@\t\tVideo Type: %@",([cartEmulator hasTrainer] ? @"Yes" : @"No"),([cartEmulator isPAL] ? @"PAL" : @"NTSC"));
-			NSLog(@"Mirroring: %@\tBackup RAM: %@",([cartEmulator usesVerticalMirroring] ? @"Vertical" : @"Horizontal"),([cartEmulator usesBatteryBackedRAM] ? @"Yes" : @"No"));
-			NSLog(@"Four-Screen VRAM Layout: %@",([cartEmulator usesFourScreenVRAMLayout] ? @"Yes" : @"No"));
-			NSLog(@"PRG-ROM Banks: %d x 16kB\tCHR-ROM Banks: %d x 8kB",[cartEmulator numberOfPRGROMBanks],[cartEmulator numberOfCHRROMBanks]);
-			NSLog(@"Onboard RAM Banks: %d x 8kB",[cartEmulator numberOfRAMBanks]);
+			NSLog(@"Mapper #: %d\t\tDescription: %@",cartridgeData->mapperNumber,[cartEmulator mapperDescription]);
+			NSLog(@"Trainer: %@\t\tVideo Type: %@",(cartridgeData->hasTrainer ? @"Yes" : @"No"),(cartridgeData->isPAL ? @"PAL" : @"NTSC"));
+			NSLog(@"Mirroring: %@\tBackup RAM: %@",(cartridgeData->usesVerticalMirroring ? @"Vertical" : @"Horizontal"),(cartridgeData->usesBatteryBackedRAM ? @"Yes" : @"No"));
+			NSLog(@"Four-Screen VRAM Layout: %@",(cartridgeData->usesFourScreenVRAMLayout ? @"Yes" : @"No"));
+			NSLog(@"PRG-ROM Banks: %d x 16kB\tCHR-ROM Banks: %d x 8kB",cartridgeData->numberOf16kbPRGROMBanks,cartridgeData->numberOf8kbCHRROMBanks);
+			NSLog(@"Onboard RAM Banks: %d x 8kB",cartridgeData->numberOf8kbWRAMBanks);
+			
+			if (gameIsLoaded) [apuEmulator stopAPUPlayback]; // Terminate audio playback
 			
 			// Reset the PPU
 			[ppuEmulator resetPPUstatus];
 			
+			// Set initial ROM pointers
+			[cartridge setInitialROMPointers];
+			
 			// Configure initial PPU state
-			[cartEmulator configureInitialPPUState];
+			[cartridge configureInitialPPUState];
 			
 			// Allow CPU Interpreter to cache PRGROM pointers
-			[cpuInterpreter setPRGROMPointers];
+			[cpuInterpreter setCartridge:cartridge];
 			
 			// Reset the CPU to prepare for execution
 			[cpuInterpreter reset];
@@ -259,14 +268,11 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		[ppuEmulator resetPPUstatus];
 		
 		// Reset ROM bank mapping
-		[cartEmulator setInitialROMPointers];
+		[[cartEmulator cartridge] setInitialROMPointers];
 		
 		// Configure initial PPU state
-		[cartEmulator configureInitialPPUState];
-		
-		// Allow CPU Interpreter to cache PRGROM pointers
-		[cpuInterpreter setPRGROMPointers];
-		
+		[[cartEmulator cartridge] configureInitialPPUState];
+				
 		// Reset the CPU to prepare for execution
 		[cpuInterpreter reset];
 	
@@ -668,7 +674,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 	if (gameIsRunning) [self play:nil]; // Pause the game
 	[apuEmulator stopAPUPlayback]; // Terminate audio playback
-	if (gameIsLoaded) [cartEmulator writeSRAMToDisk]; // Save SRAM to disk if the game uses it
+	if (gameIsLoaded) [[cartEmulator cartridge] writeWRAMToDisk]; // Save SRAM to disk if the game uses it
 	
 	return NSTerminateNow;
 }

@@ -1,4 +1,4 @@
-/* NESCartridgeEmulator.h
+/*  NESCNROMCartridge.m
  * 
  * Copyright (c) 2010 Auston Stewart
  *
@@ -21,45 +21,26 @@
  * THE SOFTWARE.
  */
 
-#import <Cocoa/Cocoa.h>
+#import "NESCNROMCartridge.h"
+#import "NESPPUEmulator.h"
 
-@class NESPPUEmulator;
-@class NESCartridge;
+@implementation NESCNROMCartridge
 
-typedef struct {
+- (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
+{		
+	uint_fast32_t bankCounter;
+	// CNROM switches 8KB CHRROM banks
+	uint_fast32_t selected8KBchrromBank = (byte & 0x3) * BANK_SIZE_8KB / CHRROM_BANK_SIZE;
 	
-	BOOL usesVerticalMirroring;
-	BOOL hasTrainer;
-	BOOL usesBatteryBackedRAM;
-	BOOL usesFourScreenVRAMLayout;
-	BOOL isPAL;
+	// Run PPU before this CHRROM swap
+	[_ppu runPPUUntilCPUCycle:cycle];
 	
-	NSString *pathToFile;
-	uint_fast8_t mapperNumber;
-	uint_fast32_t prgromSize;
-	uint_fast32_t chrromSize;
-	uint_fast8_t numberOf16kbPRGROMBanks;
-	uint_fast8_t numberOf8kbCHRROMBanks;
-	uint_fast8_t numberOf8kbWRAMBanks;
-	
-} iNESFlags;
-
-@interface NESCartridgeEmulator : NSObject {
-	
-	BOOL _romFileDidLoad;
-	
-	NSString *_lastROMPath;
-	NESCartridge *_cartridge;
-	NESPPUEmulator *_ppu;
-	iNESFlags *_lastHeader;
-	uint8_t *_prgrom;
-	uint8_t *_chrrom;
-	uint8_t *_trainer;
+	// Rebuild CHRROM indices
+	for (bankCounter = 0; bankCounter < (CHRROM_APERTURE_SIZE / CHRROM_BANK_SIZE); bankCounter++) {
+		
+		_chrromBankIndices[bankCounter] = selected8KBchrromBank + bankCounter;
+	}
+	[self rebuildCHRROMPointers];
 }
-
-- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
-- (NSError *)loadROMFileAtPath:(NSString *)path;
-- (NESCartridge *)cartridge;
-- (NSString *)mapperDescription;
 
 @end

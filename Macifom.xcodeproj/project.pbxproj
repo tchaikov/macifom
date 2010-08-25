@@ -26,11 +26,17 @@
 		B926BD8112147CC20046785C /* NESControllerInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = B926BD8012147CC20046785C /* NESControllerInterface.m */; };
 		B926BDF0121499860046785C /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B926BDEF121499860046785C /* Carbon.framework */; };
 		B926BF171214B75E0046785C /* NESKeyboardResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = B926BF161214B75E0046785C /* NESKeyboardResponder.m */; };
+		B96B196C122505E00096FEF6 /* NESTxROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */; };
 		B99E78F00E745E280019B353 /* NESPPUEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78E90E745E270019B353 /* NESPPUEmulator.m */; };
 		B99E78F10E745E280019B353 /* NES6502Interpreter.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */; };
 		B99E78F30E745E280019B353 /* NESCartridgeEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */; };
 		B99E79120E745EFC0019B353 /* NESApplicationController.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */; };
 		B99E791A0E7462220019B353 /* NESPlayfieldView.m in Sources */ = {isa = PBXBuildFile; fileRef = B99E79190E7462220019B353 /* NESPlayfieldView.m */; };
+		B9A27E7C1222074400582233 /* NESCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E7B1222074400582233 /* NESCartridge.m */; };
+		B9A27E7F12221F2600582233 /* NESUxROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */; };
+		B9A27E83122224DF00582233 /* NESCNROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E82122224DF00582233 /* NESCNROMCartridge.m */; };
+		B9A27E8612222BB700582233 /* NESAxROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E8512222BB700582233 /* NESAxROMCartridge.m */; };
+		B9A27E891222499C00582233 /* NESSNROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E881222499C00582233 /* NESSNROMCartridge.m */; };
 		B9D02A7C0F36269F003A44CC /* Macifom.icns in Resources */ = {isa = PBXBuildFile; fileRef = B9D02A7B0F36269F003A44CC /* Macifom.icns */; };
 /* End PBXBuildFile section */
 
@@ -76,6 +82,8 @@
 		B926BDEF121499860046785C /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		B926BF151214B75E0046785C /* NESKeyboardResponder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESKeyboardResponder.h; sourceTree = "<group>"; };
 		B926BF161214B75E0046785C /* NESKeyboardResponder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESKeyboardResponder.m; sourceTree = "<group>"; };
+		B96B196A122505E00096FEF6 /* NESTxROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESTxROMCartridge.h; sourceTree = "<group>"; };
+		B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESTxROMCartridge.m; sourceTree = "<group>"; };
 		B99E78E80E745E270019B353 /* NES6502Interpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NES6502Interpreter.h; sourceTree = "<group>"; };
 		B99E78E90E745E270019B353 /* NESPPUEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESPPUEmulator.m; sourceTree = "<group>"; };
 		B99E78EB0E745E270019B353 /* NES6502Interpreter.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = NES6502Interpreter.m; sourceTree = "<group>"; };
@@ -86,6 +94,16 @@
 		B99E79110E745EFC0019B353 /* NESApplicationController.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = NESApplicationController.m; sourceTree = "<group>"; };
 		B99E79180E7462220019B353 /* NESPlayfieldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESPlayfieldView.h; sourceTree = "<group>"; };
 		B99E79190E7462220019B353 /* NESPlayfieldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESPlayfieldView.m; sourceTree = "<group>"; };
+		B9A27E7A1222074400582233 /* NESCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESCartridge.h; sourceTree = "<group>"; };
+		B9A27E7B1222074400582233 /* NESCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESCartridge.m; sourceTree = "<group>"; };
+		B9A27E7D12221F2600582233 /* NESUxROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESUxROMCartridge.h; sourceTree = "<group>"; };
+		B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESUxROMCartridge.m; sourceTree = "<group>"; };
+		B9A27E81122224DF00582233 /* NESCNROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESCNROMCartridge.h; sourceTree = "<group>"; };
+		B9A27E82122224DF00582233 /* NESCNROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESCNROMCartridge.m; sourceTree = "<group>"; };
+		B9A27E8412222BB700582233 /* NESAxROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESAxROMCartridge.h; sourceTree = "<group>"; };
+		B9A27E8512222BB700582233 /* NESAxROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESAxROMCartridge.m; sourceTree = "<group>"; };
+		B9A27E871222499C00582233 /* NESSNROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESSNROMCartridge.h; sourceTree = "<group>"; };
+		B9A27E881222499C00582233 /* NESSNROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESSNROMCartridge.m; sourceTree = "<group>"; };
 		B9D02A7B0F36269F003A44CC /* Macifom.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Macifom.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -108,6 +126,7 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				B9E11C181225BD1400F6FA0E /* Cartridges */,
 				B99E79100E745EFC0019B353 /* NESApplicationController.h */,
 				B99E79110E745EFC0019B353 /* NESApplicationController.m */,
 				B99E78E80E745E270019B353 /* NES6502Interpreter.h */,
@@ -236,6 +255,25 @@
 			path = boost;
 			sourceTree = "<group>";
 		};
+		B9E11C181225BD1400F6FA0E /* Cartridges */ = {
+			isa = PBXGroup;
+			children = (
+				B9A27E7A1222074400582233 /* NESCartridge.h */,
+				B9A27E7B1222074400582233 /* NESCartridge.m */,
+				B9A27E7D12221F2600582233 /* NESUxROMCartridge.h */,
+				B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */,
+				B9A27E81122224DF00582233 /* NESCNROMCartridge.h */,
+				B9A27E82122224DF00582233 /* NESCNROMCartridge.m */,
+				B9A27E8412222BB700582233 /* NESAxROMCartridge.h */,
+				B9A27E8512222BB700582233 /* NESAxROMCartridge.m */,
+				B9A27E871222499C00582233 /* NESSNROMCartridge.h */,
+				B9A27E881222499C00582233 /* NESSNROMCartridge.m */,
+				B96B196A122505E00096FEF6 /* NESTxROMCartridge.h */,
+				B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */,
+			);
+			name = Cartridges;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -309,6 +347,12 @@
 				B91C4F5410F876E00057E78E /* NESAPUEmulator.mm in Sources */,
 				B926BD8112147CC20046785C /* NESControllerInterface.m in Sources */,
 				B926BF171214B75E0046785C /* NESKeyboardResponder.m in Sources */,
+				B9A27E7C1222074400582233 /* NESCartridge.m in Sources */,
+				B9A27E7F12221F2600582233 /* NESUxROMCartridge.m in Sources */,
+				B9A27E83122224DF00582233 /* NESCNROMCartridge.m in Sources */,
+				B9A27E8612222BB700582233 /* NESAxROMCartridge.m in Sources */,
+				B9A27E891222499C00582233 /* NESSNROMCartridge.m in Sources */,
+				B96B196C122505E00096FEF6 /* NESTxROMCartridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,6 +414,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_OBJC_GC = unsupported;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
@@ -384,6 +429,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_OBJC_GC = unsupported;
 				GCC_INPUT_FILETYPE = automatic;
 				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
