@@ -26,7 +26,8 @@
 #import "NESUxROMCartridge.h"
 #import "NESCNROMCartridge.h"
 #import "NESAxROMCartridge.h"
-#import "NESSNROMCartridge.h"
+#import "NESSxROMCartridge.h"
+#import "NESSUROMCartridge.h"
 #import "NESTxROMCartridge.h"
 
 static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UNROM switch", "CNROM switch", "Nintendo MMC3", "Nintendo MMC5", "FFE F4xxx", "AOROM switch",
@@ -92,7 +93,12 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			break;
 		case 1:
 			// SxROM
-			_cartridge = [[NESSNROMCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+			if (_lastHeader->numberOf16kbPRGROMBanks == 32) {
+				
+				// Let's try SUROM
+				_cartridge = [[NESSUROMCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+			}
+			else _cartridge = [[NESSxROMCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
 			break;
 		case 2:
 			// UxROM

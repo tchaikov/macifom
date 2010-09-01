@@ -25,6 +25,7 @@
 #import <Cocoa/Cocoa.h>
 #import "NESCartridgeEmulator.h"
 
+#define BANK_SIZE_256KB 262144
 #define BANK_SIZE_32KB 32768
 #define BANK_SIZE_16KB 16384
 #define BANK_SIZE_8KB 8192

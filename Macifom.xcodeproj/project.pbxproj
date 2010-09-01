@@ -12,6 +12,7 @@
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		B90C0F9B1205FDDC00499BEB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90C0F9A1205FDDC00499BEB /* IOKit.framework */; };
+		B91B201B122640A10066C2CB /* NESSUROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B91B201A122640A10066C2CB /* NESSUROMCartridge.m */; };
 		B91C4F4510F876580057E78E /* apu_snapshot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F2C10F876580057E78E /* apu_snapshot.cpp */; };
 		B91C4F4610F876580057E78E /* Blip_Buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F3010F876580057E78E /* Blip_Buffer.cpp */; };
 		B91C4F4710F876580057E78E /* Multi_Buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F3710F876580057E78E /* Multi_Buffer.cpp */; };
@@ -36,7 +37,7 @@
 		B9A27E7F12221F2600582233 /* NESUxROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */; };
 		B9A27E83122224DF00582233 /* NESCNROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E82122224DF00582233 /* NESCNROMCartridge.m */; };
 		B9A27E8612222BB700582233 /* NESAxROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E8512222BB700582233 /* NESAxROMCartridge.m */; };
-		B9A27E891222499C00582233 /* NESSNROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E881222499C00582233 /* NESSNROMCartridge.m */; };
+		B9A27E891222499C00582233 /* NESSxROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B9A27E881222499C00582233 /* NESSxROMCartridge.m */; };
 		B9D02A7C0F36269F003A44CC /* Macifom.icns in Resources */ = {isa = PBXBuildFile; fileRef = B9D02A7B0F36269F003A44CC /* Macifom.icns */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +52,8 @@
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Macifom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macifom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B90C0F9A1205FDDC00499BEB /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
+		B91B2019122640A10066C2CB /* NESSUROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESSUROMCartridge.h; sourceTree = "<group>"; };
+		B91B201A122640A10066C2CB /* NESSUROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESSUROMCartridge.m; sourceTree = "<group>"; };
 		B91C4F2C10F876580057E78E /* apu_snapshot.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = apu_snapshot.cpp; sourceTree = "<group>"; };
 		B91C4F2D10F876580057E78E /* apu_snapshot.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = apu_snapshot.h; sourceTree = "<group>"; };
 		B91C4F2E10F876580057E78E /* blargg_common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = blargg_common.h; sourceTree = "<group>"; };
@@ -102,8 +105,8 @@
 		B9A27E82122224DF00582233 /* NESCNROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESCNROMCartridge.m; sourceTree = "<group>"; };
 		B9A27E8412222BB700582233 /* NESAxROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESAxROMCartridge.h; sourceTree = "<group>"; };
 		B9A27E8512222BB700582233 /* NESAxROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESAxROMCartridge.m; sourceTree = "<group>"; };
-		B9A27E871222499C00582233 /* NESSNROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESSNROMCartridge.h; sourceTree = "<group>"; };
-		B9A27E881222499C00582233 /* NESSNROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESSNROMCartridge.m; sourceTree = "<group>"; };
+		B9A27E871222499C00582233 /* NESSxROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESSxROMCartridge.h; sourceTree = "<group>"; };
+		B9A27E881222499C00582233 /* NESSxROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESSxROMCartridge.m; sourceTree = "<group>"; };
 		B9D02A7B0F36269F003A44CC /* Macifom.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Macifom.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -266,10 +269,12 @@
 				B9A27E82122224DF00582233 /* NESCNROMCartridge.m */,
 				B9A27E8412222BB700582233 /* NESAxROMCartridge.h */,
 				B9A27E8512222BB700582233 /* NESAxROMCartridge.m */,
-				B9A27E871222499C00582233 /* NESSNROMCartridge.h */,
-				B9A27E881222499C00582233 /* NESSNROMCartridge.m */,
+				B9A27E871222499C00582233 /* NESSxROMCartridge.h */,
+				B9A27E881222499C00582233 /* NESSxROMCartridge.m */,
 				B96B196A122505E00096FEF6 /* NESTxROMCartridge.h */,
 				B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */,
+				B91B2019122640A10066C2CB /* NESSUROMCartridge.h */,
+				B91B201A122640A10066C2CB /* NESSUROMCartridge.m */,
 			);
 			name = Cartridges;
 			sourceTree = "<group>";
@@ -351,8 +356,9 @@
 				B9A27E7F12221F2600582233 /* NESUxROMCartridge.m in Sources */,
 				B9A27E83122224DF00582233 /* NESCNROMCartridge.m in Sources */,
 				B9A27E8612222BB700582233 /* NESAxROMCartridge.m in Sources */,
-				B9A27E891222499C00582233 /* NESSNROMCartridge.m in Sources */,
+				B9A27E891222499C00582233 /* NESSxROMCartridge.m in Sources */,
 				B96B196C122505E00096FEF6 /* NESTxROMCartridge.m in Sources */,
+				B91B201B122640A10066C2CB /* NESSUROMCartridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

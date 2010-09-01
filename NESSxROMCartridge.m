@@ -21,10 +21,15 @@
  * THE SOFTWARE.
  */
 
-#import "NESSNROMCartridge.h"
+#import "NESSxROMCartridge.h"
 #import "NESPPUEmulator.h"
 
-@implementation NESSNROMCartridge
+@implementation NESSxROMCartridge
+
+- (uint_fast32_t)_outerPRGROMBankSize
+{
+	return _iNesFlags->prgromSize;
+}
 
 - (void)_switch4KBCHRROMBank:(uint_fast32_t)bank toBank:(uint_fast32_t)index
 {
@@ -36,7 +41,6 @@
 		
 		_chrromBankIndices[bankCounter + (bank * BANK_SIZE_4KB / CHRROM_BANK_SIZE)] = selected4KBBank + bankCounter;
 	}
-	[self rebuildCHRROMPointers];
 }
 
 - (void)_switch8KBCHRROMToBank:(uint_fast32_t)index
@@ -49,7 +53,6 @@
 		
 		_chrromBankIndices[bankCounter] = selected8KBBank + bankCounter;
 	}
-	[self rebuildCHRROMPointers];
 }
 
 - (void)_switch16KBPRGROMBank:(uint_fast32_t)bank toBank:(uint_fast32_t)index
@@ -62,7 +65,6 @@
 		
 		_prgromBankIndices[bankCounter + (bank * BANK_SIZE_16KB / PRGROM_BANK_SIZE)] = selected16KBBank + bankCounter;
 	}
-	[self rebuildPRGROMPointers];
 }
 
 - (void)_switch32KBPRGROMToBank:(uint_fast32_t)index
@@ -75,7 +77,6 @@
 		
 		_prgromBankIndices[bankCounter] = selected32KBBank + bankCounter;
 	}
-	[self rebuildPRGROMPointers];
 }
 
 - (void)_setMMC1CHRROMBank0Register:(uint8_t)byte
@@ -102,6 +103,8 @@
 	}
 	
 	_mmc1CHRROMBank0Register = byte;
+	
+	[self rebuildCHRROMPointers];
 }
 
 - (void)_setMMC1CHRROMBank1Register:(uint8_t)byte
@@ -116,6 +119,8 @@
 	}
 	
 	_mmc1CHRROMBank1Register = byte;
+	
+	[self rebuildCHRROMPointers];
 }
 
 - (void)_setMMC1PRGROMBankRegister:(uint8_t)byte
@@ -128,7 +133,7 @@
 		if (_mmc1SwitchFirst16KBBank) {
 			
 			[self _switch16KBPRGROMBank:0 toBank:byte & 0xF];
-			[self _switch16KBPRGROMBank:1 toBank:((_iNesFlags->prgromSize - BANK_SIZE_16KB) / BANK_SIZE_16KB)];
+			[self _switch16KBPRGROMBank:1 toBank:(([self _outerPRGROMBankSize] - BANK_SIZE_16KB) / BANK_SIZE_16KB)];
 
 		}
 		else {
@@ -262,8 +267,11 @@
 	_mmc1Switch4KBCHRROMBanks = NO;
 	
 	[self _switch16KBPRGROMBank:0 toBank:0];
-	[self _switch16KBPRGROMBank:1 toBank:((_iNesFlags->prgromSize - BANK_SIZE_16KB) / BANK_SIZE_16KB)];
+	[self _switch16KBPRGROMBank:1 toBank:(([self _outerPRGROMBankSize] - BANK_SIZE_16KB) / BANK_SIZE_16KB)];
+	[self rebuildPRGROMPointers];
+	
 	[self _switch8KBCHRROMToBank:0];
+	[self rebuildCHRROMPointers];
 }
 
 @end

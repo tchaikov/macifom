@@ -201,10 +201,11 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_oddFrame = NO;
 	_NMIOnVBlank = NO;
 	_nameAndAttributeTablesMask = 0;	
-	// _chrRAMWriteHistory = 0;
 	_usingCHRRAM = NO;
 	_8x16Sprites = NO;
 	_frameEnded = NO;
+	
+	_notifyOnA12RisingEdge = NO;
 	
 	// FIXME: I'm not sure what the default for these should actually be
 	_spriteTileCacheIndex = 0;
@@ -1041,6 +1042,13 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	
 	// NSLog(@"Rendering %@, background is %@.",(_oddFrame ? @"odd frame" : @"even frame"),(_backgroundEnabled ? @"enabled" : @"disabled"));
 	return (remainingCycles / 3) + ((remainingCycles % 3) == 0 ? 0 : 1); 
+}
+
+- (void)observeA12RiseForTarget:(id)target andSelector:(SEL)selector
+{
+	_notifyOnA12RisingEdge = YES;
+	_scanlineCountingTarget = target;
+	_scanlineCountingSelector = selector;
 }
 
 @end

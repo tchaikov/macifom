@@ -38,4 +38,6 @@
 	uint8_t _bankRegisterToUpdate;
 }
 
+- (void)ppuA12EdgeRose;
+
 @end

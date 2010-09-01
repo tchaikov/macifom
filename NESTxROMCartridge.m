@@ -257,6 +257,13 @@
 	
 	[self _updateCHRROMBanks];
 	[self rebuildCHRROMPointers];
+	
+	[_ppu observeA12RiseForTarget:self andSelector:@selector(ppuA12EdgeRose)];
+}
+
+- (void)ppuA12EdgeRose
+{
+	
 }
 
 @end

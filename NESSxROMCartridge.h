@@ -24,7 +24,7 @@
 #import <Cocoa/Cocoa.h>
 #import "NESCartridge.h"
 
-@interface NESSNROMCartridge : NESCartridge {
+@interface NESSxROMCartridge : NESCartridge {
 
 	BOOL _mmc1Switch16KBPRGROMBanks;
 	BOOL _mmc1SwitchFirst16KBBank;
@@ -37,5 +37,9 @@
 	uint_fast8_t _serialWriteCounter;
 	uint8_t _register;
 }
+
+- (void)_setMMC1PRGROMBankRegister:(uint8_t)byte;
+- (void)_setMMC1CHRROMBank1Register:(uint8_t)byte;
+- (void)_setMMC1CHRROMBank0Register:(uint8_t)byte;
 
 @end

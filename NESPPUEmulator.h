@@ -97,6 +97,10 @@ typedef enum {
 	BOOL _usingCHRRAM;
 	BOOL _frameEnded;
 	BOOL _shortenPrimingScanline;
+	
+	id _scanlineCountingTarget;
+	SEL _scanlineCountingSelector;
+	BOOL _notifyOnA12RisingEdge;
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
@@ -126,5 +130,6 @@ typedef enum {
 - (void)changeMirroringTypeTo:(NESMirroringType)type onCycle:(uint_fast32_t)cycle;
 - (uint_fast32_t)cpuCyclesUntilVblank;
 - (uint_fast32_t)cpuCyclesUntilPrimingScanline;
+- (void)observeA12RiseForTarget:(id)target andSelector:(SEL)selector;
 
 @end
