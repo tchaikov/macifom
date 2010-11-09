@@ -53,6 +53,7 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 @interface NES6502Interpreter : NSObject {
 
 	CPURegisters *_cpuRegisters;
+	uint_fast32_t _nextIRQ;
 	
 	uint8_t *_zeroPage;
 	uint8_t *_stack;
@@ -62,6 +63,7 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 	uint8_t *_wram;
 	
 	uint16_t breakPoint;
+	BOOL _irq;
 	BOOL _encounteredUnsupportedOpcode;
 	BOOL _encounteredBreakpoint;
 	
@@ -95,9 +97,10 @@ typedef void (*OperationMethodPointer)(id, SEL, uint8_t);
 - (void)writeByte:(uint8_t)byte toCPUAddress:(uint16_t)address;
 - (uint_fast32_t)interpretOpcode;
 - (void)setProgramCounter:(uint16_t)jump;
-- (void)_performNonMaskableInterrupt:(uint8_t)opcode;
+- (void)_performNonMaskableInterrupt;
 - (void)setData:(uint_fast32_t)data forController:(int)index;
 - (void)stealCycles:(uint_fast32_t)cycles;
+- (void)setNextIRQ:(uint_fast32_t)cycles;
 
 @property(nonatomic) BOOL encounteredBreakpoint;
 

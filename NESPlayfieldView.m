@@ -45,7 +45,7 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	_fullScreenRect.size.height =_windowedRect.size.height = 240;
 	_fullScreenRect.origin.y = 0;
 	_fullScreenRect.origin.x = 32;
-	_scale = 1;
+	_scale = 2;
 	screenRect = &_windowedRect;
 		
 	// There are reports that this can return fnf on Leopard, investigating...
@@ -57,6 +57,7 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	else _colorSpace = CGColorSpaceCreateDeviceRGB();
 		
 	[[self window] useOptimizedDrawing:YES]; // Use optimized drawing in window as there are no overlapping subviews
+	[[self window] setPreferredBackingLocation:NSWindowBackingLocationVideoMemory]; // Use QuartzGL to scale the video
 	
     return self;
 }
@@ -92,20 +93,18 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 
 - (void)scaleForFullScreenDrawing
 {
-	_scale = 2;
 	screenRect = &_fullScreenRect;
 	
 	// Set the preferred backing store to the card to get on the Quartz GL path
 	[[self window] setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
+	[[self window] setBackingType:NSBackingStoreBuffered]; // For double-buffering
+	[[self window] setBackgroundColor:[NSColor blackColor]]; // Default background for the window appears to be white
 	
-	// Default background for the window appears to be white
-	[[self window] setBackgroundColor:[NSColor blackColor]];
 	CGDisplayHideCursor(kCGNullDirectDisplay);
 }
 
 - (void)scaleForWindowedDrawing
 {
-	_scale = 1;
 	screenRect = &_windowedRect;
 	
 	[[self window] makeFirstResponder:self];

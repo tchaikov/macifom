@@ -68,5 +68,6 @@
 - (void)configureInitialPPUState;
 - (void)setInitialROMPointers;
 - (BOOL)writeWRAMToDisk;
+- (void)servicedInterruptOnCycle:(uint_fast32_t)cycle;
 
 @end

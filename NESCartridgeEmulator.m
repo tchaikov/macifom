@@ -65,13 +65,14 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 
 @implementation NESCartridgeEmulator
 
-- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator
+- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator andCPU:(NES6502Interpreter *)cpuEmulator
 {
 	[super init];
 	
 	_cartridge = nil;
 	_romFileDidLoad = NO;
 	_ppu = ppuEmulator;
+	_cpu = cpuEmulator;
 	
 	return self;
 }
@@ -110,7 +111,7 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			break;
 		case 4:
 			// TxROM
-			_cartridge = [[NESTxROMCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+			_cartridge = [[NESTxROMCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu cpu:_cpu andiNesFlags:_lastHeader];
 			break;
 		case 7:
 			// AxROM

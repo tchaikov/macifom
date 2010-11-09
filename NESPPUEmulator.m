@@ -24,13 +24,6 @@
 #import "NESPPUEmulator.h"
 #import "NESCartridge.h"
 
-#define CYCLES_OF_VBLANK 6820
-#define CYCLES_BEFORE_RENDERING_SHORT 7160
-#define CYCLES_BEFORE_RENDERING_NORMAL 7161
-#define CYCLES_IN_SCANLINE_SHORT 340
-#define CYCLES_IN_SCANLINE_NORMAL 341
-#define CYCLES_IN_FRAME_SHORT 89341
-#define CYCLES_IN_FRAME_NORMAL 89342
 #define NMI_DELAY 6 // The earliest NMI can occur is two CPU cycles after it is triggered - see http://nesdev.parodius.com/bbs/viewtopic.php?t=1892
 // FIXME: This delay isn't correct, per Blargg:
 /* Based on recent testing, the earliest the NMI can occur is two CPU clocks after the VBL flag is set. 
@@ -205,7 +198,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_8x16Sprites = NO;
 	_frameEnded = NO;
 	
-	_notifyOnA12RisingEdge = NO;
+	if (_stateObservingInvocation != nil) [_stateObservingInvocation release];
+	_stateObservingInvocation = nil;
 	
 	// FIXME: I'm not sure what the default for these should actually be
 	_spriteTileCacheIndex = 0;
@@ -236,6 +230,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_spritePalette = (_palettes + 0x10);
 	_nameAndAttributeTables = (uint8_t *)malloc(sizeof(uint8_t)*2048);
 	_tileCache = NULL;
+	_observerState = (PPUState *)malloc(sizeof(PPUState));
+	_stateObservingInvocation = nil;
 	
 	[self resetPPUstatus];
 	
@@ -342,6 +338,16 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 			_chrramWriteHistory[bankIndex] = NO;
 		}
 	}
+}
+
+- (void)_notifyStateObserver
+{
+	_observerState->controlRegister1 = _ppuControlRegister1;
+	_observerState->controlRegister2 = _ppuControlRegister2;
+	_observerState->statusRegister = _ppuStatusRegister;
+	_observerState->cycle = _cyclesSinceVINT;
+
+	[_stateObservingInvocation invoke];
 }
 
 - (void)_preloadTilesForScanline
@@ -674,6 +680,7 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_lastCPUCycle = 0;
 	_lastCycleOverage = _cyclesSinceVINT;
 	// NSLog(@"PPU will start on cycle %d this frame.",_lastCycleOverage);
+	[self _notifyStateObserver];
 }
 
 - (BOOL)triggeredNMI {
@@ -838,6 +845,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_backgroundTileCacheIndex = (_ppuControlRegister1 & 0x10) ? BANK_SIZE_4KB / CHRROM_BANK_SIZE : 0;
 	_8x16Sprites = (_ppuControlRegister1 & 0x20) ? YES : NO;
 	_NMIOnVBlank = (_ppuControlRegister1 & 0x80) ? YES : NO;
+	
+	if (_stateObservingInvocation != nil) [self _notifyStateObserver];
 }
 
 // 0x2001
@@ -855,6 +864,8 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	_backgroundEnabled = _ppuControlRegister2 & 0x8 ? YES : NO;
 	_spritesEnabled = _ppuControlRegister2 & 0x10 ? YES : NO;
 	_colorIntensity = _ppuControlRegister2 & 0xE0; // Top three bits are color intensity
+	
+	if (_stateObservingInvocation != nil) [self _notifyStateObserver];
 }
 
 // 2005
@@ -1030,6 +1041,12 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	return (remainingCycles / 3) + ((remainingCycles % 3) == 0 ? 0 : 1); 
 }
 
+- (BOOL)shortenPrimingScanline
+{
+	// NOTE: This may be inacurrate if called before the end of VBLANK as rendering could be disabled prior to the priming scanline.
+	return (_backgroundEnabled || _spritesEnabled) && _oddFrame;
+}
+
 /* cpuCyclesUntilVblank
  * NOTE: This should only be called immediately after VBLANK to ensure toggling of background and sprite rendering is accounted for!
  */
@@ -1044,11 +1061,18 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 	return (remainingCycles / 3) + ((remainingCycles % 3) == 0 ? 0 : 1); 
 }
 
-- (void)observeA12RiseForTarget:(id)target andSelector:(SEL)selector
+- (void)observeStateForTarget:(id)target andSelector:(SEL)selector
 {
-	_notifyOnA12RisingEdge = YES;
-	_scanlineCountingTarget = target;
-	_scanlineCountingSelector = selector;
+	NSMethodSignature *signature;
+		
+	if (target != nil) {
+		
+		signature = [target methodSignatureForSelector:selector];
+		_stateObservingInvocation = [[NSInvocation invocationWithMethodSignature:signature] retain];
+		[_stateObservingInvocation setTarget:target];
+		[_stateObservingInvocation setSelector:selector];
+		[_stateObservingInvocation setArgument:&_observerState atIndex:2];
+	}
 }
 
 @end

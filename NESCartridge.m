@@ -184,4 +184,9 @@
 	return NO;
 }
 
+- (void)servicedInterrupt
+{
+	
+}
+
 @end

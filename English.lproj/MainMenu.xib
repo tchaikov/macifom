@@ -3,32 +3,27 @@
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
 		<string key="IBDocument.SystemVersion">10F569</string>
-		<string key="IBDocument.InterfaceBuilderVersion">788</string>
+		<string key="IBDocument.InterfaceBuilderVersion">804</string>
 		<string key="IBDocument.AppKitVersion">1038.29</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">788</string>
+			<string key="NS.object.0">804</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="29"/>
-			<integer value="457"/>
 			<integer value="371"/>
+			<integer value="29"/>
 			<integer value="749"/>
+			<integer value="457"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 		</object>
 		<object class="NSMutableDictionary" key="IBDocument.Metadata">
-			<bool key="EncodedWithXMLCoder">YES</bool>
-			<object class="NSArray" key="dict.sortedKeys" id="0">
-				<bool key="EncodedWithXMLCoder">YES</bool>
-			</object>
-			<object class="NSMutableArray" key="dict.values">
-				<bool key="EncodedWithXMLCoder">YES</bool>
-			</object>
+			<string key="NS.key.0">PluginDependencyRecalculationVersion</string>
+			<integer value="1" key="NS.object.0"/>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.RootObjects" id="1048">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -457,13 +452,13 @@
 			<object class="NSWindowTemplate" id="972006081">
 				<int key="NSWindowStyleMask">7</int>
 				<int key="NSWindowBacking">2</int>
-				<string key="NSWindowRect">{{128, 512}, {256, 240}}</string>
+				<string key="NSWindowRect">{{75, 210}, {512, 480}}</string>
 				<int key="NSWTFlags">1946158080</int>
-				<string key="NSWindowTitle">Playfield</string>
+				<string key="NSWindowTitle">Macifom</string>
 				<string key="NSWindowClass">NSWindow</string>
 				<nil key="NSViewClass"/>
-				<string key="NSWindowContentMaxSize">{256, 240}</string>
-				<string key="NSWindowContentMinSize">{256, 240}</string>
+				<string key="NSWindowContentMaxSize">{512, 480}</string>
+				<string key="NSWindowContentMinSize">{512, 480}</string>
 				<object class="NSView" key="NSWindowView" id="439893737">
 					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
@@ -472,17 +467,17 @@
 						<object class="NSCustomView" id="1007798020">
 							<reference key="NSNextResponder" ref="439893737"/>
 							<int key="NSvFlags">268</int>
-							<string key="NSFrameSize">{256, 240}</string>
+							<string key="NSFrameSize">{512, 480}</string>
 							<reference key="NSSuperview" ref="439893737"/>
 							<string key="NSClassName">NESPlayfieldView</string>
 						</object>
 					</object>
-					<string key="NSFrameSize">{256, 240}</string>
+					<string key="NSFrameSize">{512, 480}</string>
 					<reference key="NSSuperview"/>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {1280, 832}}</string>
-				<string key="NSMinSize">{256, 262}</string>
-				<string key="NSMaxSize">{256, 262}</string>
+				<string key="NSScreenRect">{{0, 0}, {1280, 778}}</string>
+				<string key="NSMinSize">{512, 502}</string>
+				<string key="NSMaxSize">{512, 502}</string>
 			</object>
 			<object class="NSCustomObject" id="755631768">
 				<string key="NSClassName">NSFontManager</string>
@@ -3039,7 +3034,9 @@
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<object class="IBObjectRecord">
 						<int key="objectID">0</int>
-						<reference key="object" ref="0"/>
+						<object class="NSArray" key="object" id="0">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+						</object>
 						<reference key="children" ref="1048"/>
 						<nil key="parent"/>
 					</object>
@@ -4861,20 +4858,20 @@
 					<string>{{145, 244}, {202, 23}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{475, 832}, {234, 43}}</string>
-					<string>{{148, 516}, {256, 240}}</string>
+					<string>{{113, 182}, {512, 480}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{148, 516}, {256, 240}}</string>
+					<string>{{113, 182}, {512, 480}}</string>
 					<integer value="1"/>
 					<string>{{33, 99}, {480, 360}}</string>
 					<integer value="1"/>
 					<integer value="1"/>
-					<string>{256, 240}</string>
-					<string>{256, 240}</string>
+					<string>{512, 480}</string>
+					<string>{512, 480}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{126, 94}, {659, 451}}</string>
+					<string>{{31, 94}, {659, 451}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{126, 94}, {659, 451}}</string>
+					<string>{{31, 94}, {659, 451}}</string>
 					<boolean value="NO"/>
 					<boolean value="YES"/>
 					<string>{659, 451}</string>

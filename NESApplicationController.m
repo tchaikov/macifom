@@ -149,9 +149,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	boolean_t exactMatch;
 	
 	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
-	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator];
 	apuEmulator = [[NESAPUEmulator alloc] init];
 	cpuInterpreter = [[NES6502Interpreter alloc] initWithPPU:ppuEmulator andAPU:apuEmulator];
+	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator andCPU:cpuInterpreter];
 	[apuEmulator setDMCReadObject:cpuInterpreter];
 	_currentInstruction = nil;
 	instructions = nil;
@@ -250,13 +250,13 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
 	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
 	
-	if ([ppuEmulator triggeredNMI]) [cpuInterpreter _performNonMaskableInterrupt:0]; // Invoke NMI if triggered by the PPU
+	if ([ppuEmulator triggeredNMI]) [cpuInterpreter _performNonMaskableInterrupt]; // Invoke NMI if triggered by the PPU
 	[cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycle:[ppuEmulator cpuCyclesUntilVblank]]; // Run CPU until the beginning of next VBLANK
 	lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
 	[ppuEmulator runPPUUntilCPUCycle:actualCPUCyclesRun];
+	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame and update cartridge scanline counters (must occur before CPU cycle counter is reset)
 	[cpuInterpreter resetCPUCycleCounter]; // Reset CPU cycle counter for next frame
-	[ppuEmulator resetCPUCycleCounter]; // Reset PPU's CPU cycle counter for next frame
 	[playfieldView setNeedsDisplay:YES]; // Redraw the screen
 }
 
@@ -375,7 +375,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
 		[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
 		
-		if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt:0]; // Invoke NMI if triggered by the PPU
+		if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt]; // Invoke NMI if triggered by the PPU
 		actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
 		
 		if (![cpuInterpreter encounteredBreakpoint]) {
@@ -387,8 +387,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		if (![cpuInterpreter encounteredBreakpoint]) {
 			
 			[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
-			[cpuInterpreter resetCPUCycleCounter];
 			[ppuEmulator resetCPUCycleCounter];
+			[cpuInterpreter resetCPUCycleCounter];
 		}
 		
 		[apuEmulator clearBuffer];
@@ -457,7 +457,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
 	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
 	
-	if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt:0]; // Invoke NMI if triggered by the PPU
+	if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt]; // Invoke NMI if triggered by the PPU
 	actualCPUCyclesRun = [cpuInterpreter executeUntilCycleWithBreak:[ppuEmulator cpuCyclesUntilPrimingScanline]]; // Run CPU until just past VBLANK
 	
 	if (![cpuInterpreter encounteredBreakpoint]) {
@@ -469,8 +469,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	if (![cpuInterpreter encounteredBreakpoint]) {
 		
 		[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
-		[cpuInterpreter resetCPUCycleCounter];
 		[ppuEmulator resetCPUCycleCounter];
+		[cpuInterpreter resetCPUCycleCounter];
 	}
 	
 	[apuEmulator clearBuffer];

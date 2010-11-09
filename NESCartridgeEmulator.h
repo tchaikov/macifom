@@ -25,6 +25,7 @@
 
 @class NESPPUEmulator;
 @class NESCartridge;
+@class NES6502Interpreter;
 
 typedef struct {
 	
@@ -51,13 +52,14 @@ typedef struct {
 	NSString *_lastROMPath;
 	NESCartridge *_cartridge;
 	NESPPUEmulator *_ppu;
+	NES6502Interpreter *_cpu;
 	iNESFlags *_lastHeader;
 	uint8_t *_prgrom;
 	uint8_t *_chrrom;
 	uint8_t *_trainer;
 }
 
-- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator;
+- (id)initWithPPU:(NESPPUEmulator *)ppuEmulator andCPU:(NES6502Interpreter *)cpuEmulator;
 - (NSError *)loadROMFileAtPath:(NSString *)path;
 - (NESCartridge *)cartridge;
 - (NSString *)mapperDescription;

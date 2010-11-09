@@ -23,6 +23,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+#define CYCLES_OF_VBLANK 6820
+#define CYCLES_BEFORE_RENDERING_SHORT 7160
+#define CYCLES_BEFORE_RENDERING_NORMAL 7161
+#define CYCLES_IN_SCANLINE_SHORT 340
+#define CYCLES_IN_SCANLINE_NORMAL 341
+#define CYCLES_IN_FRAME_SHORT 89341
+#define CYCLES_IN_FRAME_NORMAL 89342
+
 typedef uint8_t (*RegisterReadMethod)(id, SEL, uint_fast32_t);
 typedef void (*RegisterWriteMethod)(id, SEL, uint8_t, uint_fast32_t);
 typedef uint16_t (*NametableMirroringMethod)(uint16_t);
@@ -34,6 +42,15 @@ typedef enum {
 	NESSingleScreenLowerMirroring = 2,
 	NESSingleScreenUpperMirroring = 3
 } NESMirroringType;
+
+typedef struct {
+	
+	uint8_t controlRegister1;
+	uint8_t controlRegister2;
+	uint8_t statusRegister;
+	uint_fast32_t cycle;
+	
+} PPUState;
 
 @interface NESPPUEmulator : NSObject {
 
@@ -98,9 +115,8 @@ typedef enum {
 	BOOL _frameEnded;
 	BOOL _shortenPrimingScanline;
 	
-	id _scanlineCountingTarget;
-	SEL _scanlineCountingSelector;
-	BOOL _notifyOnA12RisingEdge;
+	NSInvocation *_stateObservingInvocation;
+	PPUState *_observerState;
 }
 
 - (id)initWithBuffer:(uint_fast32_t *)buffer;
@@ -130,6 +146,7 @@ typedef enum {
 - (void)changeMirroringTypeTo:(NESMirroringType)type onCycle:(uint_fast32_t)cycle;
 - (uint_fast32_t)cpuCyclesUntilVblank;
 - (uint_fast32_t)cpuCyclesUntilPrimingScanline;
-- (void)observeA12RiseForTarget:(id)target andSelector:(SEL)selector;
+- (BOOL)shortenPrimingScanline;
+- (void)observeStateForTarget:(id)target andSelector:(SEL)selector;
 
 @end

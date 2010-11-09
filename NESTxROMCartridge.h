@@ -23,21 +23,32 @@
 
 #import <Cocoa/Cocoa.h>
 #import "NESCartridge.h"
+#import "NESPPUEmulator.h"
+
+@class NES6502Interpreter;
 
 @interface NESTxROMCartridge : NESCartridge {
 
 	BOOL _mmc3IRQEnabled;
+	BOOL _mmc3ReloadIRQCounter;
+	BOOL _mmc3A12NormalOscillation;
 	BOOL _mmc3HighPRGROMSwappable;
 	BOOL _mmc3LowCHRROMIn1kbBanks;
 	BOOL _mmc3WRAMWriteDisable;
 	BOOL _mmc3WRAMChipEnable;
 	
+	uint8_t _prgromIndexMask;
 	uint8_t _mmc3BankRegisters[8];
 	uint8_t _mmc3IRQCounter;
 	uint8_t _mmc3IRQCounterReloadValue;
 	uint8_t _bankRegisterToUpdate;
+	
+	uint_fast32_t _lastPPUCycle;
+	
+	NES6502Interpreter *_cpu;
 }
 
-- (void)ppuA12EdgeRose;
+- (id)initWithPrgrom:(uint8_t *)prgrom chrrom:(uint8_t *)chrrom ppu:(NESPPUEmulator *)ppu cpu:(NES6502Interpreter *)cpu andiNesFlags:(iNESFlags *)flags;
+- (void)ppuStateChanged:(PPUState *)state;
 
 @end

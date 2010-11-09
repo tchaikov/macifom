@@ -26,6 +26,8 @@
 #import "NESPPUEmulator.h"
 #import "NESAPUEmulator.h"
 
+#define NO_PENDING_IRQ 0xffffffff
+
 static void _ADC(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	uint8_t oldAccumulator = cpuRegisters->accumulator;
@@ -271,6 +273,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (void)_clearStatus
 {
 	_cpuRegisters->cycle = 0;
+	_nextIRQ = NO_PENDING_IRQ;
 	breakPoint = 0;
 	_encounteredUnsupportedOpcode = NO;
 	_encounteredBreakpoint = NO;
@@ -906,19 +909,24 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (void)_pushProcessorStatusToStack:(uint8_t)opcode
 {
 	uint8_t processorStatusByte = (1 << 5);
-	// The fake break flag value pushed is 1 for PHP/BRK and 0 for IRQ/NMI
-	uint8_t breakFlag = ((opcode == 0x00 || opcode == 0x08) ? 1 : 0); // http://www.6502.org/tutorials/register_preservation.html
+	// The fake break flag value pushed is 1 for PHP/BRK and 0 for IRQ/NMI:
+	// http://www.6502.org/tutorials/register_preservation.html
 	// See also http://nesdev.parodius.com/the%20'B'%20flag%20&%20BRK%20instruction.txt
+	
+	if (opcode == 0x08) {
+		
+		_cpuRegisters->statusBreak = 1; // If this is invoked as PHP directly, set the break flag
+		_cpuRegisters->cycle += 3; // and add three cycles
+	}
+	
 	processorStatusByte |= (_cpuRegisters->statusNegative << 7);
 	processorStatusByte |= (_cpuRegisters->statusOverflow << 6);
-	processorStatusByte |= (breakFlag << 4);
+	processorStatusByte |= (_cpuRegisters->statusBreak << 4);
 	processorStatusByte |= (_cpuRegisters->statusDecimal << 3);
 	processorStatusByte |= (_cpuRegisters->statusIRQDisable << 2);
 	processorStatusByte |= (_cpuRegisters->statusZero << 1);
 	processorStatusByte |= _cpuRegisters->statusCarry;
 	_stack[_cpuRegisters->stackPointer--] = processorStatusByte;
-	
-	if (opcode == 0x08) _cpuRegisters->cycle += 3; // Only add cycles if this is invoked as PHP
 }
 
 - (void)_popProcessorStatusFromStack:(uint8_t)opcode
@@ -958,7 +966,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_cpuRegisters->cycle += 7;
 }
 
-- (void)_performInterrupt:(uint8_t)opcode
+- (void)_performInterrupt
 {
 	_cpuRegisters->statusBreak = 0; // Interrupt clears the break flag http://www.6502.org/tutorials/register_preservation.html
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
@@ -970,7 +978,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_cpuRegisters->cycle += 7;
 }
 
-- (void)_performNonMaskableInterrupt:(uint8_t)opcode
+- (void)_performNonMaskableInterrupt
 {
 	_cpuRegisters->statusBreak = 0; // Break is not set for NMI http://www.6502.org/tutorials/register_preservation.html
 	_stack[_cpuRegisters->stackPointer--] = (_cpuRegisters->programCounter >> 8); // store program counter high byte on stack
@@ -1439,11 +1447,20 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	
 	while (_cpuRegisters->cycle < cycle) {
 			
-		if (([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle] * 4 + _cpuRegisters->cycle) >= cycle) {
+		if ([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle]) {
+		// Believe it or not, the optimization below caused drawing issues in Maniac Mansion
+		// if (([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle] * 4 + _cpuRegisters->cycle) >= cycle) {
 			
 			[apu runAPUUntilCPUCycle:_cpuRegisters->cycle];
 		}
+		else if ((_cpuRegisters->cycle >= _nextIRQ) && !_cpuRegisters->statusIRQDisable) {
+		
+			[self _performInterrupt];
+			[cartridge servicedInterruptOnCycle:_cpuRegisters->cycle];
+			// NSLog(@"Performing interrupt on CPU cycle %d.",_cpuRegisters->cycle);
+		}
 		else {
+			
 			opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
 			_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
 		}
@@ -1453,6 +1470,20 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 }
 
 - (void)resetCPUCycleCounter {
+	
+	if (_nextIRQ != NO_PENDING_IRQ) {
+	
+		if (_nextIRQ < _cpuRegisters->cycle) {
+		
+			// If there is a pending interrupt, set it for the beginning next frame
+			_nextIRQ = 0;
+		}
+		else {
+		
+			// If the interrupt has yet to occur, set for the next frame
+			_nextIRQ -= _cpuRegisters->cycle;
+		}
+	}
 	
 	_cpuRegisters->cycle = 0;
 }
@@ -1506,6 +1537,16 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	_cpuRegisters->cycle += cycles;
 	
 	// if (_cpuRegisters->cycle > 29780) NSLog(@"Cycle stealing pushed CPU clock beyond 29780!");
+}
+
+- (void)setNextIRQ:(uint_fast32_t)cycles
+{
+	// FIXME: This broke Jurassic Park even more
+	// if (_nextIRQ > _cpuRegisters->cycle || _cpuRegisters->statusIRQDisable) {
+		
+		if (cycles != NO_PENDING_IRQ) _nextIRQ = _cpuRegisters->cycle + cycles;
+		else _nextIRQ = NO_PENDING_IRQ;
+	// }
 }
 
 @end
