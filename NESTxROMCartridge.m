@@ -206,14 +206,14 @@
 		}
 	
 		// Check to see if the counter reached zero
-		if (a12Raises >= _mmc3IRQCounter) {
+		if (a12Raises > _mmc3IRQCounter) {
 		
-			_mmc3IRQCounter = _mmc3IRQCounterReloadValue - (a12Raises - _mmc3IRQCounter);
+			_mmc3IRQCounter = _mmc3IRQCounterReloadValue - ((a12Raises - 1) - _mmc3IRQCounter);
 			// if (startingCounter) NSLog(@"MMC3 IRQ occurred during catch-up.");
 		}
 		else _mmc3IRQCounter -= a12Raises;
 	}
-	// else NSLog(@"MMC3 IRQ catch-up routine aborted as A12 oscillation is atypical.");
+	// else  NSLog(@"MMC3 IRQ catch-up routine aborted as A12 oscillation is atypical.");
 	// if (_mmc3IRQCounter < 0) NSLog(@"MMC3 IRQ Counter less than zero!");
 	// Set the last PPU cycle
 	// NSLog(@"MMC3 IRQ counter value is %d.",_mmc3IRQCounter);
@@ -297,6 +297,8 @@
 - (void)ppuStateChanged:(PPUState *)state
 {
 	BOOL newA12OscillationState;
+	
+	// NSLog(@"Notified of new PPU state.");
 	
 	// 1. Catch-up MMC3 Scanline Counter
 	[self _catchUpScanlineCounter:state->cycle];

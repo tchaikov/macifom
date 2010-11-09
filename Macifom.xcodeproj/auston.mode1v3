@@ -285,7 +285,7 @@
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 53}, {233, 611}}</string>
+							<string>{{0, 0}, {233, 611}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -334,7 +334,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>B947B8DB1289C2D30091241C</string>
+										<string>B9505A651289F0E7007118F9</string>
 										<key>history</key>
 										<array>
 											<string>B987354C0F0F178D00224CA8</string>
@@ -384,8 +384,6 @@
 											<string>B9D168F412888C2500B7250E</string>
 											<string>B9D168F612888C2500B7250E</string>
 											<string>B9D168F712888C2500B7250E</string>
-											<string>B9CB225E1288F4A2007D35B5</string>
-											<string>B9CB225F1288F4A2007D35B5</string>
 											<string>B9CB22601288F4A2007D35B5</string>
 											<string>B9CB22611288F4A2007D35B5</string>
 											<string>B947B88F128930810091241C</string>
@@ -394,7 +392,9 @@
 											<string>B947B8BE1289B8530091241C</string>
 											<string>B947B8CE1289BE620091241C</string>
 											<string>B947B8CF1289BE620091241C</string>
-											<string>B947B8D01289BE620091241C</string>
+											<string>B947B8ED1289DCC60091241C</string>
+											<string>B9505A5E1289F0A0007118F9</string>
+											<string>B9505A5F1289F0A0007118F9</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -452,9 +452,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>B947B894128930810091241C</string>
+				<string>B9505A611289F0A0007118F9</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>B947B895128930810091241C</string>
+				<string>B9505A621289F0A0007118F9</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -601,12 +601,12 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>B947B897128930810091241C</string>
-		<string>B947B898128930810091241C</string>
-		<string>1CD10A99069EF8BA00B06720</string>
+		<string>B9505A631289F0A0007118F9</string>
+		<string>B9505A641289F0A0007118F9</string>
 		<string>1C78EAAD065D492600B07095</string>
-		<string>/Users/auston/Projects/Software/macifom_trunk/Macifom.xcodeproj</string>
+		<string>1CD10A99069EF8BA00B06720</string>
 		<string>B98734FC0F0F108E00224CA8</string>
+		<string>/Users/auston/Projects/Software/macifom_trunk/Macifom.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
 	<string>45 108 1174 670 0 0 1280 778 </string>
@@ -625,14 +625,12 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>NESTxROMCartridge.m</string>
+								<string></string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -688,7 +686,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>B98734FC0F0F108E00224CA8</string>
-				<string>B947B873128923750091241C</string>
+				<string>B9505A4C1289EF7B007118F9</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
@@ -699,7 +697,7 @@
 			<key>WindowToolGUID</key>
 			<string>B98734FC0F0F108E00224CA8</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -808,13 +806,13 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1CD10A99069EF8BA00B06720</string>
-				<string>B947B874128923750091241C</string>
+				<string>B9505A4D1289EF7B007118F9</string>
 				<string>1C162984064C10D400B95A72</string>
-				<string>B947B875128923750091241C</string>
-				<string>B947B876128923750091241C</string>
-				<string>B947B877128923750091241C</string>
-				<string>B947B878128923750091241C</string>
-				<string>B947B879128923750091241C</string>
+				<string>B9505A4E1289EF7B007118F9</string>
+				<string>B9505A4F1289EF7B007118F9</string>
+				<string>B9505A501289EF7B007118F9</string>
+				<string>B9505A511289EF7B007118F9</string>
+				<string>B9505A521289EF7B007118F9</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.debugV3</string>
@@ -970,7 +968,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1C78EAAD065D492600B07095</string>
-				<string>B947B87A128923750091241C</string>
+				<string>B9505A531289EF7B007118F9</string>
 				<string>1C78EAAC065D492600B07095</string>
 			</array>
 			<key>ToolbarConfiguration</key>
@@ -980,7 +978,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C78EAAD065D492600B07095</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>

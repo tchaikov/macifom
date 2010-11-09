@@ -184,7 +184,7 @@
 	return NO;
 }
 
-- (void)servicedInterrupt
+- (void)servicedInterruptOnCycle:(uint_fast32_t)cycle;
 {
 	
 }
