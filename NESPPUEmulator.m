@@ -1065,6 +1065,12 @@ static uint16_t applySingleScreenUpperMirroring(uint16_t vramAddress) {
 {
 	NSMethodSignature *signature;
 		
+	if (_stateObservingInvocation != nil) {
+		
+		[_stateObservingInvocation release];
+		_stateObservingInvocation = nil;
+	}
+	
 	if (target != nil) {
 		
 		signature = [target methodSignatureForSelector:selector];

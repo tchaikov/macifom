@@ -40,7 +40,7 @@
 - (void)_switch1KBCHRROMBank:(uint_fast32_t)bank toBank:(uint_fast32_t)index
 {
 	uint_fast32_t bankCounter;
-	uint_fast32_t selected1KBBank = index * BANK_SIZE_1KB / CHRROM_BANK_SIZE;
+	uint_fast32_t selected1KBBank = (index & _chrromIndexMask) * BANK_SIZE_1KB / CHRROM_BANK_SIZE;
 	
 	// Rebuild CHRROM indices
 	for (bankCounter = 0; bankCounter < (BANK_SIZE_1KB / CHRROM_BANK_SIZE); bankCounter++) {
@@ -52,12 +52,12 @@
 - (void)_switch2KBCHRROMBank:(uint_fast32_t)bank toBank:(uint_fast32_t)index
 {
 	uint_fast32_t bankCounter;
-	uint_fast32_t selected2KBBank = index * BANK_SIZE_1KB / CHRROM_BANK_SIZE;
+	uint_fast32_t selected2KBBank = (index & _chrromIndexMask) * BANK_SIZE_1KB / CHRROM_BANK_SIZE;
 	
 	// Rebuild CHRROM indices
 	for (bankCounter = 0; bankCounter < (BANK_SIZE_2KB / CHRROM_BANK_SIZE); bankCounter++) {
 		
-		_chrromBankIndices[bankCounter + (bank * BANK_SIZE_2KB / CHRROM_BANK_SIZE)] = selected2KBBank + bankCounter;
+		_chrromBankIndices[bankCounter + (bank * BANK_SIZE_2KB / CHRROM_BANK_SIZE)] = (selected2KBBank + bankCounter) % _chrromIndexMask;
 	}
 }
 
@@ -473,6 +473,7 @@
 	_mmc3A12NormalOscillation = NO;
 	_bankRegisterToUpdate = 0;
 	_prgromIndexMask = (_iNesFlags->prgromSize / BANK_SIZE_8KB) - 1;
+	_chrromIndexMask = (_iNesFlags->chrromSize / BANK_SIZE_1KB) - 1;
 		
 	for (registerIndex = 0; registerIndex < 8; registerIndex++) {
 			

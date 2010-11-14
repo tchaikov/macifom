@@ -38,6 +38,7 @@
 	BOOL _mmc3WRAMChipEnable;
 	
 	uint8_t _prgromIndexMask;
+	uint8_t _chrromIndexMask;
 	uint8_t _mmc3BankRegisters[8];
 	uint8_t _mmc3IRQCounter;
 	uint8_t _mmc3IRQCounterReloadValue;
