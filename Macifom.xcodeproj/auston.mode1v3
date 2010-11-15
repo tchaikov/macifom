@@ -304,7 +304,7 @@
 							<real>233</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>5 108 1174 670 0 0 1280 778 </string>
+						<string>4 108 1174 670 0 0 1280 778 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -334,7 +334,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>B97799191290EA9300FA4B33</string>
+										<string>B97799231290EAF200FA4B33</string>
 										<key>history</key>
 										<array>
 											<string>B987354C0F0F178D00224CA8</string>
@@ -408,7 +408,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {919, 624}}</string>
 								<key>RubberWindowFrame</key>
-								<string>5 108 1174 670 0 0 1280 778 </string>
+								<string>4 108 1174 670 0 0 1280 778 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -428,7 +428,7 @@
 								<key>Frame</key>
 								<string>{{0, 629}, {919, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>5 108 1174 670 0 0 1280 778 </string>
+								<string>4 108 1174 670 0 0 1280 778 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -609,7 +609,7 @@
 		<string>/Users/auston/Projects/Software/macifom_trunk/Macifom.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>5 108 1174 670 0 0 1280 778 </string>
+	<string>4 108 1174 670 0 0 1280 778 </string>
 	<key>WindowToolsV3</key>
 	<array>
 		<dict>

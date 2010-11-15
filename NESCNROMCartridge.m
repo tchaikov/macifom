@@ -29,8 +29,9 @@
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
 {		
 	uint_fast32_t bankCounter;
+	
 	// CNROM switches 8KB CHRROM banks
-	uint_fast32_t selected8KBchrromBank = (byte & 0x3) * BANK_SIZE_8KB / CHRROM_BANK_SIZE;
+	uint_fast32_t selected8KBchrromBank = (byte & ((_iNesFlags->chrromSize / BANK_SIZE_8KB) - 1)) * BANK_SIZE_8KB / CHRROM_BANK_SIZE;
 	
 	// Run PPU before this CHRROM swap
 	[_ppu runPPUUntilCPUCycle:cycle];
