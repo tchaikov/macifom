@@ -57,7 +57,7 @@
 	// Rebuild CHRROM indices
 	for (bankCounter = 0; bankCounter < (BANK_SIZE_2KB / CHRROM_BANK_SIZE); bankCounter++) {
 		
-		_chrromBankIndices[bankCounter + (bank * BANK_SIZE_2KB / CHRROM_BANK_SIZE)] = (selected2KBBank + bankCounter) % _chrromIndexMask;
+		_chrromBankIndices[bankCounter + (bank * BANK_SIZE_2KB / CHRROM_BANK_SIZE)] = (selected2KBBank + bankCounter) & _chrromIndexMask;
 	}
 }
 
