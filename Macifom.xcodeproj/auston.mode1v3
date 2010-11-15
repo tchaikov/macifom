@@ -277,13 +277,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>36</integer>
-									<integer>34</integer>
+									<integer>26</integer>
+									<integer>1</integer>
 									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {233, 611}}</string>
+							<string>{{0, 18}, {233, 611}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -313,12 +313,14 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>Info.plist</string>
+								<string>NESPlayfieldView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -326,11 +328,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>Info.plist</string>
+										<string>NESPlayfieldView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>B976F27A1291C4CD00D6C06B</string>
+										<string>B9D7A04A1291C72E00F15035</string>
 										<key>history</key>
 										<array>
 											<string>B987354C0F0F178D00224CA8</string>
@@ -374,7 +376,6 @@
 											<string>B976F2661291C4CD00D6C06B</string>
 											<string>B976F2671291C4CD00D6C06B</string>
 											<string>B976F2681291C4CD00D6C06B</string>
-											<string>B976F2691291C4CD00D6C06B</string>
 											<string>B976F26A1291C4CD00D6C06B</string>
 											<string>B976F26B1291C4CD00D6C06B</string>
 											<string>B976F26C1291C4CD00D6C06B</string>
@@ -382,7 +383,6 @@
 											<string>B976F26E1291C4CD00D6C06B</string>
 											<string>B976F26F1291C4CD00D6C06B</string>
 											<string>B976F2701291C4CD00D6C06B</string>
-											<string>B976F2711291C4CD00D6C06B</string>
 											<string>B976F2721291C4CD00D6C06B</string>
 											<string>B976F2731291C4CD00D6C06B</string>
 											<string>B976F2741291C4CD00D6C06B</string>
@@ -390,7 +390,9 @@
 											<string>B976F2761291C4CD00D6C06B</string>
 											<string>B976F2771291C4CD00D6C06B</string>
 											<string>B976F2781291C4CD00D6C06B</string>
-											<string>B976F2791291C4CD00D6C06B</string>
+											<string>B9D7A0471291C72E00F15035</string>
+											<string>B9D7A0481291C72E00F15035</string>
+											<string>B9D7A0491291C72E00F15035</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -448,9 +450,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>B976F2321291BE0E00D6C06B</string>
+				<string>B9D7A04B1291C72E00F15035</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>B976F2331291BE0E00D6C06B</string>
+				<string>B9D7A04C1291C72E00F15035</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -597,10 +599,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>B976F23D1291BE0E00D6C06B</string>
-		<string>B976F23E1291BE0E00D6C06B</string>
-		<string>1C78EAAD065D492600B07095</string>
-		<string>1CD10A99069EF8BA00B06720</string>
 		<string>B98734FC0F0F108E00224CA8</string>
 		<string>/Users/auston/Projects/Software/macifom_trunk/Macifom.xcodeproj</string>
 	</array>
@@ -621,14 +619,12 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>NESApplicationController.m</string>
+								<string></string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -684,7 +680,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>B98734FC0F0F108E00224CA8</string>
-				<string>B976F2341291BE0E00D6C06B</string>
+				<string>B9D7A04D1291C72E00F15035</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

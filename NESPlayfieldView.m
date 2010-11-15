@@ -97,6 +97,7 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	
 	// Set the preferred backing store to the card to get on the Quartz GL path
 	[[self window] setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
+	[[self window] useOptimizedDrawing:YES]; // Use optimized drawing in window as there are no overlapping subviews
 	[[self window] setBackingType:NSBackingStoreBuffered]; // For double-buffering
 	[[self window] setBackgroundColor:[NSColor blackColor]]; // Default background for the window appears to be white
 	
