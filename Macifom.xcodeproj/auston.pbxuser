@@ -107,14 +107,13 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 311487315;
-			PBXWorkspaceStateSaveDate = 311487315;
+			PBXPerProjectTemplateStateSaveDate = 311540915;
+			PBXWorkspaceStateSaveDate = 311540915;
 		};
 		perUserProjectItems = {
 			B909AE6712189B95002EC4A9 = B909AE6712189B95002EC4A9 /* PBXTextBookmark */;
 			B9123F1312909015002FBB61 = B9123F1312909015002FBB61 /* PBXTextBookmark */;
 			B9123F1412909015002FBB61 = B9123F1412909015002FBB61 /* PBXTextBookmark */;
-			B9123F1512909015002FBB61 = B9123F1512909015002FBB61 /* PBXTextBookmark */;
 			B91B204712264A5C0066C2CB = B91B204712264A5C0066C2CB /* PBXTextBookmark */;
 			B91C4FA410F89A7E0057E78E = B91C4FA410F89A7E0057E78E /* PBXTextBookmark */;
 			B91C4FA810F89A7E0057E78E = B91C4FA810F89A7E0057E78E /* PBXTextBookmark */;
@@ -134,28 +133,77 @@
 			B926BE62121499F50046785C = B926BE62121499F50046785C /* PBXTextBookmark */;
 			B926C00F1214FD690046785C = B926C00F1214FD690046785C /* PBXTextBookmark */;
 			B932B336121853330021AAC0 = B932B336121853330021AAC0 /* PBXTextBookmark */;
-			B932B337121853330021AAC0 = B932B337121853330021AAC0 /* PBXTextBookmark */;
 			B934AE4B0F36500200B8A418 = B934AE4B0F36500200B8A418 /* PBXBookmark */;
-			B947B8BC1289B8530091241C = B947B8BC1289B8530091241C /* PBXTextBookmark */;
 			B947B8BE1289B8530091241C = B947B8BE1289B8530091241C /* PBXTextBookmark */;
 			B947B8CF1289BE620091241C = B947B8CF1289BE620091241C /* PBXTextBookmark */;
 			B947B8ED1289DCC60091241C = B947B8ED1289DCC60091241C /* PBXTextBookmark */;
 			B9505A5E1289F0A0007118F9 = B9505A5E1289F0A0007118F9 /* PBXTextBookmark */;
 			B95CEB6312875EA000F9A1B7 = B95CEB6312875EA000F9A1B7 /* PBXTextBookmark */;
 			B95CEB6412875EA000F9A1B7 = B95CEB6412875EA000F9A1B7 /* PBXTextBookmark */;
-			B95CEB6512875EA000F9A1B7 = B95CEB6512875EA000F9A1B7 /* PBXTextBookmark */;
 			B95CEB6612875EA000F9A1B7 = B95CEB6612875EA000F9A1B7 /* PBXTextBookmark */;
 			B95CEB6C12875EA000F9A1B7 = B95CEB6C12875EA000F9A1B7 /* PBXTextBookmark */;
-			B95CEB6D12875EA000F9A1B7 = B95CEB6D12875EA000F9A1B7 /* PBXTextBookmark */;
 			B95CEB6E12875EA000F9A1B7 = B95CEB6E12875EA000F9A1B7 /* PBXTextBookmark */;
 			B95CEB6F12875EA000F9A1B7 = B95CEB6F12875EA000F9A1B7 /* PBXTextBookmark */;
-			B97799231290EAF200FA4B33 = B97799231290EAF200FA4B33 /* PBXTextBookmark */;
+			B976F2301291BE0E00D6C06B /* PBXTextBookmark */ = B976F2301291BE0E00D6C06B /* PBXTextBookmark */;
+			B976F2311291BE0E00D6C06B /* PBXTextBookmark */ = B976F2311291BE0E00D6C06B /* PBXTextBookmark */;
+			B976F2411291BE4800D6C06B /* PBXTextBookmark */ = B976F2411291BE4800D6C06B /* PBXTextBookmark */;
+			B976F2461291C1F400D6C06B /* XCBuildMessageTextBookmark */ = B976F2461291C1F400D6C06B /* XCBuildMessageTextBookmark */;
+			B976F2471291C1F400D6C06B /* PBXTextBookmark */ = B976F2471291C1F400D6C06B /* PBXTextBookmark */;
+			B976F24A1291C1F900D6C06B /* PBXTextBookmark */ = B976F24A1291C1F900D6C06B /* PBXTextBookmark */;
+			B976F24B1291C1F900D6C06B /* XCBuildMessageTextBookmark */ = B976F24B1291C1F900D6C06B /* XCBuildMessageTextBookmark */;
+			B976F24C1291C1F900D6C06B /* PBXTextBookmark */ = B976F24C1291C1F900D6C06B /* PBXTextBookmark */;
+			B976F2501291C31600D6C06B /* PBXTextBookmark */ = B976F2501291C31600D6C06B /* PBXTextBookmark */;
+			B976F2511291C31600D6C06B /* PBXTextBookmark */ = B976F2511291C31600D6C06B /* PBXTextBookmark */;
+			B976F25B1291C4CD00D6C06B /* PBXTextBookmark */ = B976F25B1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F25C1291C4CD00D6C06B /* PBXTextBookmark */ = B976F25C1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F25D1291C4CD00D6C06B /* PBXTextBookmark */ = B976F25D1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F25E1291C4CD00D6C06B /* PBXTextBookmark */ = B976F25E1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F25F1291C4CD00D6C06B /* PBXTextBookmark */ = B976F25F1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2601291C4CD00D6C06B /* PBXTextBookmark */ = B976F2601291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2611291C4CD00D6C06B /* PBXTextBookmark */ = B976F2611291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2621291C4CD00D6C06B /* PBXTextBookmark */ = B976F2621291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2631291C4CD00D6C06B /* PBXTextBookmark */ = B976F2631291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2641291C4CD00D6C06B /* PBXTextBookmark */ = B976F2641291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2651291C4CD00D6C06B /* PBXTextBookmark */ = B976F2651291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2661291C4CD00D6C06B /* PBXTextBookmark */ = B976F2661291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2671291C4CD00D6C06B /* PBXTextBookmark */ = B976F2671291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2681291C4CD00D6C06B /* PBXTextBookmark */ = B976F2681291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2691291C4CD00D6C06B /* PBXTextBookmark */ = B976F2691291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F26A1291C4CD00D6C06B /* PBXTextBookmark */ = B976F26A1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F26B1291C4CD00D6C06B /* PBXTextBookmark */ = B976F26B1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F26C1291C4CD00D6C06B /* PBXTextBookmark */ = B976F26C1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F26D1291C4CD00D6C06B /* PBXTextBookmark */ = B976F26D1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F26E1291C4CD00D6C06B /* PBXTextBookmark */ = B976F26E1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F26F1291C4CD00D6C06B /* PBXTextBookmark */ = B976F26F1291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2701291C4CD00D6C06B /* PBXTextBookmark */ = B976F2701291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2711291C4CD00D6C06B /* PBXTextBookmark */ = B976F2711291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2721291C4CD00D6C06B /* PBXTextBookmark */ = B976F2721291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2731291C4CD00D6C06B /* PBXTextBookmark */ = B976F2731291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2741291C4CD00D6C06B /* PBXTextBookmark */ = B976F2741291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2751291C4CD00D6C06B /* PBXTextBookmark */ = B976F2751291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2761291C4CD00D6C06B /* PBXTextBookmark */ = B976F2761291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2771291C4CD00D6C06B /* PBXTextBookmark */ = B976F2771291C4CD00D6C06B /* PBXTextBookmark */;
+			B976F2781291C4CD00D6C06B /* PBXBookmark */ = B976F2781291C4CD00D6C06B /* PBXBookmark */;
+			B976F2791291C4CD00D6C06B /* PlistBookmark */ = B976F2791291C4CD00D6C06B /* PlistBookmark */;
+			B976F27A1291C4CD00D6C06B /* PlistBookmark */ = B976F27A1291C4CD00D6C06B /* PlistBookmark */;
 			B97AAD6311FB6ECA00B2FA1D = B97AAD6311FB6ECA00B2FA1D /* PBXTextBookmark */;
 			B97EEE471218ECA200705222 = B97EEE471218ECA200705222 /* PBXTextBookmark */;
+			B984E3901291B31800F57A4A = B984E3901291B31800F57A4A /* PBXTextBookmark */;
+			B984E3911291B31800F57A4A = B984E3911291B31800F57A4A /* PBXTextBookmark */;
+			B984E3921291B31800F57A4A = B984E3921291B31800F57A4A /* PBXTextBookmark */;
+			B984E3931291B31800F57A4A = B984E3931291B31800F57A4A /* PBXTextBookmark */;
+			B984E3941291B31800F57A4A = B984E3941291B31800F57A4A /* PBXTextBookmark */;
+			B984E3951291B31800F57A4A = B984E3951291B31800F57A4A /* PBXTextBookmark */;
+			B984E3961291B31800F57A4A = B984E3961291B31800F57A4A /* PBXTextBookmark */;
+			B984E3971291B31800F57A4A = B984E3971291B31800F57A4A /* PBXTextBookmark */;
+			B984E3981291B31800F57A4A = B984E3981291B31800F57A4A /* PBXTextBookmark */;
 			B987354C0F0F178D00224CA8 = B987354C0F0F178D00224CA8 /* PBXTextBookmark */;
 			B98A99FB11C09FC800976889 = B98A99FB11C09FC800976889 /* PBXTextBookmark */;
 			B9A365D5121CBBD40078EA5B = B9A365D5121CBBD40078EA5B /* PBXTextBookmark */;
 			B9A365D6121CBBD40078EA5B = B9A365D6121CBBD40078EA5B /* PlistBookmark */;
+			B9B30DC01290ECC2007C8F74 = B9B30DC01290ECC2007C8F74 /* PBXTextBookmark */;
+			B9B30DC11290ECC2007C8F74 = B9B30DC11290ECC2007C8F74 /* PBXTextBookmark */;
+			B9B30DC21290ECC2007C8F74 = B9B30DC21290ECC2007C8F74 /* PBXTextBookmark */;
 			B9B93FC71274D968003011BF = B9B93FC71274D968003011BF /* PBXTextBookmark */;
 			B9B93FC91274D968003011BF = B9B93FC91274D968003011BF /* PBXTextBookmark */;
 			B9B93FD11274D968003011BF = B9B93FD11274D968003011BF /* PBXTextBookmark */;
@@ -163,13 +211,7 @@
 			B9CB22601288F4A2007D35B5 = B9CB22601288F4A2007D35B5 /* PBXTextBookmark */;
 			B9CB22611288F4A2007D35B5 = B9CB22611288F4A2007D35B5 /* PBXTextBookmark */;
 			B9D168F412888C2500B7250E = B9D168F412888C2500B7250E /* PBXTextBookmark */;
-			B9D168F612888C2500B7250E = B9D168F612888C2500B7250E /* PBXTextBookmark */;
 			B9D168F712888C2500B7250E = B9D168F712888C2500B7250E /* PBXTextBookmark */;
-			B9E11C2B1225CD6E00F6FA0E = B9E11C2B1225CD6E00F6FA0E /* PBXTextBookmark */;
-			B9E11C2D1225CD6E00F6FA0E = B9E11C2D1225CD6E00F6FA0E /* PBXTextBookmark */;
-			B9E4E8FE1290962F006BB5B9 = B9E4E8FE1290962F006BB5B9 /* PBXTextBookmark */;
-			B9E617BD12248AB000DC4FD5 = B9E617BD12248AB000DC4FD5 /* PBXTextBookmark */;
-			B9EBBA07128B89D200A2725B = B9EBBA07128B89D200A2725B /* PBXTextBookmark */;
 		};
 		sourceControlManager = B99E78E60E745E070019B353 /* Source Control */;
 		userBuildSettings = {
@@ -211,28 +253,18 @@
 		vrLen = 1434;
 		vrLoc = 519;
 	};
-	B9123F1512909015002FBB61 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B99E78E90E745E270019B353 /* NESPPUEmulator.m */;
-		name = "NESPPUEmulator.m: 524";
-		rLen = 0;
-		rLoc = 20197;
-		rType = 0;
-		vrLen = 2467;
-		vrLoc = 19420;
-	};
 	B91B2019122640A10066C2CB /* NESSUROMCartridge.h */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {858, 592}}";
-			sepNavSelRange = "{238, 0}";
-			sepNavVisRange = "{0, 301}";
+			sepNavSelRange = "{20, 0}";
+			sepNavVisRange = "{0, 1300}";
 		};
 	};
 	B91B201A122640A10066C2CB /* NESSUROMCartridge.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1013, 897}}";
-			sepNavSelRange = "{1775, 0}";
-			sepNavVisRange = "{84, 1385}";
+			sepNavIntBoundsRect = "{{0, 0}, {1013, 1105}}";
+			sepNavSelRange = "{22, 0}";
+			sepNavVisRange = "{0, 1790}";
 		};
 	};
 	B91B204712264A5C0066C2CB /* PBXTextBookmark */ = {
@@ -332,9 +364,9 @@
 	};
 	B91C4F3A10F876580057E78E /* Nes_Apu.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {850, 1937}}";
+			sepNavIntBoundsRect = "{{0, 0}, {858, 2119}}";
 			sepNavSelRange = "{0, 0}";
-			sepNavVisRange = "{2036, 1956}";
+			sepNavVisRange = "{0, 1455}";
 		};
 	};
 	B91C4F3C10F876580057E78E /* Nes_Namco.h */ = {
@@ -381,16 +413,16 @@
 	};
 	B91C4F5210F876E00057E78E /* NESAPUEmulator.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {858, 1326}}";
-			sepNavSelRange = "{1740, 0}";
+			sepNavIntBoundsRect = "{{0, 0}, {858, 1352}}";
+			sepNavSelRange = "{2241, 0}";
 			sepNavVisRange = "{0, 1741}";
 		};
 	};
 	B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1244, 3900}}";
-			sepNavSelRange = "{6322, 0}";
-			sepNavVisRange = "{6065, 631}";
+			sepNavIntBoundsRect = "{{0, 0}, {1384, 3926}}";
+			sepNavSelRange = "{3869, 0}";
+			sepNavVisRange = "{0, 1888}";
 			sepNavWindowFrame = "{{409, -40}, {1232, 770}}";
 		};
 	};
@@ -546,17 +578,17 @@
 	};
 	B926BD7F12147CC20046785C /* NESControllerInterface.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {858, 871}}";
-			sepNavSelRange = "{1144, 0}";
-			sepNavVisRange = "{0, 1191}";
+			sepNavIntBoundsRect = "{{0, 0}, {858, 1066}}";
+			sepNavSelRange = "{0, 1149}";
+			sepNavVisRange = "{1432, 1617}";
 			sepNavWindowFrame = "{{4, 0}, {1276, 778}}";
 		};
 	};
 	B926BD8012147CC20046785C /* NESControllerInterface.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {2735, 11999}}";
-			sepNavSelRange = "{27857, 0}";
-			sepNavVisRange = "{10538, 1935}";
+			sepNavIntBoundsRect = "{{0, 0}, {1867, 12298}}";
+			sepNavSelRange = "{27, 0}";
+			sepNavVisRange = "{8868, 2082}";
 		};
 	};
 	B926BE62121499F50046785C /* PBXTextBookmark */ = {
@@ -579,15 +611,15 @@
 	B926BF151214B75E0046785C /* NESKeyboardResponder.h */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {858, 592}}";
-			sepNavSelRange = "{386, 0}";
-			sepNavVisRange = "{0, 392}";
+			sepNavSelRange = "{23, 0}";
+			sepNavVisRange = "{0, 1391}";
 		};
 	};
 	B926BF161214B75E0046785C /* NESKeyboardResponder.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {703, 640}}";
-			sepNavSelRange = "{470, 0}";
-			sepNavVisRange = "{0, 479}";
+			sepNavIntBoundsRect = "{{0, 0}, {858, 592}}";
+			sepNavSelRange = "{23, 0}";
+			sepNavVisRange = "{0, 1478}";
 		};
 	};
 	B926C00F1214FD690046785C /* PBXTextBookmark */ = {
@@ -617,29 +649,9 @@
 		vrLen = 781;
 		vrLoc = 6746;
 	};
-	B932B337121853330021AAC0 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B91C4F3A10F876580057E78E /* Nes_Apu.h */;
-		name = "Nes_Apu.h: 1";
-		rLen = 0;
-		rLoc = 0;
-		rType = 0;
-		vrLen = 1956;
-		vrLoc = 2036;
-	};
 	B934AE4B0F36500200B8A418 /* PBXBookmark */ = {
 		isa = PBXBookmark;
 		fRef = B9D02A7B0F36269F003A44CC /* Macifom.icns */;
-	};
-	B947B8BC1289B8530091241C /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */;
-		name = "NES6502Interpreter.m: 1485";
-		rLen = 0;
-		rLoc = 83758;
-		rType = 0;
-		vrLen = 1340;
-		vrLoc = 82281;
 	};
 	B947B8BE1289B8530091241C /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -701,16 +713,6 @@
 		vrLen = 1252;
 		vrLoc = 0;
 	};
-	B95CEB6512875EA000F9A1B7 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B9A27E81122224DF00582233 /* NESCNROMCartridge.h */;
-		name = "NESCNROMCartridge.h: 1";
-		rLen = 0;
-		rLoc = 23;
-		rType = 0;
-		vrLen = 1252;
-		vrLoc = 0;
-	};
 	B95CEB6612875EA000F9A1B7 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = B9A27E7D12221F2600582233 /* NESUxROMCartridge.h */;
@@ -731,22 +733,12 @@
 		vrLen = 1584;
 		vrLoc = 0;
 	};
-	B95CEB6D12875EA000F9A1B7 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B91C4F5210F876E00057E78E /* NESAPUEmulator.h */;
-		name = "NESAPUEmulator.h: 46";
-		rLen = 0;
-		rLoc = 1740;
-		rType = 0;
-		vrLen = 1741;
-		vrLoc = 0;
-	};
 	B95CEB6E12875EA000F9A1B7 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = B926BD7F12147CC20046785C /* NESControllerInterface.h */;
 		name = "NESControllerInterface.h: 45";
 		rLen = 0;
-		rLoc = 1144;
+		rLoc = 2143;
 		rType = 0;
 		vrLen = 1191;
 		vrLoc = 0;
@@ -756,7 +748,7 @@
 		fRef = B926BF151214B75E0046785C /* NESKeyboardResponder.h */;
 		name = "NESKeyboardResponder.h: 20";
 		rLen = 0;
-		rLoc = 386;
+		rLoc = 1385;
 		rType = 0;
 		vrLen = 392;
 		vrLoc = 0;
@@ -765,26 +757,432 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {1076, 728}}";
 			sepNavSelRange = "{1559, 0}";
-			sepNavVisRange = "{519, 1434}";
+			sepNavVisRange = "{0, 1689}";
 			sepNavWindowFrame = "{{19, 246}, {1041, 527}}";
 		};
 	};
 	B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1069, 6344}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1069, 6331}}";
 			sepNavSelRange = "{2406, 0}";
-			sepNavVisRange = "{1417, 1512}";
+			sepNavVisRange = "{0, 1848}";
 		};
 	};
-	B97799231290EAF200FA4B33 /* PBXTextBookmark */ = {
+	B976F2301291BE0E00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 490";
+		rLen = 0;
+		rLoc = 21050;
+		rType = 0;
+		vrLen = 2227;
+		vrLoc = 0;
+	};
+	B976F2311291BE0E00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 453";
+		rLen = 0;
+		rLoc = 19561;
+		rType = 0;
+		vrLen = 953;
+		vrLoc = 18760;
+	};
+	B976F2411291BE4800D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 393";
+		rLen = 0;
+		rLoc = 18187;
+		rType = 0;
+		vrLen = 1681;
+		vrLoc = 16586;
+	};
+	B976F2461291C1F400D6C06B /* XCBuildMessageTextBookmark */ = {
+		isa = PBXTextBookmark;
+		comments = "'actualCPUCyclesRun' was not declared in this scope";
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		fallbackIsa = XCBuildMessageTextBookmark;
+		rLen = 1;
+		rLoc = 505;
+		rType = 1;
+	};
+	B976F2471291C1F400D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 505";
+		rLen = 0;
+		rLoc = 21547;
+		rType = 0;
+		vrLen = 854;
+		vrLoc = 20804;
+	};
+	B976F24A1291C1F900D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */;
+		name = "NES6502Interpreter.m: 1492";
+		rLen = 0;
+		rLoc = 83781;
+		rType = 0;
+		vrLen = 1049;
+		vrLoc = 82225;
+	};
+	B976F24B1291C1F900D6C06B /* XCBuildMessageTextBookmark */ = {
+		isa = PBXTextBookmark;
+		comments = "'actualCPUCyclesRun' was not declared in this scope";
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		fallbackIsa = XCBuildMessageTextBookmark;
+		rLen = 1;
+		rLoc = 505;
+		rType = 1;
+	};
+	B976F24C1291C1F900D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 505";
+		rLen = 0;
+		rLoc = 21479;
+		rType = 0;
+		vrLen = 1152;
+		vrLoc = 20506;
+	};
+	B976F2501291C31600D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 498";
+		rLen = 0;
+		rLoc = 21082;
+		rType = 0;
+		vrLen = 1159;
+		vrLoc = 20506;
+	};
+	B976F2511291C31600D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 499";
+		rLen = 0;
+		rLoc = 21212;
+		rType = 0;
+		vrLen = 1297;
+		vrLoc = 20930;
+	};
+	B976F25B1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E7B1222074400582233 /* NESCartridge.m */;
+		name = "NESCartridge.m: 187";
+		rLen = 0;
+		rLoc = 5350;
+		rType = 0;
+		vrLen = 1739;
+		vrLoc = 0;
+	};
+	B976F25C1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E7D12221F2600582233 /* NESUxROMCartridge.h */;
+		name = "NESUxROMCartridge.h: 22";
+		rLen = 0;
+		rLoc = 1145;
+		rType = 0;
+		vrLen = 1252;
+		vrLoc = 0;
+	};
+	B976F25D1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */;
+		name = "NESUxROMCartridge.m: 44";
+		rLen = 59;
+		rLoc = 1837;
+		rType = 0;
+		vrLen = 1507;
+		vrLoc = 1142;
+	};
+	B976F25E1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E81122224DF00582233 /* NESCNROMCartridge.h */;
+		name = "NESCNROMCartridge.h: 1";
+		rLen = 0;
+		rLoc = 23;
+		rType = 0;
+		vrLen = 1252;
+		vrLoc = 0;
+	};
+	B976F25F1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E82122224DF00582233 /* NESCNROMCartridge.m */;
+		name = "NESCNROMCartridge.m: 31";
+		rLen = 0;
+		rLoc = 1373;
+		rType = 0;
+		vrLen = 1836;
+		vrLoc = 24;
+	};
+	B976F2601291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E8412222BB700582233 /* NESAxROMCartridge.h */;
+		name = "NESAxROMCartridge.h: 22";
+		rLen = 0;
+		rLoc = 1145;
+		rType = 0;
+		vrLen = 1252;
+		vrLoc = 0;
+	};
+	B976F2611291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E8512222BB700582233 /* NESAxROMCartridge.m */;
+		name = "NESAxROMCartridge.m: 22";
+		rLen = 0;
+		rLoc = 1145;
+		rType = 0;
+		vrLen = 1971;
+		vrLoc = 0;
+	};
+	B976F2621291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E871222499C00582233 /* NESSxROMCartridge.h */;
+		name = "NESSxROMCartridge.h: 27";
+		rLen = 0;
+		rLoc = 1213;
+		rType = 0;
+		vrLen = 1695;
+		vrLoc = 0;
+	};
+	B976F2631291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E881222499C00582233 /* NESSxROMCartridge.m */;
+		name = "NESSxROMCartridge.m: 24";
+		rLen = 0;
+		rLoc = 1161;
+		rType = 0;
+		vrLen = 1788;
+		vrLoc = 0;
+	};
+	B976F2641291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B96B196A122505E00096FEF6 /* NESTxROMCartridge.h */;
+		name = "NESTxROMCartridge.h: 41";
+		rLen = 0;
+		rLoc = 1559;
+		rType = 0;
+		vrLen = 1689;
+		vrLoc = 0;
+	};
+	B976F2651291C4CD00D6C06B /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */;
 		name = "NESTxROMCartridge.m: 60";
 		rLen = 0;
 		rLoc = 2406;
 		rType = 0;
-		vrLen = 1512;
-		vrLoc = 1417;
+		vrLen = 1848;
+		vrLoc = 0;
+	};
+	B976F2661291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91B2019122640A10066C2CB /* NESSUROMCartridge.h */;
+		name = "NESSUROMCartridge.h: 1";
+		rLen = 0;
+		rLoc = 20;
+		rType = 0;
+		vrLen = 1300;
+		vrLoc = 0;
+	};
+	B976F2671291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91B201A122640A10066C2CB /* NESSUROMCartridge.m */;
+		name = "NESSUROMCartridge.m: 1";
+		rLen = 0;
+		rLoc = 22;
+		rType = 0;
+		vrLen = 1790;
+		vrLoc = 0;
+	};
+	B976F2681291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79100E745EFC0019B353 /* NESApplicationController.h */;
+		name = "NESApplicationController.h: 1";
+		rLen = 1151;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1855;
+		vrLoc = 0;
+	};
+	B976F2691291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 499";
+		rLen = 0;
+		rLoc = 21212;
+		rType = 0;
+		vrLen = 2227;
+		vrLoc = 0;
+	};
+	B976F26A1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78E80E745E270019B353 /* NES6502Interpreter.h */;
+		name = "NES6502Interpreter.h: 87";
+		rLen = 13;
+		rLoc = 2587;
+		rType = 0;
+		vrLen = 1580;
+		vrLoc = 0;
+	};
+	B976F26B1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */;
+		name = "NES6502Interpreter.m: 1492";
+		rLen = 0;
+		rLoc = 83781;
+		rType = 0;
+		vrLen = 2057;
+		vrLoc = 0;
+	};
+	B976F26C1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78ED0E745E270019B353 /* NESPPUEmulator.h */;
+		name = "NESPPUEmulator.h: 150";
+		rLen = 0;
+		rLoc = 5381;
+		rType = 0;
+		vrLen = 1805;
+		vrLoc = 0;
+	};
+	B976F26D1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78E90E745E270019B353 /* NESPPUEmulator.m */;
+		name = "NESPPUEmulator.m: 1043";
+		rLen = 0;
+		rLoc = 39816;
+		rType = 0;
+		vrLen = 2803;
+		vrLoc = 0;
+	};
+	B976F26E1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78EF0E745E280019B353 /* NESCartridgeEmulator.h */;
+		name = "NESCartridgeEmulator.h: 62";
+		rLen = 0;
+		rLoc = 1969;
+		rType = 0;
+		vrLen = 1620;
+		vrLoc = 0;
+	};
+	B976F26F1291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */;
+		name = "NESCartridgeEmulator.m: 114";
+		rLen = 0;
+		rLoc = 7703;
+		rType = 0;
+		vrLen = 3554;
+		vrLoc = 0;
+	};
+	B976F2701291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79180E7462220019B353 /* NESPlayfieldView.h */;
+		name = "NESPlayfieldView.h: 40";
+		rLen = 0;
+		rLoc = 1479;
+		rType = 0;
+		vrLen = 1584;
+		vrLoc = 0;
+	};
+	B976F2711291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79190E7462220019B353 /* NESPlayfieldView.m */;
+		name = "NESPlayfieldView.m: 103";
+		rLen = 0;
+		rLoc = 3462;
+		rType = 0;
+		vrLen = 1861;
+		vrLoc = 0;
+	};
+	B976F2721291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91C4F5210F876E00057E78E /* NESAPUEmulator.h */;
+		name = "NESAPUEmulator.h: 67";
+		rLen = 0;
+		rLoc = 2241;
+		rType = 0;
+		vrLen = 1741;
+		vrLoc = 0;
+	};
+	B976F2731291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
+		name = "NESAPUEmulator.mm: 123";
+		rLen = 0;
+		rLoc = 3869;
+		rType = 0;
+		vrLen = 1888;
+		vrLoc = 0;
+	};
+	B976F2741291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B926BD7F12147CC20046785C /* NESControllerInterface.h */;
+		name = "NESControllerInterface.h: 1";
+		rLen = 1149;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1617;
+		vrLoc = 1432;
+	};
+	B976F2751291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B926BD8012147CC20046785C /* NESControllerInterface.m */;
+		name = "NESControllerInterface.m: 1";
+		rLen = 0;
+		rLoc = 27;
+		rType = 0;
+		vrLen = 2082;
+		vrLoc = 8868;
+	};
+	B976F2761291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B926BF151214B75E0046785C /* NESKeyboardResponder.h */;
+		name = "NESKeyboardResponder.h: 1";
+		rLen = 0;
+		rLoc = 23;
+		rType = 0;
+		vrLen = 1391;
+		vrLoc = 0;
+	};
+	B976F2771291C4CD00D6C06B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B926BF161214B75E0046785C /* NESKeyboardResponder.m */;
+		name = "NESKeyboardResponder.m: 1";
+		rLen = 0;
+		rLoc = 23;
+		rType = 0;
+		vrLen = 1478;
+		vrLoc = 0;
+	};
+	B976F2781291C4CD00D6C06B /* PBXBookmark */ = {
+		isa = PBXBookmark;
+		fRef = B9D02A7B0F36269F003A44CC /* Macifom.icns */;
+	};
+	B976F2791291C4CD00D6C06B /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			CFBundleVersion,
+		);
+		name = /Users/auston/Projects/Software/macifom_trunk/Info.plist;
+		rLen = 0;
+		rLoc = 9223372036854775807;
+	};
+	B976F27A1291C4CD00D6C06B /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			CFBundleVersion,
+		);
+		name = /Users/auston/Projects/Software/macifom_trunk/Info.plist;
+		rLen = 0;
+		rLoc = 9223372036854775807;
 	};
 	B97AAD6311FB6ECA00B2FA1D /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -812,6 +1210,96 @@
 		rType = 0;
 		vrLen = 1110;
 		vrLoc = 957;
+	};
+	B984E3901291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E82122224DF00582233 /* NESCNROMCartridge.m */;
+		name = "NESCNROMCartridge.m: 31";
+		rLen = 0;
+		rLoc = 1373;
+		rType = 0;
+		vrLen = 1832;
+		vrLoc = 28;
+	};
+	B984E3911291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78EB0E745E270019B353 /* NES6502Interpreter.m */;
+		name = "NES6502Interpreter.m: 381";
+		rLen = 0;
+		rLoc = 12716;
+		rType = 0;
+		vrLen = 1362;
+		vrLoc = 83032;
+	};
+	B984E3921291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91C4F3A10F876580057E78E /* Nes_Apu.h */;
+		name = "Nes_Apu.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1455;
+		vrLoc = 0;
+	};
+	B984E3931291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91C4F5210F876E00057E78E /* NESAPUEmulator.h */;
+		name = "NESAPUEmulator.h: 67";
+		rLen = 0;
+		rLoc = 2241;
+		rType = 0;
+		vrLen = 1115;
+		vrLoc = 2016;
+	};
+	B984E3941291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
+		name = "NESAPUEmulator.mm: 123";
+		rLen = 0;
+		rLoc = 3869;
+		rType = 0;
+		vrLen = 1006;
+		vrLoc = 5488;
+	};
+	B984E3951291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78E80E745E270019B353 /* NES6502Interpreter.h */;
+		name = "NES6502Interpreter.h: 87";
+		rLen = 13;
+		rLoc = 2587;
+		rType = 0;
+		vrLen = 1444;
+		vrLoc = 1935;
+	};
+	B984E3961291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E78E90E745E270019B353 /* NESPPUEmulator.m */;
+		name = "NESPPUEmulator.m: 1038";
+		rLen = 46;
+		rLoc = 39623;
+		rType = 0;
+		vrLen = 1471;
+		vrLoc = 38775;
+	};
+	B984E3971291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 461";
+		rLen = 0;
+		rLoc = 20155;
+		rType = 0;
+		vrLen = 1729;
+		vrLoc = 19073;
+	};
+	B984E3981291B31800F57A4A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
+		name = "NESApplicationController.m: 490";
+		rLen = 0;
+		rLoc = 21050;
+		rType = 0;
+		vrLen = 2227;
+		vrLoc = 0;
 	};
 	B987354C0F0F178D00224CA8 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -913,22 +1401,22 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {858, 1404}}";
 			sepNavSelRange = "{2587, 13}";
-			sepNavVisRange = "{1935, 1444}";
+			sepNavVisRange = "{0, 1580}";
 		};
 	};
 	B99E78E90E745E270019B353 /* NESPPUEmulator.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1433, 13507}}";
-			sepNavSelRange = "{20197, 0}";
-			sepNavVisRange = "{19420, 2467}";
+			sepNavIntBoundsRect = "{{0, 0}, {1370, 14001}}";
+			sepNavSelRange = "{39816, 0}";
+			sepNavVisRange = "{0, 2803}";
 			sepNavWindowFrame = "{{42, 298}, {829, 454}}";
 		};
 	};
 	B99E78EB0E745E270019B353 /* NES6502Interpreter.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1027, 20982}}";
-			sepNavSelRange = "{83758, 0}";
-			sepNavVisRange = "{82281, 1340}";
+			sepNavIntBoundsRect = "{{0, 0}, {1776, 21242}}";
+			sepNavSelRange = "{83781, 0}";
+			sepNavVisRange = "{0, 2057}";
 			sepNavWindowFrame = "{{19, 82}, {965, 745}}";
 		};
 	};
@@ -936,14 +1424,14 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {922, 1989}}";
 			sepNavSelRange = "{5381, 0}";
-			sepNavVisRange = "{889, 1275}";
+			sepNavVisRange = "{0, 1805}";
 		};
 	};
 	B99E78EE0E745E280019B353 /* NESCartridgeEmulator.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {2791, 4069}}";
+			sepNavIntBoundsRect = "{{0, 0}, {2623, 3328}}";
 			sepNavSelRange = "{7703, 0}";
-			sepNavVisRange = "{10118, 1752}";
+			sepNavVisRange = "{0, 3554}";
 			sepNavWindowFrame = "{{19, 319}, {829, 454}}";
 		};
 	};
@@ -951,21 +1439,21 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {858, 884}}";
 			sepNavSelRange = "{1969, 0}";
-			sepNavVisRange = "{740, 1138}";
+			sepNavVisRange = "{0, 1620}";
 		};
 	};
 	B99E79100E745EFC0019B353 /* NESApplicationController.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {866, 1066}}";
-			sepNavSelRange = "{30, 1121}";
-			sepNavVisRange = "{1577, 1304}";
+			sepNavIntBoundsRect = "{{0, 0}, {866, 1001}}";
+			sepNavSelRange = "{0, 1151}";
+			sepNavVisRange = "{0, 1855}";
 		};
 	};
 	B99E79110E745EFC0019B353 /* NESApplicationController.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1244, 9022}}";
-			sepNavSelRange = "{14275, 0}";
-			sepNavVisRange = "{12747, 1762}";
+			sepNavIntBoundsRect = "{{0, 0}, {1706, 9152}}";
+			sepNavSelRange = "{21212, 0}";
+			sepNavVisRange = "{0, 2227}";
 		};
 	};
 	B99E79180E7462220019B353 /* NESPlayfieldView.h */ = {
@@ -977,9 +1465,9 @@
 	};
 	B99E79190E7462220019B353 /* NESPlayfieldView.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1580, 1690}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1580, 1625}}";
 			sepNavSelRange = "{3462, 0}";
-			sepNavVisRange = "{2738, 445}";
+			sepNavVisRange = "{0, 1861}";
 			sepNavWindowFrame = "{{19, 82}, {965, 745}}";
 		};
 	};
@@ -992,9 +1480,9 @@
 	};
 	B9A27E7B1222074400582233 /* NESCartridge.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1027, 2717}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1027, 2509}}";
 			sepNavSelRange = "{5350, 0}";
-			sepNavVisRange = "{4167, 1196}";
+			sepNavVisRange = "{0, 1739}";
 		};
 	};
 	B9A27E7D12221F2600582233 /* NESUxROMCartridge.h */ = {
@@ -1007,8 +1495,8 @@
 	B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {1034, 884}}";
-			sepNavSelRange = "{1145, 0}";
-			sepNavVisRange = "{0, 2117}";
+			sepNavSelRange = "{1837, 59}";
+			sepNavVisRange = "{1142, 1507}";
 		};
 	};
 	B9A27E81122224DF00582233 /* NESCNROMCartridge.h */ = {
@@ -1020,9 +1508,9 @@
 	};
 	B9A27E82122224DF00582233 /* NESCNROMCartridge.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {719, 633}}";
-			sepNavSelRange = "{1145, 0}";
-			sepNavVisRange = "{0, 1815}";
+			sepNavIntBoundsRect = "{{0, 0}, {943, 624}}";
+			sepNavSelRange = "{1373, 0}";
+			sepNavVisRange = "{24, 1836}";
 		};
 	};
 	B9A27E8412222BB700582233 /* NESAxROMCartridge.h */ = {
@@ -1034,9 +1522,9 @@
 	};
 	B9A27E8512222BB700582233 /* NESAxROMCartridge.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {719, 689}}";
+			sepNavIntBoundsRect = "{{0, 0}, {858, 689}}";
 			sepNavSelRange = "{1145, 0}";
-			sepNavVisRange = "{0, 2007}";
+			sepNavVisRange = "{0, 1971}";
 		};
 	};
 	B9A27E871222499C00582233 /* NESSxROMCartridge.h */ = {
@@ -1075,6 +1563,36 @@
 		name = /Users/auston/Projects/Software/macifom_trunk/Info.plist;
 		rLen = 0;
 		rLoc = 9223372036854775808;
+	};
+	B9B30DC01290ECC2007C8F74 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */;
+		name = "NESTxROMCartridge.m: 60";
+		rLen = 0;
+		rLoc = 2406;
+		rType = 0;
+		vrLen = 1512;
+		vrLoc = 1417;
+	};
+	B9B30DC11290ECC2007C8F74 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */;
+		name = "NESUxROMCartridge.m: 44";
+		rLen = 59;
+		rLoc = 1837;
+		rType = 0;
+		vrLen = 1503;
+		vrLoc = 1146;
+	};
+	B9B30DC21290ECC2007C8F74 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = B9A27E81122224DF00582233 /* NESCNROMCartridge.h */;
+		name = "NESCNROMCartridge.h: 1";
+		rLen = 0;
+		rLoc = 23;
+		rType = 0;
+		vrLen = 1252;
+		vrLoc = 0;
 	};
 	B9B33878120768F400FDFE1C /* NESPPUEmulator.m:1029 */ = {
 		isa = PBXFileBreakpoint;
@@ -1134,7 +1652,7 @@
 		fRef = B926BF161214B75E0046785C /* NESKeyboardResponder.m */;
 		name = "NESKeyboardResponder.m: 21";
 		rLen = 0;
-		rLoc = 470;
+		rLoc = 1469;
 		rType = 0;
 		vrLen = 479;
 		vrLoc = 0;
@@ -1144,7 +1662,7 @@
 		fRef = B926BD8012147CC20046785C /* NESControllerInterface.m */;
 		name = "NESControllerInterface.m: 735";
 		rLen = 0;
-		rLoc = 27857;
+		rLoc = 28856;
 		rType = 0;
 		vrLen = 1935;
 		vrLoc = 10538;
@@ -1181,7 +1699,7 @@
 		fRef = B91B201A122640A10066C2CB /* NESSUROMCartridge.m */;
 		name = "NESSUROMCartridge.m: 63";
 		rLen = 0;
-		rLoc = 1775;
+		rLoc = 2774;
 		rType = 0;
 		vrLen = 1385;
 		vrLoc = 84;
@@ -1191,7 +1709,7 @@
 		fRef = B91B2019122640A10066C2CB /* NESSUROMCartridge.h */;
 		name = "NESSUROMCartridge.h: 12";
 		rLen = 0;
-		rLoc = 238;
+		rLoc = 1237;
 		rType = 0;
 		vrLen = 301;
 		vrLoc = 0;
@@ -1206,16 +1724,6 @@
 		vrLen = 1752;
 		vrLoc = 10118;
 	};
-	B9D168F612888C2500B7250E /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B99E79110E745EFC0019B353 /* NESApplicationController.m */;
-		name = "NESApplicationController.m: 258";
-		rLen = 0;
-		rLoc = 14275;
-		rType = 0;
-		vrLen = 1762;
-		vrLoc = 12747;
-	};
 	B9D168F712888C2500B7250E /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = B99E78EF0E745E280019B353 /* NESCartridgeEmulator.h */;
@@ -1225,55 +1733,5 @@
 		rType = 0;
 		vrLen = 1138;
 		vrLoc = 740;
-	};
-	B9E11C2B1225CD6E00F6FA0E /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B9A27E7E12221F2600582233 /* NESUxROMCartridge.m */;
-		name = "NESUxROMCartridge.m: 22";
-		rLen = 0;
-		rLoc = 1145;
-		rType = 0;
-		vrLen = 2117;
-		vrLoc = 0;
-	};
-	B9E11C2D1225CD6E00F6FA0E /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B9A27E82122224DF00582233 /* NESCNROMCartridge.m */;
-		name = "NESCNROMCartridge.m: 22";
-		rLen = 0;
-		rLoc = 1145;
-		rType = 0;
-		vrLen = 1815;
-		vrLoc = 0;
-	};
-	B9E4E8FE1290962F006BB5B9 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B96B196B122505E00096FEF6 /* NESTxROMCartridge.m */;
-		name = "NESTxROMCartridge.m: 60";
-		rLen = 0;
-		rLoc = 2347;
-		rType = 0;
-		vrLen = 1363;
-		vrLoc = 4094;
-	};
-	B9E617BD12248AB000DC4FD5 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B91C4F5310F876E00057E78E /* NESAPUEmulator.mm */;
-		name = "NESAPUEmulator.mm: 223";
-		rLen = 0;
-		rLoc = 6444;
-		rType = 0;
-		vrLen = 1294;
-		vrLoc = 5588;
-	};
-	B9EBBA07128B89D200A2725B /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = B99E78E80E745E270019B353 /* NES6502Interpreter.h */;
-		name = "NES6502Interpreter.h: 87";
-		rLen = 13;
-		rLoc = 2587;
-		rType = 0;
-		vrLen = 1444;
-		vrLoc = 1935;
 	};
 }

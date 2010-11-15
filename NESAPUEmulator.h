@@ -63,6 +63,8 @@ static void HandleOutputBuffer (
 	NESAPUState *nesAPUState;
 	
 	blip_time_t time;
+	uint_fast32_t _lastCPUCycle;
+	uint8_t _apuStatus;
 }
 
 - (void)beginAPUPlayback;

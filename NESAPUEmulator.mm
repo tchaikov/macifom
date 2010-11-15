@@ -120,11 +120,6 @@ static void HandleOutputBuffer (
 							);
 }
 
-- (blip_time_t) clock { 
-
-	return time += 4; 
-}
-
 - (id)init {
 
 	if ([super init]) {
@@ -207,6 +202,7 @@ static void HandleOutputBuffer (
 	nesAPUState->isRunning = NO;
 	
 	// Reset the APU and Buffer
+	_lastCPUCycle = 0;
 	nesAPU->reset(false,0);
 	blipBuffer->clear(true);
 	
@@ -249,7 +245,15 @@ static void HandleOutputBuffer (
 // Read from status register at 0x4015
 - (uint8_t)readAPUStatusOnCycle:(uint_fast32_t)cycle {
 
-	return nesAPU->read_status(cycle);
+	// This is done to allow multiple reads from APU status during debugging (otherwise Blargg's APU asserts) Fixes Issue #1
+	if (cycle > _lastCPUCycle) {
+	
+		_apuStatus = nesAPU->read_status(cycle);
+		_lastCPUCycle = cycle;
+		
+	}
+	
+	return _apuStatus;
 }
 
 // End a 1/60 sound frame
@@ -257,10 +261,12 @@ static void HandleOutputBuffer (
 
 	UInt32 availableSamples;
 	double timingCorrection = 0;
+	
 	nesAPU->end_frame(cycle);
 	blipBuffer->end_frame(cycle);
-	
+	_lastCPUCycle = 0;
 	nesAPUState->isRunning = YES;
+	
 	availableSamples = nesAPUState->blipBuffer->samples_avail();
 	if (availableSamples < (nesAPUState->numPacketsToRead * 2)) {
 			

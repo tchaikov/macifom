@@ -378,7 +378,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (void)_unsupportedOpcode:(uint8_t)opcode
 {
-	NSLog(@"Macifom: Encountered unsupported opcode %2.2x at program counter %4.4x on cycle %d",opcode,_cpuRegisters->programCounter,_cpuRegisters->cycle);
+	NSLog(@"Encountered unsupported opcode %2.2x at program counter %4.4x on cycle %d",opcode,_cpuRegisters->programCounter,_cpuRegisters->cycle);
 	_encounteredUnsupportedOpcode = YES;
 }
 
@@ -1448,8 +1448,6 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	while (_cpuRegisters->cycle < cycle) {
 			
 		if ([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle]) {
-		// Believe it or not, the optimization below caused drawing issues in Maniac Mansion
-		// if (([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle] * 4 + _cpuRegisters->cycle) >= cycle) {
 			
 			[apu runAPUUntilCPUCycle:_cpuRegisters->cycle];
 		}
@@ -1457,7 +1455,6 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		
 			[self _performInterrupt];
 			[cartridge servicedInterruptOnCycle:_cpuRegisters->cycle];
-			// NSLog(@"Performing interrupt on CPU cycle %d.",_cpuRegisters->cycle);
 		}
 		else {
 			
@@ -1490,30 +1487,32 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 
 - (uint_fast32_t)executeUntilCycleWithBreak:(uint_fast32_t)cycle
 {
-	uint8_t opcode;
-	
-	while ((_cpuRegisters->cycle < cycle) && (_cpuRegisters->programCounter != breakPoint)) {
-	
-		if (([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle] * 4 + _cpuRegisters->cycle) >= cycle) {
-			
-			[apu runAPUUntilCPUCycle:_cpuRegisters->cycle];
-		}
-		else {
-			opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
-			_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, bbum says that's fine
-		}
-	}
-	
-	_encounteredBreakpoint = (_cpuRegisters->programCounter == breakPoint);
+	while ((_cpuRegisters->cycle < cycle) && (_cpuRegisters->programCounter != breakPoint)) [self interpretOpcode];
+
+	[self setEncounteredBreakpoint:(_cpuRegisters->programCounter == breakPoint)];
 	
 	return _cpuRegisters->cycle;
 }
 
 - (uint_fast32_t)interpretOpcode
 {
-	uint8_t opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
-	_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, I don't think this matters
-
+	uint8_t opcode;
+	
+	if ([apu pendingDMCReadsOnCycle:_cpuRegisters->cycle]) {
+		
+		[apu runAPUUntilCPUCycle:_cpuRegisters->cycle];
+	}
+	else if ((_cpuRegisters->cycle >= _nextIRQ) && !_cpuRegisters->statusIRQDisable) {
+		
+		[self _performInterrupt];
+		[cartridge servicedInterruptOnCycle:_cpuRegisters->cycle];
+	}
+	else {
+	
+		opcode = _readByteFromCPUAddressSpace(self,@selector(readByteFromCPUAddressSpace:),_cpuRegisters->programCounter++);
+		_operationMethods[opcode](self,@selector(_unsupportedOpcode:),opcode); // Deliberately passing wrong SEL here, I don't think this matters
+	}
+	
 	return _cpuRegisters->cycle;
 }
 
@@ -1535,18 +1534,12 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 - (void)stealCycles:(uint_fast32_t)cycles
 {
 	_cpuRegisters->cycle += cycles;
-	
-	// if (_cpuRegisters->cycle > 29780) NSLog(@"Cycle stealing pushed CPU clock beyond 29780!");
 }
 
 - (void)setNextIRQ:(uint_fast32_t)cycles
 {
-	// FIXME: This broke Jurassic Park even more
-	// if (_nextIRQ > _cpuRegisters->cycle || _cpuRegisters->statusIRQDisable) {
-		
-		if (cycles != NO_PENDING_IRQ) _nextIRQ = _cpuRegisters->cycle + cycles;
-		else _nextIRQ = NO_PENDING_IRQ;
-	// }
+	if (cycles != NO_PENDING_IRQ) _nextIRQ = _cpuRegisters->cycle + cycles;
+	else _nextIRQ = NO_PENDING_IRQ;
 }
 
 @end

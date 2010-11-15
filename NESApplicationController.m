@@ -359,7 +359,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 - (void)_nextFrameWithBreak {
 	
 	uint_fast32_t actualCPUCyclesRun;
-	
+		
 	if ([cpuInterpreter encounteredBreakpoint]) {
 		
 		gameIsRunning = NO;
@@ -370,7 +370,7 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 	else {
 		
-		gameTimer = [NSTimer scheduledTimerWithTimeInterval:0.0166 target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
+		gameTimer = [NSTimer scheduledTimerWithTimeInterval:(0.0166 + lastTimingCorrection) target:self selector:@selector(_nextFrameWithBreak) userInfo:nil repeats:NO];
 		
 		[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
 		[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
@@ -386,12 +386,11 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		
 		if (![cpuInterpreter encounteredBreakpoint]) {
 			
-			[apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
+			lastTimingCorrection = [apuEmulator endFrameOnCycle:actualCPUCyclesRun]; // End the APU frame and update timing correction
 			[ppuEmulator resetCPUCycleCounter];
 			[cpuInterpreter resetCPUCycleCounter];
 		}
 		
-		[apuEmulator clearBuffer];
 		[playfieldView setNeedsDisplay:YES];
 	}
 }
@@ -412,8 +411,10 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 	if (gameIsRunning) {
 		
-		[gameTimer invalidate];
 		gameIsRunning = NO;
+		[gameTimer invalidate];
+		gameTimer = nil;
+		[apuEmulator pause];
 		
 		if (debuggerIsVisible) {
 			
@@ -425,7 +426,9 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	else {
 		
 		gameIsRunning = YES;
+		[cpuInterpreter setEncounteredBreakpoint:NO];
 		[self _nextFrameWithBreak];
+		[apuEmulator resume];
 		[runDebugButton setTitle:@"Stop"];
 	}
 }
@@ -440,19 +443,23 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 	else {
 	
-		if (gameIsRunning) [self play:nil]; // Pause the game if it is running
 		if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Switch out of full-screen if in it
+		if (gameIsRunning) [self runUntilBreak:nil]; // Pause the game if it is running
+		
+		[debuggerWindow makeKeyAndOrderFront:nil];
+		debuggerIsVisible = YES;
 		[self updatecpuRegisters];
 		[self updateInstructions:NO];
 		[ppuEmulator toggleDebugging:YES];
-		[debuggerWindow makeKeyAndOrderFront:nil];
-		debuggerIsVisible = YES;
+		
 	}
 }
 
 - (IBAction)advanceFrame:(id)sender {
 
 	uint_fast32_t actualCPUCyclesRun;
+	
+	[cpuInterpreter setEncounteredBreakpoint:NO]; // Clear existing break, if any to continue to next frame
 		
 	[cpuInterpreter setData:[_controllerInterface readController:0] forController:0];
 	[cpuInterpreter setData:[_controllerInterface readController:1] forController:1];// Pull latest controller data
@@ -485,10 +492,28 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 - (IBAction)step:(id)sender {
 	
-	// FIXME: This needs to work with the PPU to be really useful
-	[cpuInterpreter interpretOpcode];
-	[self updatecpuRegisters];
-	[self updateInstructions:NO];
+	// Only allow step-through if game is not running
+	if (!gameIsRunning) {
+		
+		if ([ppuEmulator triggeredNMI] && ([cpuInterpreter cpuRegisters]->cycle == 0)) [cpuInterpreter _performNonMaskableInterrupt];
+		else [cpuInterpreter interpretOpcode];
+		[ppuEmulator runPPUUntilCPUCycle:[cpuInterpreter cpuRegisters]->cycle];
+		[apuEmulator clearBuffer];
+		[playfieldView setNeedsDisplay:YES];
+		
+		if ([cpuInterpreter cpuRegisters]->cycle >= [ppuEmulator cpuCyclesUntilVblank]) {
+			
+			[apuEmulator endFrameOnCycle:[cpuInterpreter cpuRegisters]->cycle]; // End the APU frame and update timing correction
+			[ppuEmulator resetCPUCycleCounter];
+			[cpuInterpreter resetCPUCycleCounter];
+		}
+		
+		if (debuggerIsVisible) {
+			
+			[self updatecpuRegisters];
+			[self updateInstructions:NO];
+		}
+	}
 }
 
 - (IBAction)peek:(id)sender 
