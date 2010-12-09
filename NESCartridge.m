@@ -131,7 +131,7 @@
 
 - (void)writeByte:(uint8_t)byte toWRAMwithCPUAddress:(uint16_t)address
 {
-	
+	_wram[address & (WRAM_SIZE - 1)] = byte;
 }
 
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle

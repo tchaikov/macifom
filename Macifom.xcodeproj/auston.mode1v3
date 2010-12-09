@@ -279,7 +279,8 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>18</integer>
+									<integer>4</integer>
+									<integer>2</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -320,7 +321,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>NESApplicationController.m</string>
+								<string>NESCartridge.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -328,11 +329,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>NESApplicationController.m</string>
+										<string>NESCartridge.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>B94FC3EF12B04A9E00827518</string>
+										<string>B94FC3FA12B151CA00827518</string>
 										<key>history</key>
 										<array>
 											<string>B987354C0F0F178D00224CA8</string>
@@ -362,8 +363,6 @@
 											<string>B9A365D5121CBBD40078EA5B</string>
 											<string>B984E3921291B31800F57A4A</string>
 											<string>B976F26A1291C4CD00D6C06B</string>
-											<string>B976F26C1291C4CD00D6C06B</string>
-											<string>B976F26D1291C4CD00D6C06B</string>
 											<string>B976F26E1291C4CD00D6C06B</string>
 											<string>B976F2701291C4CD00D6C06B</string>
 											<string>B976F2721291C4CD00D6C06B</string>
@@ -374,7 +373,6 @@
 											<string>B976F2781291C4CD00D6C06B</string>
 											<string>B9D7A0471291C72E00F15035</string>
 											<string>B9DD2EC2129DFABA00A5369B</string>
-											<string>B9DD2EC3129DFABA00A5369B</string>
 											<string>B9DD2EC5129DFABA00A5369B</string>
 											<string>B9DD2EC6129DFABA00A5369B</string>
 											<string>B9DD2EC7129DFABA00A5369B</string>
@@ -388,11 +386,14 @@
 											<string>B9DD2ECF129DFABA00A5369B</string>
 											<string>B9C4D21612A03829008AA67A</string>
 											<string>B9D3250612A3770500BBB397</string>
-											<string>B9D3250C12A3880D00BBB397</string>
-											<string>B9C5191D12A5A22C006BC734</string>
 											<string>B94FC3ED12B04A9E00827518</string>
-											<string>B94FC3EE12B04A9E00827518</string>
-											<string>B9D7A0481291C72E00F15035</string>
+											<string>B94FC3F312B151CA00827518</string>
+											<string>B94FC3F412B151CA00827518</string>
+											<string>B94FC3F512B151CA00827518</string>
+											<string>B94FC3F612B151CA00827518</string>
+											<string>B94FC3F712B151CA00827518</string>
+											<string>B94FC3F812B151CA00827518</string>
+											<string>B94FC3F912B151CA00827518</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
