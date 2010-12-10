@@ -188,9 +188,12 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	[openPanel setCanChooseFiles:YES];
 	[openPanel setCanChooseDirectories:NO];
 	[openPanel setAllowsMultipleSelection:NO];
-	[openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"nes"]];
+	// FIXME: The below method is correct for 10.6 and later but is non-functional in 10.5
+	// [openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"nes"]]; 
+	[openPanel setAllowsOtherFileTypes:NO];
 	
-	if (NSOKButton == [openPanel runModal]) {
+	// FIXME: runModalForTypes is deprecated in 10.6, but needed for 10.5 compatibility, change to runModal when 10.7 is released
+	if (NSOKButton == [openPanel runModalForTypes:[NSArray arrayWithObjects:@"nes",@"NES",nil]]) {
 						
 		if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:(NSString *)[[openPanel filenames] objectAtIndex:0]])) {
 		
