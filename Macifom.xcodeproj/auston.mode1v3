@@ -330,7 +330,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>B9E5A80712B29711005C844A</string>
+										<string>B9E5A80B12B298AB005C844A</string>
 										<key>history</key>
 										<array>
 											<string>B987354C0F0F178D00224CA8</string>
@@ -598,6 +598,10 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>B9E5A81312B298AB005C844A</string>
+		<string>B9E5A81412B298AB005C844A</string>
+		<string>1C78EAAD065D492600B07095</string>
+		<string>1CD10A99069EF8BA00B06720</string>
 		<string>B98734FC0F0F108E00224CA8</string>
 		<string>/Users/auston/Projects/Software/macifom_trunk/Macifom.xcodeproj</string>
 	</array>
@@ -799,13 +803,13 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1CD10A99069EF8BA00B06720</string>
-				<string>B94FC41312B1FABC00827518</string>
+				<string>B9E5A80C12B298AB005C844A</string>
 				<string>1C162984064C10D400B95A72</string>
-				<string>B94FC41412B1FABC00827518</string>
-				<string>B94FC41512B1FABC00827518</string>
-				<string>B94FC41612B1FABC00827518</string>
-				<string>B94FC41712B1FABC00827518</string>
-				<string>B94FC41812B1FABC00827518</string>
+				<string>B9E5A80D12B298AB005C844A</string>
+				<string>B9E5A80E12B298AB005C844A</string>
+				<string>B9E5A80F12B298AB005C844A</string>
+				<string>B9E5A81012B298AB005C844A</string>
+				<string>B9E5A81112B298AB005C844A</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.debugV3</string>
@@ -959,7 +963,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1C78EAAD065D492600B07095</string>
-				<string>B94FC41912B1FABC00827518</string>
+				<string>B9E5A81212B298AB005C844A</string>
 				<string>1C78EAAC065D492600B07095</string>
 			</array>
 			<key>ToolbarConfiguration</key>

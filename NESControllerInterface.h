@@ -64,12 +64,12 @@ typedef enum {
 }
 
 - (uint_fast32_t)readController:(int)index;
-- (void)keyboardKey:(unsigned short)keyCode changedTo:(BOOL)state;
+- (void)keyboardEvent:(NSEvent *)event changedTo:(BOOL)state;
 - (void)setButton:(NESControllerButton)button forController:(int)index withBool:(BOOL)flag;
 - (void)startListeningForMapping:(id)sender;
 - (void)stopListeningForMapping:(id)sender;
 - (BOOL)listenForButton;
-- (void)mapDevice:(NSMutableDictionary *)device button:(NESControllerButton)button toKeyCode:(NSNumber *)keyCode;
+- (void)mapDevice:(NSMutableDictionary *)device button:(NESControllerButton)button toKeyDictionary:(NSDictionary *)keyDict;
 - (NSMutableDictionary *)_activeDeviceForController:(NSNumber *)controller;
 
 @property (retain) NSMutableArray *controllerMappings;

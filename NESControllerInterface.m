@@ -23,7 +23,8 @@
 
 #import "NESControllerInterface.h"
 #import "NESKeyboardResponder.h"
-#import <Carbon/Carbon.h>
+
+#define CONTROLLER_SETTINGS_VERSION 2
 
 static Boolean IOHIDDevice_GetLongProperty( IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, long * outValue )
 {
@@ -120,6 +121,7 @@ static const struct { char const* const name; unichar const glyph; } mapOfNamesF
 
 // Need to update this value if you modify mapOfNamesForUnicodeGlyphs
 #define NumberOfUnicodeGlyphReplacements 24
+
 static void GamePadValueChanged(void *context, IOReturn result, void *sender, IOHIDValueRef value)
 {
 	IOHIDDeviceRef hidDevice;
@@ -157,8 +159,8 @@ static void GamePadValueChanged(void *context, IOReturn result, void *sender, IO
 				
 					NESControllerButton otherButton = button == NESControllerButtonUp ? NESControllerButtonDown : (button == NESControllerButtonDown ? NESControllerButtonUp : (button == NESControllerButtonLeft ? NESControllerButtonRight : NESControllerButtonLeft));
 					
-					[controllerInterface mapDevice:device button:button toKeyCode:[NSNumber numberWithUnsignedInt:(uint32_t)cookie]];
-					[controllerInterface mapDevice:device button:otherButton toKeyCode:[NSNumber numberWithUnsignedInt:(uint32_t)cookie]];
+					[controllerInterface mapDevice:device button:button toKeyDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:(uint32_t)cookie],@"code",[NSString stringWithFormat:@"Axis %d",(uint32_t)cookie],@"name",nil]];
+					[controllerInterface mapDevice:device button:otherButton toKeyDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:(uint32_t)cookie],@"code",[NSString stringWithFormat:@"Axis %d",(uint32_t)cookie],@"name",nil]];
 					[controllerInterface stopListeningForMapping:nil];
 				}
 				// FIXME: Should I allow setting a direction to a non-axis?
@@ -166,7 +168,7 @@ static void GamePadValueChanged(void *context, IOReturn result, void *sender, IO
 			else if (elementType == kIOHIDElementTypeInput_Button) {
 			
 				// If button is not a direction, verify that this is not an axis and set it only
-				[controllerInterface mapDevice:device button:button toKeyCode:[NSNumber numberWithUnsignedInt:(uint32_t)cookie]];
+				[controllerInterface mapDevice:device button:button toKeyDictionary:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:(uint32_t)cookie],@"code",[NSString stringWithFormat:@"Button %d",(uint32_t)cookie],@"name",nil]];
 				[controllerInterface stopListeningForMapping:nil];
 			}
 		}
@@ -184,38 +186,38 @@ static void GamePadValueChanged(void *context, IOReturn result, void *sender, IO
 			
 			for (button = NESControllerButtonUp; button < [mappings count]; button++) {
 				
-				if ([(NSNumber *)[mappings objectAtIndex:button] unsignedIntValue] == (uint32_t)cookie) {
+				if ([(NSNumber *)[(NSDictionary *)[mappings objectAtIndex:button] objectForKey:@"code"] unsignedIntValue] == (uint32_t)cookie) {
 					
 					if ((button == NESControllerButtonUp) || (button == NESControllerButtonDown)) {
 
-						switch (logicalValue) {
-								
-							case 1:
-								[controllerInterface setButton:NESControllerButtonUp forController:controller withBool:YES];
-								break;
-							case 255:
-								[controllerInterface setButton:NESControllerButtonDown forController:controller withBool:YES];
-								break;
-							default:
-								[controllerInterface setButton:NESControllerButtonUp forController:controller withBool:NO];
-								[controllerInterface setButton:NESControllerButtonDown forController:controller withBool:NO];
-								break;
-						}
+						if (logicalValue < 125) {
+                            
+                            [controllerInterface setButton:NESControllerButtonUp forController:controller withBool:YES];
+                        }
+                        else if (logicalValue > 129) {
+                            
+                            [controllerInterface setButton:NESControllerButtonDown forController:controller withBool:YES];
+                        }
+                        else {
+						
+                            [controllerInterface setButton:NESControllerButtonUp forController:controller withBool:NO];
+                            [controllerInterface setButton:NESControllerButtonDown forController:controller withBool:NO];
+                        }
 					}
 					else if ((button == NESControllerButtonLeft) || (button == NESControllerButtonRight)) {
 						
-						switch (logicalValue) {
+						if (logicalValue < 125) {
 						
-							case 1:
-								[controllerInterface setButton:NESControllerButtonLeft forController:controller withBool:YES];
-								break;
-							case 255:
-								[controllerInterface setButton:NESControllerButtonRight forController:controller withBool:YES];
-								break;
-							default:
-								[controllerInterface setButton:NESControllerButtonLeft forController:controller withBool:NO];
-								[controllerInterface setButton:NESControllerButtonRight forController:controller withBool:NO];
-								break;
+                            [controllerInterface setButton:NESControllerButtonLeft forController:controller withBool:YES];
+                        }
+                        else if (logicalValue > 129) {
+                            
+                            [controllerInterface setButton:NESControllerButtonRight forController:controller withBool:YES];
+                        }
+                        else {
+							
+                            [controllerInterface setButton:NESControllerButtonLeft forController:controller withBool:NO];
+                            [controllerInterface setButton:NESControllerButtonRight forController:controller withBool:NO];
 						}
 					}
 					else {
@@ -308,6 +310,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	return nil;
 }
 
+/*
 // Used under MIT license from http://inquisitivecocoa.com/2009/04/05/key-code-translator/
 - (NSString *)stringForKeyCode:(unsigned short)keyCode withModifierFlags:(NSUInteger)modifierFlags
 {
@@ -350,6 +353,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	
 	return nil;
 }
+ */
 
 - (void)_updateControllerMappings {
 	
@@ -376,8 +380,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 			  [NSNumber numberWithInt:button],@"buttonIndex",
 			  [activeDevice objectForKey:@"usedFor"],@"controller",
 			  [NSString stringWithFormat:@"%@ %@",controllerName,[self _nameForButton:button]],@"button",
-			  [NSString stringWithFormat:@"%@ (%@)",[(NSNumber *)[mappings objectAtIndex:button] intValue] < 0 ? @"(None)" :
-			   ([deviceUsage isEqualToNumber:[NSNumber numberWithUnsignedInt:6]] ? [self stringForKeyCode:[(NSNumber *)[mappings objectAtIndex:button] unsignedShortValue] withModifierFlags:0] : [(NSNumber *)[mappings objectAtIndex:button] stringValue]),deviceName],@"assignment",
+			  [NSString stringWithFormat:@"%@ (%@)",[(NSDictionary *)[mappings objectAtIndex:button] objectForKey:@"name"], deviceName],@"assignment",
 			  nil]];
 		}
 	}
@@ -666,18 +669,26 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	NSDictionary *defaultControls = [NSDictionary dictionaryWithObjectsAndKeys:
 									 [NSArray arrayWithObjects:
 									  [NSDictionary dictionaryWithObjectsAndKeys:
-									   [NSArray arrayWithObjects:[NSNumber numberWithUnsignedShort:13],[NSNumber numberWithUnsignedShort:1],[NSNumber numberWithUnsignedShort:0],[NSNumber numberWithUnsignedShort:2],[NSNumber numberWithUnsignedShort:5],[NSNumber numberWithUnsignedShort:4],[NSNumber numberWithUnsignedShort:37],[NSNumber numberWithUnsignedShort:40],nil],@"mappings",
+									   [NSArray arrayWithObjects:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:13],@"code",@"w",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:1],@"code",@"s",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:0],@"code",@"a",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:2],@"code",@"d",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:5],@"code",@"g",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:4],@"code",@"h",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:37],@"code",@"l",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:40],@"code",@"k",@"name",nil],nil],@"mappings",
 									   [NSDictionary dictionaryWithObjectsAndKeys:@"Keyboard",@"name",[NSNumber numberWithUnsignedInt:6],@"usage",nil],@"identifiers",
 									   [NSNumber numberWithUnsignedInt:0],@"usedFor",
 									   [NSNumber numberWithBool:YES],@"enabled",nil],
 									  [NSDictionary dictionaryWithObjectsAndKeys:
-									   [NSArray arrayWithObjects:[NSNumber numberWithUnsignedShort:126],[NSNumber numberWithUnsignedShort:125],[NSNumber numberWithUnsignedShort:123],[NSNumber numberWithUnsignedShort:124],[NSNumber numberWithUnsignedShort:9],[NSNumber numberWithUnsignedShort:11],[NSNumber numberWithUnsignedShort:46],[NSNumber numberWithUnsignedShort:45],nil],@"mappings",
+									   [NSArray arrayWithObjects:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:126],@"code",@"Up",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:125],@"code",@"Down",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:123],@"code",@"Left",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:124],@"code",@"Right",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:9],@"code",@"v",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:11],@"code",@"b",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:46],@"code",@"m",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:45],@"code",@"n",@"name",nil],nil],@"mappings",
 									   [NSDictionary dictionaryWithObjectsAndKeys:@"Keyboard",@"name",[NSNumber numberWithUnsignedInt:6],@"usage",nil],@"identifiers",
 									   [NSNumber numberWithUnsignedInt:1],@"usedFor",
-									   [NSNumber numberWithBool:YES],@"enabled",nil],nil],@"controllers",nil];
+									   [NSNumber numberWithBool:YES],@"enabled",nil],nil],@"controllers",[NSNumber numberWithUnsignedInt:1],@"controllerSettingsVersion",nil];
 	
 	[defaults registerDefaults:defaultControls];
 	
+    if (![[NSUserDefaults standardUserDefaults] objectForKey:@"controllerSettingsVersion"] || ([[[NSUserDefaults standardUserDefaults] objectForKey:@"controllerSettingsVersion"] unsignedIntValue] != CONTROLLER_SETTINGS_VERSION)) {
+        
+        NSLog(@"Updating controller settings schema.");
+        
+        [[NSUserDefaults standardUserDefaults] setObject:[defaultControls objectForKey:@"controllers"] forKey:@"controllers"];
+        [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithUnsignedInt:CONTROLLER_SETTINGS_VERSION] forKey:@"controllerSettingsVersion"];
+    }
+    
 	// Build list of known devices
 	[self _buildKnownDeviceList];
 	
@@ -749,30 +760,43 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 		
 		[mappingController setSelectionIndex:_setMappingIndex];
 		_listenForButton = NO;
+        [propertiesWindow makeFirstResponder:mappingTable];
 	}
 }
 
-- (void)mapDevice:(NSMutableDictionary *)device button:(NESControllerButton)button toKeyCode:(NSNumber *)keyCode {
+- (void)mapDevice:(NSMutableDictionary *)device button:(NESControllerButton)button toKeyDictionary:(NSDictionary *)keyDict {
 	
-	[(NSMutableArray *)[device objectForKey:@"mappings"] replaceObjectAtIndex:button withObject:keyCode];
+	[(NSMutableArray *)[device objectForKey:@"mappings"] replaceObjectAtIndex:button withObject:keyDict];
 	[[NSUserDefaults standardUserDefaults] setObject:_knownDevices forKey:@"controllers"];
 	
 	[self _updateControllerMappings];
 }
 
-- (void)keyboardKey:(unsigned short)keyCode changedTo:(BOOL)state
+- (void)keyboardEvent:(NSEvent *)event changedTo:(BOOL)state
 {
 	NESControllerButton buttonIndex;
 	NSDictionary *controller;
 	NSArray *mappings;
-	NSNumber *key = [NSNumber numberWithUnsignedShort:keyCode];
+    NSString *keyName;
+    NSUInteger keyCounter;
+	NSNumber *key = [NSNumber numberWithUnsignedShort:[event keyCode]];
 
 	if (_listenForButton) {
 	
 		NSMutableDictionary *device = [self _activeDeviceForController:_setMappingForController];
 		if ([(NSNumber *)[(NSMutableDictionary *)[device objectForKey:@"identifiers"] objectForKey:@"usage"] unsignedIntValue] == 6) {
 		
-			[self mapDevice:device button:_setMappingForButton toKeyCode:[NSNumber numberWithUnsignedShort:keyCode]];
+            keyName = [event charactersIgnoringModifiers];
+			for (keyCounter = 0; keyCounter < NumberOfUnicodeGlyphReplacements; keyCounter++) {
+				
+                if (mapOfNamesForUnicodeGlyphs[keyCounter].glyph == [keyName characterAtIndex:0]) {
+                    
+                    keyName = [NSString stringWithCString:mapOfNamesForUnicodeGlyphs[keyCounter].name encoding:NSUTF8StringEncoding];
+                    break;
+                }
+			}
+            
+			[self mapDevice:device button:_setMappingForButton toKeyDictionary:[NSDictionary dictionaryWithObjectsAndKeys:key,@"code",keyName,@"name",nil]];
 			[self stopListeningForMapping:nil];
 			return;
 		}
@@ -786,7 +810,7 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 		
 		for (buttonIndex = NESControllerButtonUp; buttonIndex < [mappings count]; buttonIndex++) {
 			
-			if ([(NSNumber *)[mappings objectAtIndex:buttonIndex] isEqualToNumber:key]) {
+			if ([(NSNumber *)[(NSDictionary *)[mappings objectAtIndex:buttonIndex] objectForKey:@"code"] isEqualToNumber:key]) {
 		
 				[self setButton:buttonIndex forController:[(NSNumber *)[controller objectForKey:@"usedFor"] unsignedIntValue] withBool:state];
 				return;
@@ -940,9 +964,10 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	else {
 		
 		NSLog(@"Creating new known device.");
+        
 		// A device we don't know about, give it empty data and add it to the list of known devices
 		newDevice = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-					 [NSMutableArray arrayWithObjects:[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],[NSNumber numberWithInt:-1],nil],@"mappings",
+					 [NSMutableArray arrayWithObjects:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:-1],@"code",@"None",@"name",nil],nil],@"mappings",
 					 newSelection,@"identifiers",
 					 controller,@"usedFor",
 					 [NSNumber numberWithBool:YES],@"enabled",nil];

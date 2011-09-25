@@ -63,7 +63,7 @@
 - (void)rebuildCHRROMPointers;
 - (uint8_t *)wram;
 - (iNESFlags *)iNesFlags;
-- (void)writeByte:(uint8_t)byte toWRAMwithCPUAddress:(uint16_t)address;
+- (void)writeByte:(uint8_t)byte toWRAMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)writeByte:(uint8_t)byte toPRGROMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle;
 - (void)configureInitialPPUState;
 - (void)setInitialROMPointers;

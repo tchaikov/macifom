@@ -129,7 +129,7 @@
 	return _chrromBankIndices;
 }
 
-- (void)writeByte:(uint8_t)byte toWRAMwithCPUAddress:(uint16_t)address
+- (void)writeByte:(uint8_t)byte toWRAMwithCPUAddress:(uint16_t)address onCycle:(uint_fast32_t)cycle
 {
 	_wram[address & (WRAM_SIZE - 1)] = byte;
 }

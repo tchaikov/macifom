@@ -41,7 +41,7 @@
 }
 
 - (uint_fast32_t *)videoBuffer;
-- (void)scaleForFullScreenDrawing;
+- (void)scaleForFullScreenDrawingWithWidth:(size_t)width height:(size_t)height;
 - (void)scaleForWindowedDrawing;
 
 @end

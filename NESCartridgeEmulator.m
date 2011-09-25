@@ -29,17 +29,21 @@
 #import "NESSxROMCartridge.h"
 #import "NESSUROMCartridge.h"
 #import "NESTxROMCartridge.h"
+#import "NESVRC2bCartridge.h"
+#import "NESVRC2aCartridge.h"
+#import "NESVRC1Cartridge.h"
+#import "NESiNES184Cartridge.h"
 
 static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UNROM switch", "CNROM switch", "Nintendo MMC3", "Nintendo MMC5", "FFE F4xxx", "AOROM switch",
 												"FFE F3xxx", "Nintendo MMC2", "Nintendo MMC4", "ColorDreams", "FFE F6xxx", "CPROM switch", "Unknown Mapper", "100-in-1 switch",
-												"Bandai", "FFE F8xxx", "Jaleco SS8806", "Namcot 106", "Nintendo DiskSystem", "Konami VRC4a", "Konami VRC2a (1)", "Konami VRC2a (2)",
+												"Bandai", "FFE F8xxx", "Jaleco SS8806", "Namcot 106", "Nintendo DiskSystem", "Konami VRC4a", "Konami VRC2a", "Konami VRC2b",
 												"Konami VRC6", "Konami VRC4b", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Irem G-101", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
-												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
+												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "VRC1", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
 												"Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper", "Unknown Mapper",
@@ -117,6 +121,22 @@ static const char *mapperDescriptions[256] = { "No mapper", "Nintendo MMC1", "UN
 			// AxROM
 			_cartridge = [[NESAxROMCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
 			break;
+        case 22:
+            // VRC2a
+            _cartridge = [[NESVRC2aCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+            break;
+        case 23:
+            // VRC2b
+            _cartridge = [[NESVRC2bCartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+            break;
+        case 75:
+            // VRC1
+            _cartridge = [[NESVRC1Cartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+            break;
+        case 184:
+            // iNES Mapper 184 Sunsoft
+            _cartridge = [[NESiNES184Cartridge alloc] initWithPrgrom:_prgrom chrrom:_chrrom ppu:_ppu andiNesFlags:_lastHeader];
+            break;
 		default:
 			return [NSError errorWithDomain:@"NESMapperErrorDomain" code:11 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Unsupported iNES Mapper",NSLocalizedDescriptionKey,[NSString stringWithFormat:@"Macifom was unable to load the selected file as it specifies an unsupported iNES mapper: %@",[self mapperDescription]],NSLocalizedRecoverySuggestionErrorKey,nil]];
 			break;

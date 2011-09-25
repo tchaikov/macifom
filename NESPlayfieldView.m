@@ -43,8 +43,6 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	_windowedRect.origin.y = 0;
 	_fullScreenRect.size.width = _windowedRect.size.width = 256;
 	_fullScreenRect.size.height =_windowedRect.size.height = 240;
-	_fullScreenRect.origin.y = 0;
-	_fullScreenRect.origin.x = 32;
 	_scale = 2;
 	screenRect = &_windowedRect;
 		
@@ -58,6 +56,8 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 		
 	[[self window] useOptimizedDrawing:YES]; // Use optimized drawing in window as there are no overlapping subviews
 	[[self window] setPreferredBackingLocation:NSWindowBackingLocationVideoMemory]; // Use QuartzGL to scale the video
+    [[self window] setBackingType:NSBackingStoreBuffered]; // For double-buffering
+	[[self window] setBackgroundColor:[NSColor blackColor]]; // Default background for the window
 	
     return self;
 }
@@ -78,12 +78,12 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 
 - (void)keyDown:(NSEvent *)theEvent
 {
-	[_controllerInterface keyboardKey:[theEvent keyCode] changedTo:YES];
+	[_controllerInterface keyboardEvent:theEvent changedTo:YES];
 }
 
 - (void)keyUp:(NSEvent *)theEvent
 {
-	[_controllerInterface keyboardKey:[theEvent keyCode] changedTo:NO];
+	[_controllerInterface keyboardEvent:theEvent changedTo:NO];
 }
 
 - (uint_fast32_t *)videoBuffer
@@ -91,7 +91,7 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	return _videoBuffer;
 }
 
-- (void)scaleForFullScreenDrawing
+- (void)scaleForFullScreenDrawingWithWidth:(size_t)width height:(size_t)height
 {
 	screenRect = &_fullScreenRect;
 	
@@ -101,13 +101,23 @@ void VideoBufferProviderReleaseData(void *info, const void *data, size_t size)
 	[[self window] setBackingType:NSBackingStoreBuffered]; // For double-buffering
 	[[self window] setBackgroundColor:[NSColor blackColor]]; // Default background for the window appears to be white
 	
+    _scale = height / 240;
+    _fullScreenRect.origin.x = ((width / _scale) - _fullScreenRect.size.width) / 2;
+    _fullScreenRect.origin.y = ((height / _scale) - _fullScreenRect.size.height) / 2;
 	CGDisplayHideCursor(kCGNullDirectDisplay);
 }
 
 - (void)scaleForWindowedDrawing
 {
 	screenRect = &_windowedRect;
+    
+    // Set the preferred backing store to the card to get on the Quartz GL path
+	[[self window] setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
+	[[self window] useOptimizedDrawing:YES]; // Use optimized drawing in window as there are no overlapping subviews
+	[[self window] setBackingType:NSBackingStoreBuffered]; // For double-buffering
+	[[self window] setBackgroundColor:[NSColor blackColor]]; // Default background for the window appears to be white
 	
+    _scale = 2;
 	[[self window] makeFirstResponder:self];
 	CGDisplayShowCursor(kCGNullDirectDisplay);
 }

@@ -131,116 +131,210 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 @implementation NESApplicationController
 
+- (id)init
+{
+    if (self == [super init]) {
+        
+        _currentInstruction = nil;
+        instructions = nil;
+        romFilePath = nil;
+        debuggerIsVisible = NO;
+        gameIsLoaded = NO;
+        gameIsRunning = NO;
+        playOnActivate = NO;
+        applicationHasLaunched = NO;
+        lastTimingCorrection = 0;
+    }
+    
+    return self;
+}
+
 - (void)dealloc
 {
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (_fullScreenMode != NULL) CGDisplayModeRelease(_fullScreenMode);
+    if (_windowedMode != NULL) CGDisplayModeRelease(_windowedMode);
 	[cpuInterpreter release];
 	[apuEmulator release];
 	[ppuEmulator release];
 	[cartEmulator release];
 	[cpuRegisters release];
 	[instructions release];
+    [romFilePath release];
 	
 	[super dealloc];
 }
 
-- (void)awakeFromNib {
+- (CGDisplayModeRef)findBestFullscreenDisplayModeForDisplay:(CGDirectDisplayID)display
+{
+    CGDisplayModeRef displayMode;
+    CGDisplayModeRef bestDisplayMode = NULL;
+    CFStringRef pixelEncoding;
+    CFIndex displayModeIndex;
+    CFArrayRef displayModes = CGDisplayCopyAllDisplayModes(display,NULL);
+    
+    for (displayModeIndex = 0; displayModeIndex < CFArrayGetCount(displayModes); displayModeIndex++) {
+        
+        displayMode = (CGDisplayModeRef)CFArrayGetValueAtIndex(displayModes, displayModeIndex);
+        
+        // Verify that minimum horizontal resolution is met (let's say 512)
+        if (CGDisplayModeGetWidth(displayMode) < 512) continue;
+        
+        // Verify that minimum vertical resolution is met (let's say 480)
+        if (CGDisplayModeGetHeight(displayMode) < 480) continue;
+        
+        // Verify that the minimum refresh rate is met (0 - LCD, 60 - CRT)
+        if ((CGDisplayModeGetRefreshRate(displayMode) != 0) && (CGDisplayModeGetRefreshRate(displayMode) < 60.f)) continue;
+        
+        // Verify that color depth is correct
+        pixelEncoding = CGDisplayModeCopyPixelEncoding(displayMode);
+        if (![[NSString stringWithCString:IO32BitDirectPixels encoding:NSUTF8StringEncoding] isEqualToString:(NSString *)pixelEncoding]) continue;
+        CFRelease(pixelEncoding);
+        
+        if (bestDisplayMode == NULL) {
+            
+            CFRetain(displayMode);
+            bestDisplayMode = displayMode;
+        }
+        else {
+            
+            if (CGDisplayModeGetHeight(displayMode) < CGDisplayModeGetHeight(bestDisplayMode)) {
+                
+                // We have a new champion
+                CFRetain(displayMode);
+                CFRelease(bestDisplayMode);
+                bestDisplayMode = displayMode;
+            }
+        }
+    }
+    
+    CFRelease(displayModes);
+    
+    return bestDisplayMode;
+}
+
+- (BOOL)application:(NSApplication *)sender openFile:(NSString *)filename
+{
+    if (applicationHasLaunched) {
+        
+        if (gameIsRunning) [self play:nil]; // Pause game when opening rom selector
+        if (gameIsLoaded) [[cartEmulator cartridge] writeWRAMToDisk]; // This is a decent time to save!
+        if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Come out of full-screen mode
+        
+        return [self loadROMAtPath:filename];
+    }
+    else {
+        
+        [filename retain];
+        romFilePath = filename;
+    }
+    
+    return YES;
+}
+
+- (void)application:(NSApplication *)sender openFiles:(NSArray *)filenames
+{
+    [self application:sender openFile:[filenames objectAtIndex:0]];
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)notification {
 	
-	boolean_t exactMatch;
+    ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
+    apuEmulator = [[NESAPUEmulator alloc] init];
+    cpuInterpreter = [[NES6502Interpreter alloc] initWithPPU:ppuEmulator andAPU:apuEmulator];
+    cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator andCPU:cpuInterpreter];
+    [apuEmulator setDMCReadObject:cpuInterpreter];
+    
+	_fullScreenMode = [self findBestFullscreenDisplayModeForDisplay:kCGDirectMainDisplay];
+    _windowedMode = CGDisplayCopyDisplayMode(kCGDirectMainDisplay);
+    
+    if (_fullScreenMode) {
+        
+        NSLog(@"Fullscreen mode will be: %lux%lu, %.0fHz, 32bpp",CGDisplayModeGetWidth(_fullScreenMode),CGDisplayModeGetHeight(_fullScreenMode),CGDisplayModeGetRefreshRate(_fullScreenMode));
+    }
+    
+    if (romFilePath) {
+        
+        // Application was launched by double-clicking a ROM file
+        [self loadROMAtPath:romFilePath];
+    }
+    
+    applicationHasLaunched = YES;
+}
+
+- (BOOL)loadROMAtPath:(NSString *)path
+{
+    NSError *propagatedError;
+	NSAlert *errorDialog;
 	
-	ppuEmulator = [[NESPPUEmulator alloc] initWithBuffer:[playfieldView videoBuffer]];
-	apuEmulator = [[NESAPUEmulator alloc] init];
-	cpuInterpreter = [[NES6502Interpreter alloc] initWithPPU:ppuEmulator andAPU:apuEmulator];
-	cartEmulator = [[NESCartridgeEmulator alloc] initWithPPU:ppuEmulator andCPU:cpuInterpreter];
-	[apuEmulator setDMCReadObject:cpuInterpreter];
-	_currentInstruction = nil;
-	instructions = nil;
-	debuggerIsVisible = NO;
-	gameIsLoaded = NO;
-	gameIsRunning = NO;
-	playOnActivate = NO;
-	lastTimingCorrection = 0;
-	
-	// FIXME: Should probably CGRelease this somewhere
-	_fullScreenMode = CGDisplayBestModeForParameters(kCGDirectMainDisplay,32,640,480,&exactMatch); // FIXME: This call is deprecated as of Mac OS X 10.6
-	
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(_willLoseFocus:)
-												 name:NSApplicationWillResignActiveNotification object:nil];
-	
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(_willGainFocus:)
-												 name:NSApplicationDidBecomeActiveNotification object:nil];
-	
+    if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:path])) {
+		
+        NESCartridge *cartridge = [cartEmulator cartridge];
+        iNESFlags *cartridgeData = [cartridge iNesFlags];
+        
+        // Friendly Cartridge Info
+        NSLog(@"Cartridge Information:");
+        NSLog(@"Mapper #: %d\t\tDescription: %@",cartridgeData->mapperNumber,[cartEmulator mapperDescription]);
+        NSLog(@"Trainer: %@\t\tVideo Type: %@",(cartridgeData->hasTrainer ? @"Yes" : @"No"),(cartridgeData->isPAL ? @"PAL" : @"NTSC"));
+        NSLog(@"Mirroring: %@\tBackup RAM: %@",(cartridgeData->usesVerticalMirroring ? @"Vertical" : @"Horizontal"),(cartridgeData->usesBatteryBackedRAM ? @"Yes" : @"No"));
+        NSLog(@"Four-Screen VRAM Layout: %@",(cartridgeData->usesFourScreenVRAMLayout ? @"Yes" : @"No"));
+        NSLog(@"PRG-ROM Banks: %d x 16kB\tCHR-ROM Banks: %d x 8kB",cartridgeData->numberOf16kbPRGROMBanks,cartridgeData->numberOf8kbCHRROMBanks);
+        NSLog(@"Onboard RAM Banks: %d x 8kB",cartridgeData->numberOf8kbWRAMBanks);
+        
+        if (gameIsLoaded) [apuEmulator stopAPUPlayback]; // Terminate audio playback
+        
+        // Reset the PPU
+        [ppuEmulator resetPPUstatus];
+        
+        // Set initial ROM pointers
+        [cartridge setInitialROMPointers];
+        
+        // Configure initial PPU state
+        [cartridge configureInitialPPUState];
+        
+        // Allow CPU Interpreter to cache PRGROM pointers
+        [cpuInterpreter setCartridge:cartridge];
+        
+        // Reset the CPU to prepare for execution
+        [cpuInterpreter reset];
+        
+        // Flip the bool to indicate that the game is loaded
+        [self setGameIsLoaded:YES];
+        
+        // Flip on audio
+        [apuEmulator beginAPUPlayback];
+        
+        // Start the game
+        [self play:nil];
+    }
+    else {
+        
+        // Throw an error
+        errorDialog = [NSAlert alertWithError:propagatedError];
+        [errorDialog runModal];
+        return NO;
+    }
+    
+    return YES;
 }
 
 - (IBAction)loadROM:(id)sender
 {
-	NSError *propagatedError;
-	NSAlert *errorDialog;
-	NSOpenPanel *openPanel;
+    NSOpenPanel *openPanel;
 	
 	if (gameIsRunning) [self play:nil]; // Pause game when opening rom selector
 	if (gameIsLoaded) [[cartEmulator cartridge] writeWRAMToDisk]; // This is a decent time to save!
 	if ([playfieldView isInFullScreenMode]) [self toggleFullScreenMode:nil]; // Come out of full-screen mode
-	
+    
 	openPanel = [NSOpenPanel openPanel];
 	[openPanel setCanChooseFiles:YES];
 	[openPanel setCanChooseDirectories:NO];
 	[openPanel setAllowsMultipleSelection:NO];
-	// FIXME: The below method is correct for 10.6 and later but is non-functional in 10.5
-	// [openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"nes"]]; 
+	[openPanel setAllowedFileTypes:[NSArray arrayWithObjects:@"nes",@"NES",nil]]; 
 	[openPanel setAllowsOtherFileTypes:NO];
 	
-	// FIXME: runModalForTypes is deprecated in 10.6, but needed for 10.5 compatibility, change to runModal when 10.7 is released
-	if (NSOKButton == [openPanel runModalForTypes:[NSArray arrayWithObjects:@"nes",@"NES",nil]]) {
+	if (NSOKButton == [openPanel runModal]) {
 						
-		if (nil == (propagatedError = [cartEmulator loadROMFileAtPath:(NSString *)[[openPanel filenames] objectAtIndex:0]])) {
-		
-			NESCartridge *cartridge = [cartEmulator cartridge];
-			iNESFlags *cartridgeData = [cartridge iNesFlags];
-			
-			// Friendly Cartridge Info
-			NSLog(@"Cartridge Information:");
-			NSLog(@"Mapper #: %d\t\tDescription: %@",cartridgeData->mapperNumber,[cartEmulator mapperDescription]);
-			NSLog(@"Trainer: %@\t\tVideo Type: %@",(cartridgeData->hasTrainer ? @"Yes" : @"No"),(cartridgeData->isPAL ? @"PAL" : @"NTSC"));
-			NSLog(@"Mirroring: %@\tBackup RAM: %@",(cartridgeData->usesVerticalMirroring ? @"Vertical" : @"Horizontal"),(cartridgeData->usesBatteryBackedRAM ? @"Yes" : @"No"));
-			NSLog(@"Four-Screen VRAM Layout: %@",(cartridgeData->usesFourScreenVRAMLayout ? @"Yes" : @"No"));
-			NSLog(@"PRG-ROM Banks: %d x 16kB\tCHR-ROM Banks: %d x 8kB",cartridgeData->numberOf16kbPRGROMBanks,cartridgeData->numberOf8kbCHRROMBanks);
-			NSLog(@"Onboard RAM Banks: %d x 8kB",cartridgeData->numberOf8kbWRAMBanks);
-			
-			if (gameIsLoaded) [apuEmulator stopAPUPlayback]; // Terminate audio playback
-			
-			// Reset the PPU
-			[ppuEmulator resetPPUstatus];
-			
-			// Set initial ROM pointers
-			[cartridge setInitialROMPointers];
-			
-			// Configure initial PPU state
-			[cartridge configureInitialPPUState];
-			
-			// Allow CPU Interpreter to cache PRGROM pointers
-			[cpuInterpreter setCartridge:cartridge];
-			
-			// Reset the CPU to prepare for execution
-			[cpuInterpreter reset];
-			
-			// Flip the bool to indicate that the game is loaded
-			[self setGameIsLoaded:YES];
-			
-			// Flip on audio
-			[apuEmulator beginAPUPlayback];
-			
-			// Start the game
-			[self play:nil];
-		}
-		else {
-					
-			// Throw an error
-			errorDialog = [NSAlert alertWithError:propagatedError];
-			[errorDialog runModal];
-		}
+        [self loadROMAtPath:(NSString *)[[openPanel filenames] objectAtIndex:0]];
 	}
 }
 
@@ -345,13 +439,19 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 		if (gameWasRunning) [self play:nil]; // Pause the game during the transition
 		if ([playfieldView isInFullScreenMode]) {
 			
+            CGDisplaySetDisplayMode(kCGDirectMainDisplay, _windowedMode, NULL);
+            CGDisplayRelease(kCGDirectMainDisplay);
+            
 			[playfieldView exitFullScreenModeWithOptions:nil];
 			[playfieldView scaleForWindowedDrawing];
 		}
 		else {
 			
-			[playfieldView enterFullScreenMode:[NSScreen mainScreen] withOptions:[NSDictionary dictionaryWithObjectsAndKeys:(NSDictionary *)_fullScreenMode,NSFullScreenModeSetting,[NSNumber numberWithBool:NO],NSFullScreenModeAllScreens,nil]];
-			[playfieldView scaleForFullScreenDrawing];
+            CGDisplayCapture(kCGDirectMainDisplay);
+            CGDisplaySetDisplayMode(kCGDirectMainDisplay, _fullScreenMode, NULL);
+            
+			[playfieldView enterFullScreenMode:[NSScreen mainScreen] withOptions:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],NSFullScreenModeAllScreens,nil]];
+			[playfieldView scaleForFullScreenDrawingWithWidth:CGDisplayModeGetWidth(_fullScreenMode) height:CGDisplayModeGetHeight(_fullScreenMode)];
 		}
 		if (gameWasRunning) [self play:nil]; // Resume the game at the end of the transition
 	}
@@ -666,8 +766,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 
 /* BEGIN Windowing system event handlers */
 
-- (void)_willLoseFocus:(NSNotification *)notification {
-	
+- (void)applicationWillResignActive:(NSNotification *)notification
+{	
 	if (gameIsRunning) {
 		
 		[self play:nil];
@@ -679,8 +779,8 @@ static const char *instructionDescriptions[256] = { "Break (Implied)", "ORA Indi
 	}
 }
 
-- (void)_willGainFocus:(NSNotification *)notification {
-	
+- (void)applicationDidBecomeActive:(NSNotification *)notification
+{	
 	if (playOnActivate) {
 		
 		[self play:nil];

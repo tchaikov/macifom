@@ -332,6 +332,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		
 		if (address == 0x4014) {
 						
+            // Resolve base address for DMA origin
 			if (byte < 32) {
 				
 				// NSLog(@"Initiating DMA SPRRAM transfer from CPU RAM: 0x%4.4x", (0x100 * byte));
@@ -368,7 +369,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	else if (address < 0x6000) return;
 	else if (address < 0x8000) {
 		
-		_wram[address & (WRAM_SIZE - 1)] = byte;
+		[cartridge writeByte:byte toWRAMwithCPUAddress:address onCycle:_cpuRegisters->cycle];
 	}
 	else {
 		
@@ -1414,7 +1415,7 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 	cartridge = cart;
 	
 	_prgromBankPointers = [cartridge prgromBankPointers];
-	_wram = [cartridge wram];
+	_wram = [cartridge wram]; // FIXME: This assumes we have WRAM, which isn't a great assumption.
 }
  
 - (void)reset

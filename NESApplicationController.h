@@ -25,7 +25,7 @@
 
 @class NESPlayfieldView, NES6502Interpreter, NESAPUEmulator, NESPPUEmulator, NESCartridgeEmulator, NESControllerInterface;
 
-@interface NESApplicationController : NSObject {
+@interface NESApplicationController : NSObject <NSApplicationDelegate> {
 
 	uint_fast32_t ppuCyclesInLastFrame;
 	double lastTimingCorrection;
@@ -36,7 +36,9 @@
 	NSArray *instructions;
 	NSDictionary *cpuRegisters;
 	NSTimer *gameTimer;
-	CFDictionaryRef _fullScreenMode;
+	CGDisplayModeRef _fullScreenMode;
+    CGDisplayModeRef _windowedMode;
+    NSString *romFilePath;
 	
 	NSMutableDictionary *_currentInstruction;
 	
@@ -54,6 +56,7 @@
 	BOOL gameIsLoaded;
 	BOOL gameIsRunning;
 	BOOL playOnActivate;
+    BOOL applicationHasLaunched;
 }
 
 - (IBAction)play:(id)sender;
@@ -69,6 +72,7 @@
 - (IBAction)showPreferences:(id)sender;
 - (IBAction)toggleFullScreenMode:(id)sender;
 
+- (BOOL)loadROMAtPath:(NSString *)path;
 - (BOOL)gameIsLoaded;
 - (void)setGameIsLoaded:(BOOL)flag;
 - (void)updatecpuRegisters;

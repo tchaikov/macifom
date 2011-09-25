@@ -28,12 +28,12 @@
 
 - (void)keyDown:(NSEvent *)theEvent
 {
-	[controllerInterface keyboardKey:[theEvent keyCode] changedTo:YES];
+	[controllerInterface keyboardEvent:theEvent changedTo:YES];
 }
 
 - (void)keyUp:(NSEvent *)theEvent
 {
-	[controllerInterface keyboardKey:[theEvent keyCode] changedTo:NO];
+	[controllerInterface keyboardEvent:theEvent changedTo:NO];
 }
 
 @end
