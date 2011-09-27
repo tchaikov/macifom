@@ -26,7 +26,7 @@
 
 #define CONTROLLER_SETTINGS_VERSION 2
 
-static Boolean IOHIDDevice_GetLongProperty( IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, long * outValue )
+static Boolean IOHIDDevice_GetNSIntegerProperty( IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, NSInteger* outValue )
 {
 	Boolean result = FALSE;
 	
@@ -36,24 +36,24 @@ static Boolean IOHIDDevice_GetLongProperty( IOHIDDeviceRef inIOHIDDeviceRef, CFS
 			// if this is a number
 			if ( CFNumberGetTypeID() == CFGetTypeID( tCFTypeRef ) ) {
 				// get it's value
-				result = CFNumberGetValue( ( CFNumberRef ) tCFTypeRef, kCFNumberSInt32Type, outValue );
+				result = CFNumberGetValue( ( CFNumberRef ) tCFTypeRef, kCFNumberNSIntegerType, outValue );
 			}
 		}
 	}
 	return result;
 }	// IOHIDDevice_GetLongProperty
 
-uint32_t IOHIDDevice_GetUsage( IOHIDDeviceRef inIOHIDDeviceRef )
+NSInteger IOHIDDevice_GetUsage( IOHIDDeviceRef inIOHIDDeviceRef )
 {
-	uint32_t result = 0;
-	( void ) IOHIDDevice_GetLongProperty( inIOHIDDeviceRef, CFSTR( kIOHIDDeviceUsageKey ), ( long * ) &result );
+	NSInteger result = 0;
+	( void ) IOHIDDevice_GetNSIntegerProperty( inIOHIDDeviceRef, CFSTR( kIOHIDDeviceUsageKey ), &result );
 	return result;
 } // IOHIDDevice_GetUsage
 
-long IOHIDDevice_GetLocationID( IOHIDDeviceRef inIOHIDDeviceRef )
+NSInteger IOHIDDevice_GetLocationID( IOHIDDeviceRef inIOHIDDeviceRef )
 {
-	long result = 0;
-	( void ) IOHIDDevice_GetLongProperty( inIOHIDDeviceRef, CFSTR( kIOHIDLocationIDKey ), &result );
+	NSInteger result = 0;
+	( void ) IOHIDDevice_GetNSIntegerProperty( inIOHIDDeviceRef, CFSTR( kIOHIDLocationIDKey ), &result );
 	return result;
 }	// IOHIDDevice_GetLocationID
 
@@ -72,17 +72,17 @@ CFStringRef IOHIDDevice_GetManufacturer( IOHIDDeviceRef inIOHIDDeviceRef )
 	return IOHIDDeviceGetProperty( inIOHIDDeviceRef, CFSTR( kIOHIDManufacturerKey ) );
 } // IOHIDDevice_GetManufacturer
 
-long IOHIDDevice_GetProductID( IOHIDDeviceRef inIOHIDDeviceRef )
+NSInteger IOHIDDevice_GetProductID( IOHIDDeviceRef inIOHIDDeviceRef )
 {
-	long result = 0;
-	( void ) IOHIDDevice_GetLongProperty( inIOHIDDeviceRef, CFSTR( kIOHIDProductIDKey ), &result );
+	NSInteger result = 0;
+	( void ) IOHIDDevice_GetNSIntegerProperty( inIOHIDDeviceRef, CFSTR( kIOHIDProductIDKey ), &result );
 	return result;
 } // IOHIDDevice_GetProductID
 
-long IOHIDDevice_GetVendorID( IOHIDDeviceRef inIOHIDDeviceRef )
+NSInteger IOHIDDevice_GetVendorID( IOHIDDeviceRef inIOHIDDeviceRef )
 {
-	long result = 0;
-	( void ) IOHIDDevice_GetLongProperty( inIOHIDDeviceRef, CFSTR( kIOHIDVendorIDKey ), &result );
+	NSInteger result = 0;
+	( void ) IOHIDDevice_GetNSIntegerProperty( inIOHIDDeviceRef, CFSTR( kIOHIDVendorIDKey ), &result );
 	return result;
 } // IOHIDDevice_GetVendorID
 
@@ -128,7 +128,8 @@ static void GamePadValueChanged(void *context, IOReturn result, void *sender, IO
 	IOHIDElementRef element;
 	IOHIDElementType elementType;
 	long hidDeviceLocation;
-	uint32_t usage, controller;
+	uint32_t controller;
+    NSInteger usage;
 	CFIndex logicalValue;
 	IOHIDElementCookie cookie;
 	NSMutableDictionary *device;
@@ -407,17 +408,17 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 	
 	return [NSDictionary dictionaryWithObjectsAndKeys:
 								name,@"name",
-								[NSNumber numberWithUnsignedInt:IOHIDDevice_GetUsage(device)],@"usage",
-								[NSNumber numberWithLong:IOHIDDevice_GetVendorID(device)],@"vendorId",
-								[NSNumber numberWithLong:IOHIDDevice_GetProductID(device)],@"productId",
-								[NSNumber numberWithLong:IOHIDDevice_GetLocationID(device)],@"locationId",nil];
+								[NSNumber numberWithInteger:IOHIDDevice_GetUsage(device)],@"usage",
+								[NSNumber numberWithInteger:IOHIDDevice_GetVendorID(device)],@"vendorId",
+								[NSNumber numberWithInteger:IOHIDDevice_GetProductID(device)],@"productId",
+								[NSNumber numberWithInteger:IOHIDDevice_GetLocationID(device)],@"locationId",nil];
 }
 
 - (void)_updateInputDevices:(IOHIDDeviceRef *)devices length:(CFIndex)number {
 
 	NSMutableArray *newDeviceList = [NSMutableArray arrayWithObject:
 									 [NSDictionary dictionaryWithObjectsAndKeys:@"Keyboard",@"name",
-									  [NSNumber numberWithUnsignedInt:6],@"usage",nil]];
+									  [NSNumber numberWithInteger:6],@"usage",nil]];
 	
 	for (uint_fast32_t index = 0; index < number; index++) {
 	
@@ -429,8 +430,8 @@ static CFMutableDictionaryRef hu_CreateDeviceMatchingDictionary(UInt32 inUsagePa
 
 - (BOOL)_device:(NSDictionary *)deviceOne matches:(NSDictionary *)deviceTwo {
 
-	if ([(NSNumber *)[deviceOne objectForKey:@"usage"] isEqualToNumber:[NSNumber numberWithUnsignedInt:6]] &&
-		[(NSNumber *)[deviceTwo objectForKey:@"usage"] isEqualToNumber:[NSNumber numberWithUnsignedInt:6]]) return YES;
+	if ([(NSNumber *)[deviceOne objectForKey:@"usage"] isEqualToNumber:[NSNumber numberWithInteger:6]] &&
+		[(NSNumber *)[deviceTwo objectForKey:@"usage"] isEqualToNumber:[NSNumber numberWithInteger:6]]) return YES;
 	
 	return [(NSNumber *)[deviceOne objectForKey:@"usage"] isEqualToNumber:(NSNumber *)[deviceTwo objectForKey:@"usage"]] &&
 		[(NSNumber *)[deviceOne objectForKey:@"vendorId"] isEqualToNumber:(NSNumber *)[deviceTwo objectForKey:@"vendorId"]] &&
