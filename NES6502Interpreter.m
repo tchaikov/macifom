@@ -333,16 +333,16 @@ static uint8_t _GetIndexRegisterY(CPURegisters *cpuRegisters, uint8_t operand) {
 		if (address == 0x4014) {
 						
             // Resolve base address for DMA origin
-			if (byte < 32) {
+			if (byte < 0x20) {
 				
 				// NSLog(@"Initiating DMA SPRRAM transfer from CPU RAM: 0x%4.4x", (0x100 * byte));
 				DMAorigin = _zeroPage + (0x100 * (byte & 0x7));
 			}
-			else if (byte >= 128) {
+			else if (byte >= 0x80) {
 				
 				DMAorigin = _prgromBankPointers[(0x100 * (byte & 0x7F)) / PRGROM_BANK_SIZE] + ((0x100 * (byte & 0x7F)) & (PRGROM_BANK_SIZE - 1)); 
 			}
-			else if (byte >= 96) {
+			else if (byte >= 0x60) {
 				
 				// NSLog(@"Initiating DMA SPRRAM transfer from WRAM: 0x%4.4x", (0x100 * byte));
 				DMAorigin = _wram + (0x100 * (byte & 0x1F));

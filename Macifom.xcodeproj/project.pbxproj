@@ -11,6 +11,7 @@
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		94AA3A4615EBF6FD00559BFA /* NESNamco106Cartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 94AA3A4515EBF6FD00559BFA /* NESNamco106Cartridge.m */; };
 		B90C0F9B1205FDDC00499BEB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90C0F9A1205FDDC00499BEB /* IOKit.framework */; };
 		B91B201B122640A10066C2CB /* NESSUROMCartridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B91B201A122640A10066C2CB /* NESSUROMCartridge.m */; };
 		B91C4F4510F876580057E78E /* apu_snapshot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91C4F2C10F876580057E78E /* apu_snapshot.cpp */; };
@@ -54,6 +55,8 @@
 		32CA4F630368D1EE00C91783 /* Macifom_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macifom_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Macifom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macifom.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		94AA3A4415EBF6FD00559BFA /* NESNamco106Cartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESNamco106Cartridge.h; sourceTree = "<group>"; };
+		94AA3A4515EBF6FD00559BFA /* NESNamco106Cartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESNamco106Cartridge.m; sourceTree = "<group>"; };
 		B90C0F9A1205FDDC00499BEB /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		B91B2019122640A10066C2CB /* NESSUROMCartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESSUROMCartridge.h; sourceTree = "<group>"; };
 		B91B201A122640A10066C2CB /* NESSUROMCartridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESSUROMCartridge.m; sourceTree = "<group>"; };
@@ -291,6 +294,8 @@
 				B92A4FF0142E6AF900BE811B /* NESVRC2aCartridge.m */,
 				B9809555142FADEF00195D48 /* NESVRC1Cartridge.h */,
 				B9809556142FADEF00195D48 /* NESVRC1Cartridge.m */,
+				94AA3A4415EBF6FD00559BFA /* NESNamco106Cartridge.h */,
+				94AA3A4515EBF6FD00559BFA /* NESNamco106Cartridge.m */,
 			);
 			name = Cartridges;
 			sourceTree = "<group>";
@@ -321,6 +326,9 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0450;
+			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Macifom" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
@@ -386,6 +394,7 @@
 				B9ACB554142D37520054018C /* NESVRC2bCartridge.m in Sources */,
 				B92A4FF1142E6AF900BE811B /* NESVRC2aCartridge.m in Sources */,
 				B9809557142FADEF00195D48 /* NESVRC1Cartridge.m in Sources */,
+				94AA3A4615EBF6FD00559BFA /* NESNamco106Cartridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,12 +425,13 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Macifom_Prefix.pch;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
@@ -434,9 +444,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Macifom_Prefix.pch;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
@@ -457,7 +469,6 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				ONLY_ACTIVE_ARCH = YES;
-				PREBINDING = NO;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -473,7 +484,6 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				PREBINDING = NO;
 				SDKROOT = macosx;
 			};
 			name = Release;
